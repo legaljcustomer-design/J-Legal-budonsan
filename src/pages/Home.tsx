@@ -491,7 +491,10 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </div>
           </div>
           
-          <div className="pt-8 border-t border-zinc-200 text-zinc-500 text-[10px] uppercase tracking-[0.3em] flex flex-col md:flex-row justify-end items-center gap-6">
+          <div className="pt-8 border-t border-zinc-200 text-zinc-500 text-[10px] uppercase tracking-[0.3em] flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+            <div className="normal-case tracking-normal text-zinc-400">
+              오사카J부동산은 Legal_J Office에서 운영하는 일본 부동산 서비스입니다.
+            </div>
             {isAdmin && <Link to="/admin" className="text-electric-blue font-bold">ADMIN ACCESS</Link>}
           </div>
         </div>
