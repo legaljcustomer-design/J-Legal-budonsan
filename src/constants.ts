@@ -1,0 +1,43 @@
+import { Property } from './types';
+
+export const SAMPLE_PROPERTIES: Property[] = [
+  {
+    id: '1',
+    title: '난바역 도보 5분 신축 맨션',
+    price: '월 8.5만엔',
+    location: '오사카시 나니와구',
+    type: 'OneRoom',
+    description: '2023년 준공된 최신식 맨션입니다. 난바역과 가깝고 주방 분리형 구조로 쾌적합니다.',
+    images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=800'],
+    features: ['신축', '오토록', '택배함', '인터넷 무료'],
+    isFeatured: true,
+    createdAt: Date.now(),
+    ownerId: 'system',
+  },
+  {
+    id: '2',
+    title: '우메다 고급 오피스텔',
+    price: '월 12만엔',
+    location: '오사카시 키타구',
+    type: 'Office',
+    description: '재택 근무에 최적화된 고급 인테리어 오피스텔입니다. 우메다의 야경을 한눈에 볼 수 있습니다.',
+    images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800'],
+    features: ['역세권', '풀옵션', '보안 철저', '고층 뷰'],
+    isFeatured: true,
+    createdAt: Date.now(),
+    ownerId: 'system',
+  },
+  {
+    id: '3',
+    title: '텐노지 가족형 고층 아파트',
+    price: '3,500만엔 (매매)',
+    location: '오사카시 아베노구',
+    type: 'Family',
+    description: '아이를 키우기 좋은 조용한 주택가에 위치한 넓은 평수의 아파트입니다.',
+    images: ['https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&q=80&w=800'],
+    features: ['남향', '주차 가능', '초등학교 인접'],
+    isFeatured: false,
+    createdAt: Date.now(),
+    ownerId: 'system',
+  }
+];

@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "Property": {
+      "title": "Property",
+      "description": "Real estate property details",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the property" },
+        "price": { "type": "string", "description": "Price descriptor" },
+        "location": { "type": "string", "description": "Location in Osaka" },
+        "type": { "type": "string", "enum": ["OneRoom", "TwoRoom", "Family", "Office", "Investment"] },
+        "description": { "type": "string", "description": "Detailed description" },
+        "images": { "type": "array", "description": "List of image URLs" },
+        "features": { "type": "array", "description": "List of feature tags" },
+        "googleMapUrl": { "type": "string" },
+        "isFeatured": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string", "description": "UID of the admin who created it" }
+      },
+      "required": ["title", "price", "location", "type", "description", "images", "features", "isFeatured", "createdAt", "ownerId"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "User with administrative privileges",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["super", "editor"] }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "properties/{propertyId}": {
+      "schema": "Property",
+      "description": "Collection of all real estate listings"
+    },
+    "admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Collection of users authorized to manage properties"
+    }
+  }
+}
