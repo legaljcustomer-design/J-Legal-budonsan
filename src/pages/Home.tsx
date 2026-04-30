@@ -48,11 +48,11 @@ const SAMPLE_PROPERTIES: Property[] = [
   },
   {
     id: 'sample-2',
-    title: '난바 스테이션 직결 프리미엄 1LDK',
-    price: '¥145,000 / 월',
+    title: '난바역 도보 7분 초프리미엄 1LDK+S',
+    price: '¥188,000円 / 월\n(관리비 별도)',
     location: '나니와구 난바',
-    type: 'OneRoom',
-    description: '난바역 도보 3분 거리의 초역세권 신축 맨션입니다. 직장인과 학생들에게 가장 인기 있는 위치와 설비를 자랑합니다.',
+    type: '1LDK+S',
+    description: '난바 생활권에서 50㎡대 1LDK를 찾으신다면, 실제로 보셨을 때 “생각보다 훨씬 넓다”는 느낌이 먼저 들 만한 맨션입니다...',
     images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop'],
     features: ['역세권', '신축', '오토록', '택배함'],
     isFeatured: false,
@@ -356,7 +356,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                       </div>
 
                       <div className="flex justify-between items-end mb-6 pt-4 border-t border-zinc-100">
-                        <span className="text-2xl font-bold tracking-tighter text-zinc-900">{prop.price}</span>
+                        <span className="text-2xl font-bold tracking-tighter text-zinc-900 whitespace-pre-wrap">{prop.price}</span>
                         <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-medium">상담 문의</span>
                       </div>
                       

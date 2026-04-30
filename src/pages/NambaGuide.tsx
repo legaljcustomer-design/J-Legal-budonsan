@@ -176,9 +176,9 @@ export default function NambaGuide() {
               </div>
               <div className="p-8">
                 <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-2">Chuo-ku, Namba</p>
-                <h3 className="text-xl font-bold mb-4 tracking-tight">난바 스테이션 직결 프리미엄 1LDK</h3>
+                <h3 className="text-xl font-bold mb-4 tracking-tight">난바역 도보 7분 초프리미엄 1LDK+S</h3>
                 <div className="flex justify-between items-center border-t border-zinc-100 pt-6 mb-6">
-                  <p className="text-2xl font-bold tracking-tighter">¥145,000 / 월</p>
+                  <p className="text-2xl font-bold tracking-tighter leading-tight text-right">¥188,000円 / 월<br /><span className="text-sm font-medium opacity-60">(관리비 별도)</span></p>
                   <a 
                     href="https://pf.kakao.com/_TSvgxb" 
                     target="_blank" 

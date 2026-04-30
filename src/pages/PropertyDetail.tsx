@@ -42,11 +42,11 @@ const SAMPLE_PROPERTIES: Property[] = [
   },
   {
     id: 'sample-2',
-    title: '난바 스테이션 직결 프리미엄 1LDK',
-    price: '¥145,000 / 월',
+    title: '난바역 도보 7분 초프리미엄 1LDK+S',
+    price: '¥188,000円 / 월\n(관리비 별도)',
     location: '나니와구 난바',
-    type: 'OneRoom',
-    description: '난바역 도보 3분 거리의 초역세권 신축 맨션입니다. 직장인과 학생들에게 가장 인기 있는 위치와 설비를 자랑하며, 주변에 미츠코시 백화점, 도톤보리 상가 등이 인접해 있어 완벽한 생활 인프라를 제공합니다. 시스템 키친, 욕실 건조기, 택배 보관함 등 최신식 설비가 완비되어 있습니다.',
+    type: '1LDK+S',
+    description: '난바 생활권에서 50㎡대 1LDK를 찾으신다면, 실제로 보셨을 때 “생각보다 훨씬 넓다”는 느낌이 먼저 들 만한 맨션입니다.\n톤 다운된 실내 분위기와 깔끔한 마감이 잘 잡혀 있어서, 혼자 사셔도 여유롭고 2인 입주로도 충분히 검토해보실 만했습니다.\n다이코쿠초역과 난바 접근성이 좋아서 출퇴근은 물론, 평소 생활 동선까지 편하게 가져가시기 좋았던 점도 장점이었습니다.\n외국인 계약 가능 조건이라 오사카에서 집을 구하시는 분들께도 비교적 현실적으로 계약을 추진해볼 수 있는 타입으로 보였습니다.\n이런 매물은 사진만 보고 넘기기엔 아쉬운 경우가 많아서, 조건이 맞으신다면 너무 오래 미루지 마시고 내람부터 한 번 잡아보시는 편이 좋겠습니다.',
     images: [
       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=2070&auto=format&fit=crop',
@@ -155,11 +155,11 @@ export default function PropertyDetail() {
                </div>
                <div className="p-6 text-center">
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Plan / Area</p>
-                  <p className="text-sm font-bold text-zinc-900">1LDK / Approx. 35㎡~</p>
+                  <p className="text-sm font-bold text-zinc-900">1LDK + S / 50.14㎡~</p>
                </div>
                <div className="p-6 text-center">
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Type / Construction</p>
-                  <p className="text-sm font-bold text-zinc-900">{property.type} / 2024</p>
+                  <p className="text-sm font-bold text-zinc-900">1LDK+S / 2026</p>
                </div>
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function PropertyDetail() {
                       {property.title}
                     </h1>
 
-                    <div className="text-4xl font-black text-blue-600 tracking-tighter mb-8 bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50 inline-block w-full text-center">
+                    <div className="text-4xl font-black text-blue-600 tracking-tighter mb-8 bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50 inline-block w-full text-center whitespace-pre-wrap">
                       {property.price}
                     </div>
 

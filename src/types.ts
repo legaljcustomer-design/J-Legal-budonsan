@@ -3,7 +3,7 @@ export interface Property {
   title: string;
   price: string;
   location: string;
-  type: 'OneRoom' | 'TwoRoom' | 'Family' | 'Office' | 'Investment';
+  type: 'OneRoom' | 'TwoRoom' | 'Family' | 'Office' | 'Investment' | '1LDK+S';
   description: string;
   images: string[];
   features: string[];
