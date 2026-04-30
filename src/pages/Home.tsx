@@ -262,7 +262,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
            className="relative z-20 px-10"
         >
-          <div className="mb-8 backdrop-blur-md bg-blue-600/30 border border-blue-400/30 text-white py-4 px-10 text-xl md:text-2xl font-bold tracking-tight inline-block mx-auto rounded-full shadow-[0_0_30px_rgba(37,99,235,0.3)]">
+          <div className="mt-10 mb-8 backdrop-blur-md bg-blue-600/30 border border-blue-400/30 text-white py-4 px-10 text-xl md:text-2xl font-bold tracking-tight inline-block mx-auto rounded-full shadow-[0_0_30px_rgba(37,99,235,0.3)]">
             현재 오사카J부동산에서 <span className="text-yellow-300 underline underline-offset-8 decoration-yellow-400/50 decoration-2">{consultationCount}명</span>이 상담 받고 계세요 ❤️
           </div>
           <h1 className="text-6xl md:text-8xl font-bold mb-8 tracking-tighter leading-tight drop-shadow-2xl text-white">
