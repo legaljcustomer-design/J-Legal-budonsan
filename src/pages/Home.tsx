@@ -314,37 +314,40 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                         alt={prop.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                      <span className="absolute top-4 left-4 px-2 py-1 bg-electric-blue text-[10px] font-bold rounded uppercase tracking-wider">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <span className="absolute top-4 left-4 px-2 py-1 bg-electric-blue text-[10px] font-bold rounded uppercase tracking-wider text-white">
                         {CATEGORIES.find(c => c.id === prop.type)?.label}
                       </span>
                       {prop.isFeatured && (
-                        <div className="absolute top-4 right-4 bg-emerald-600 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest">
+                        <div className="absolute top-4 right-4 bg-emerald-600 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest text-white">
                           FEATURED
                         </div>
                       )}
-                      <div className="absolute bottom-4 left-4">
-                        <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">{prop.location}</p>
-                        <h3 className="text-xl font-bold tracking-tight">{prop.title}</h3>
-                      </div>
                     </div>
                     
-                    <div className="p-6 bg-white">
-                      <div className="flex justify-between items-end mb-4">
+                    <div className="p-8 bg-white flex flex-col flex-grow">
+                      <div className="mb-6">
+                        <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-2">{prop.location}</p>
+                        <h3 className="text-xl font-bold tracking-tight text-zinc-900 leading-snug h-[3.5rem] line-clamp-2">
+                          {prop.title}
+                        </h3>
+                      </div>
+
+                      <div className="flex justify-between items-end mb-6 pt-4 border-t border-zinc-100">
                         <span className="text-2xl font-bold tracking-tighter text-zinc-900">{prop.price}</span>
-                        <span className="text-[10px] text-zinc-500 uppercase tracking-widest">관리비 포함/조정가능</span>
+                        <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-medium">상담 문의</span>
                       </div>
                       
-                      <div className="flex gap-2 mb-6 flex-wrap">
+                      <div className="flex gap-2 mb-8 flex-wrap">
                         {prop.features.slice(0, 3).map((f, i) => (
-                            <span key={i} className="px-2 py-1 bg-zinc-100 rounded text-[10px] text-zinc-600 font-medium border border-zinc-200">
+                            <span key={i} className="px-2 py-1 bg-slate-50 rounded text-[10px] text-zinc-500 font-bold border border-zinc-100 uppercase tracking-tighter">
                                 {f}
                             </span>
                         ))}
                       </div>
                       
-                      <button className="w-full py-3 bg-zinc-50 group-hover:bg-electric-blue group-hover:text-white border border-zinc-200 group-hover:border-electric-blue text-[10px] font-bold tracking-[0.2em] uppercase transition-all rounded-lg flex items-center justify-center gap-2">
-                        상세 보기 <ChevronRight size={14} />
+                      <button className="w-full py-4 bg-zinc-950 text-white text-[10px] font-bold tracking-[0.2em] uppercase transition-all rounded-xl flex items-center justify-center gap-2 hover:bg-electric-blue shadow-lg hover:shadow-blue-500/20 active:scale-[0.98]">
+                        매물 정보 더보기 <ChevronRight size={14} />
                       </button>
                     </div>
                   </motion.div>
@@ -577,9 +580,9 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 <div>
                   <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-600 mb-4">Office Address</h4>
                   <p className="text-zinc-600 text-sm leading-relaxed">
-                    본사주소：〒553-0003<br />
-                    大阪府大阪市福島区福島７丁目２０－１８<br />
-                    シティタワー西梅田4203号
+                    본사주소:〒553-0003<br />
+                    大阪府大阪市福島区福島7丁目20-18<br />
+                    ｼﾃｨﾀﾜｰ西梅田4203号
                   </p>
                 </div>
                 <div className="flex flex-col gap-6">
