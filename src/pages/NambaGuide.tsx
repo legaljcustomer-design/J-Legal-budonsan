@@ -23,7 +23,12 @@ export default function NambaGuide() {
             <span className="font-bold text-sm tracking-tight">홈으로 돌아가기</span>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-electric-blue rounded-sm flex items-center justify-center font-bold text-lg text-white">J</div>
+            <img 
+              src="https://yt3.googleusercontent.com/ZNWF_L7kuC_cHkMdodV_-R27ac-oQModzDEdDhAm6h-qFoA9-mLjbJMi05MbA66tU8U7zqVN=s160-c-k-c0x00ffffff-no-rj" 
+              alt="J Logo" 
+              className="w-8 h-8 rounded-sm object-cover"
+              referrerPolicy="no-referrer"
+            />
             <span className="text-xl font-bold tracking-tight">오사카J부동산</span>
           </div>
         </div>

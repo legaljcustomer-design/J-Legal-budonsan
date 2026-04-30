@@ -199,7 +199,12 @@ export default function Admin() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 bg-electric-blue rounded-xs flex items-center justify-center font-bold text-xs">J</div>
+                <img 
+                  src="https://yt3.googleusercontent.com/ZNWF_L7kuC_cHkMdodV_-R27ac-oQModzDEdDhAm6h-qFoA9-mLjbJMi05MbA66tU8U7zqVN=s160-c-k-c0x00ffffff-no-rj" 
+                  alt="J Logo" 
+                  className="w-6 h-6 rounded-xs object-cover"
+                  referrerPolicy="no-referrer"
+                />
                 <h1 className="text-2xl font-bold tracking-tighter uppercase">Admin Management</h1>
             </div>
             <div className="tag-blue lowercase tracking-normal px-2 py-0.5">signed in as {auth.currentUser.email}</div>

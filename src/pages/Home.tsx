@@ -161,7 +161,12 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
       <nav className="fixed top-0 w-full z-50 glass-morphism h-20 flex items-center">
         <div className="max-w-7xl mx-auto w-full px-10 flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-electric-blue rounded-sm flex items-center justify-center font-bold text-lg text-white">J</div>
+            <img 
+              src="https://yt3.googleusercontent.com/ZNWF_L7kuC_cHkMdodV_-R27ac-oQModzDEdDhAm6h-qFoA9-mLjbJMi05MbA66tU8U7zqVN=s160-c-k-c0x00ffffff-no-rj" 
+              alt="J Logo" 
+              className="w-8 h-8 rounded-sm object-cover"
+              referrerPolicy="no-referrer"
+            />
             <span className="text-xl font-bold tracking-tight text-zinc-900">오사카J부동산 <span className="text-blue-600 font-light ml-1 text-sm">OSAKA J</span></span>
           </Link>
           
