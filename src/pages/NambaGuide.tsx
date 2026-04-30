@@ -176,8 +176,8 @@ export default function NambaGuide() {
               </div>
               <div className="p-8">
                 <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-2">Chuo-ku, Namba</p>
-                <h3 className="text-xl font-bold mb-4 tracking-tight">난바 스테이션 자이 1LDK</h3>
-                <div className="flex justify-between items-center border-t border-zinc-100 pt-6">
+                <h3 className="text-xl font-bold mb-4 tracking-tight">난바 스테이션 직결 프리미엄 1LDK</h3>
+                <div className="flex justify-between items-center border-t border-zinc-100 pt-6 mb-6">
                   <p className="text-2xl font-bold tracking-tighter">¥145,000 / 월</p>
                   <a 
                     href="https://pf.kakao.com/_TSvgxb" 
@@ -188,6 +188,12 @@ export default function NambaGuide() {
                     <MessageCircle size={20} className="text-[#3C1E1E]" />
                   </a>
                 </div>
+                <Link 
+                  to="/property/sample-2"
+                  className="w-full py-4 bg-zinc-950 text-white text-[10px] font-bold tracking-[0.2em] uppercase transition-all rounded-xl flex items-center justify-center gap-2 hover:bg-electric-blue shadow-lg"
+                >
+                  매물 정보 더보기 <ChevronRight size={14} />
+                </Link>
               </div>
             </div>
 
@@ -205,7 +211,7 @@ export default function NambaGuide() {
               <div className="p-8">
                 <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-2">Chuo-ku, Dotonbori</p>
                 <h3 className="text-xl font-bold mb-4 tracking-tight">도톤보리 리버뷰 펜트하우스</h3>
-                <div className="flex justify-between items-center border-t border-zinc-100 pt-6">
+                <div className="flex justify-between items-center border-t border-zinc-100 pt-6 mb-6">
                   <p className="text-2xl font-bold tracking-tighter">¥2,300,000 / 월</p>
                   <a 
                     href="https://pf.kakao.com/_TSvgxb" 
@@ -216,6 +222,12 @@ export default function NambaGuide() {
                     <MessageCircle size={20} className="text-[#3C1E1E]" />
                   </a>
                 </div>
+                <Link 
+                  to="/property/sample-3"
+                  className="w-full py-4 bg-zinc-950 text-white text-[10px] font-bold tracking-[0.2em] uppercase transition-all rounded-xl flex items-center justify-center gap-2 hover:bg-electric-blue shadow-lg"
+                >
+                  매물 정보 더보기 <ChevronRight size={14} />
+                </Link>
               </div>
             </div>
 

@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import Admin from './pages/Admin';
 import Recruitment from './pages/Recruitment';
 import NambaGuide from './pages/NambaGuide';
+import PropertyDetail from './pages/PropertyDetail';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="/" element={<Home isAdmin={isAdmin} />} />
         <Route path="/recruitment" element={<Recruitment />} />
         <Route path="/namba-guide" element={<NambaGuide />} />
+        <Route path="/property/:id" element={<PropertyDetail />} />
         <Route 
           path="/admin" 
           element={<Admin />} 

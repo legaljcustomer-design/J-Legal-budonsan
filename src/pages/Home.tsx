@@ -368,9 +368,12 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                         ))}
                       </div>
                       
-                      <button className="w-full py-4 bg-zinc-950 text-white text-[10px] font-bold tracking-[0.2em] uppercase transition-all rounded-xl flex items-center justify-center gap-2 hover:bg-electric-blue shadow-lg hover:shadow-blue-500/20 active:scale-[0.98]">
+                      <Link 
+                        to={`/property/${prop.id}`}
+                        className="w-full py-4 bg-zinc-950 text-white text-[10px] font-bold tracking-[0.2em] uppercase transition-all rounded-xl flex items-center justify-center gap-2 hover:bg-electric-blue shadow-lg hover:shadow-blue-500/20 active:scale-[0.98]"
+                      >
                         매물 정보 더보기 <ChevronRight size={14} />
-                      </button>
+                      </Link>
                     </div>
                   </motion.div>
                 ))

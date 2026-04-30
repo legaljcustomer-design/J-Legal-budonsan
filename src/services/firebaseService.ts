@@ -86,5 +86,21 @@ export const firebaseService = {
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, path);
     }
+  },
+
+  // Public: Get single property
+  async getPropertyById(id: string): Promise<Property | null> {
+    const path = `${PROPERTIES_COLLECTION}/${id}`;
+    try {
+      const docRef = doc(db, PROPERTIES_COLLECTION, id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Property;
+      }
+      return null;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, path);
+      return null;
+    }
   }
 };
