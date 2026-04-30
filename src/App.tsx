@@ -7,6 +7,7 @@ import { firebaseService } from './services/firebaseService';
 // Components (We'll create these)
 import Home from './pages/Home';
 import Admin from './pages/Admin';
+import Recruitment from './pages/Recruitment';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -39,6 +40,7 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home isAdmin={isAdmin} />} />
+        <Route path="/recruitment" element={<Recruitment />} />
         <Route 
           path="/admin" 
           element={<Admin />} 

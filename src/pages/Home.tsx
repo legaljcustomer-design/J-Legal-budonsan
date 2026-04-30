@@ -26,9 +26,77 @@ import { Link } from 'react-router-dom';
 const CATEGORIES = [
   { id: 'all', label: '전체', icon: HomeIcon },
   { id: 'OneRoom', label: '원룸/투룸', icon: Building2 },
-  { id: 'Family', label: '가족형 아파트', icon: HomeIcon },
+  { id: 'Family', label: '타워맨션', icon: HomeIcon },
   { id: 'Office', label: '상가/사무실', icon: Briefcase },
   { id: 'Investment', label: '수익형 부동산', icon: TrendingUp },
+];
+
+const SAMPLE_PROPERTIES: Property[] = [
+  {
+    id: 'sample-1',
+    title: '우메다 시티타워 자이 럭셔리 펜트하우스',
+    price: '¥285,000,000',
+    location: '키타구 우메다',
+    type: 'Family',
+    description: '오사카 최고의 스카이라인을 자랑하는 우메다 중심의 초고층 타워 맨션입니다. 최고급 자재와 최첨단 보안 시스템을 갖추고 있습니다.',
+    images: ['https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop'],
+    features: ['초고층 뷰', '컨시어지 서비스', '전용 주차장', '피트니스 센터'],
+    isFeatured: true,
+    createdAt: new Date(),
+    ownerId: 'system'
+  },
+  {
+    id: 'sample-2',
+    title: '난바 스테이션 직결 프리미엄 1LDK',
+    price: '¥145,000 / 월',
+    location: '나니와구 난바',
+    type: 'OneRoom',
+    description: '난바역 도보 3분 거리의 초역세권 신축 맨션입니다. 직장인과 학생들에게 가장 인기 있는 위치와 설비를 자랑합니다.',
+    images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop'],
+    features: ['역세권', '신축', '오토록', '택배함'],
+    isFeatured: false,
+    createdAt: new Date(),
+    ownerId: 'system'
+  },
+  {
+    id: 'sample-3',
+    title: '신사이바시 상업지구 수익형 빌딩',
+    price: '¥850,000,000',
+    location: '주오구 신사이바시',
+    type: 'Investment',
+    description: '유동인구가 가장 많은 신사이바시 메인 스트리트에 위치한 8층 규모의 수익형 빌딩입니다. 안정적인 임대 수익이 보장됩니다.',
+    images: ['https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2048&auto=format&fit=crop'],
+    features: ['고수익', '핵심 상권', '엘리베이터 완비', '관리 용이'],
+    isFeatured: true,
+    createdAt: new Date(),
+    ownerId: 'system'
+  },
+  {
+    id: 'sample-4',
+    title: '혼마치 비즈니스 지구 모던 오피스',
+    price: '¥420,000 / 월',
+    location: '주오구 혼마치',
+    type: 'Office',
+    description: '기업체 밀집 지역인 혼마치에 위치한 대형 평수 오피스입니다. 세련된 인테리어와 쾌적한 업무 환경을 제공합니다.',
+    images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069&auto=format&fit=crop'],
+    features: ['대형 평수', '중심 업무 지구', '개별 냉난방', '회의실 가능'],
+    isFeatured: false,
+    createdAt: new Date(),
+    ownerId: 'system'
+  },
+  {
+    id: 'sample-5',
+    title: '텐노지 공원 근교 파노라마 뷰 맨션',
+    price: '¥198,000 / 월',
+    location: '덴노지구 덴노지',
+    type: 'Family',
+    description: '덴노지 공원과 하루카스가 한눈에 보이는 조망권을 가진 가족형 맨션입니다. 교육 환경과 편의시설이 우수합니다.',
+    images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=2080&auto=format&fit=crop'],
+    features: ['공원 근처', '파노라마 뷰', '대형 수납장', '바닥 난방'],
+    isFeatured: true,
+    createdAt: new Date(),
+    ownerId: 'system'
+  }
 ];
 
 export default function Home({ isAdmin }: { isAdmin: boolean }) {
@@ -75,7 +143,13 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     const fetchProperties = async () => {
       setLoading(true);
       const data = await firebaseService.getProperties(activeCategory);
-      setProperties(data);
+      
+      // Filter samples based on active category
+      const filteredSamples = activeCategory === 'all' 
+        ? SAMPLE_PROPERTIES 
+        : SAMPLE_PROPERTIES.filter(p => p.type === activeCategory);
+      
+      setProperties([...filteredSamples, ...data]);
       setLoading(false);
     };
     fetchProperties();
@@ -96,6 +170,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             <a href="#properties" className="hover:text-electric-blue transition-colors">매물검색</a>
             <a href="#guide" className="hover:text-electric-blue transition-colors">지역 가이드</a>
             <a href="#about" className="hover:text-electric-blue transition-colors">회사소개</a>
+            <Link to="/recruitment" className="hover:text-electric-blue transition-colors">채용 정보</Link>
           </div>
 
           <div className="flex items-center gap-4">
@@ -128,6 +203,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               <a href="#properties" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">매물검색</a>
               <a href="#guide" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">가이드</a>
               <a href="#about" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">회사소개</a>
+              <Link to="/recruitment" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">채용 정보</Link>
               {isAdmin && <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="text-electric-blue">대시보드</Link>}
             </div>
             <a 
@@ -193,6 +269,9 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             <div>
               <div className="text-electric-blue text-xs font-bold uppercase tracking-[0.3em] mb-4">Properties</div>
               <h2 className="text-4xl font-bold tracking-tighter text-zinc-900">추천 프리미엄 매물</h2>
+              <p className="text-[11px] text-zinc-500 font-medium mt-2 leading-relaxed">
+                ※ 실시간 공실/만실 매물 상황은 무조건 문의바랍니다.
+              </p>
             </div>
             
             <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar w-full md:w-auto">
