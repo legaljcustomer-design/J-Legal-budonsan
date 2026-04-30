@@ -73,7 +73,7 @@ const Recruitment = () => {
             className="text-center"
           >
             <span className="inline-block py-2 px-6 rounded-full bg-blue-600/10 border border-blue-500/20 text-blue-500 text-xs font-bold tracking-widest uppercase mb-8">
-              行政書士Legal_ J office & 오사카J부동산
+              <a href="https://legalj.jp/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">行政書士Legal_ J office</a> & 오사카J부동산
             </span>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-8 leading-tight">
               오사카 한인 경제의 중심에서 <br />
@@ -241,7 +241,9 @@ const Recruitment = () => {
       <footer className="py-20 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <span className="text-sm font-bold text-white mb-2">行政書士Legal_ J office & OSAKA J REAL ESTATE</span>
+            <span className="text-sm font-bold text-white mb-2">
+              <a href="https://legalj.jp/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">行政書士Legal_ J office</a> & OSAKA J REAL ESTATE
+            </span>
             <p className="text-zinc-600 text-xs text-balance">오사카 한인 경제의 발전을 위해 노력하는 전문가 그룹입니다.</p>
           </div>
           <div className="text-zinc-600 text-[10px] uppercase tracking-[0.3em] font-bold">

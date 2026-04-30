@@ -439,7 +439,9 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             <div className="lg:col-span-1">
               <div className="tag-blue mb-4">About Us</div>
               <h2 className="text-4xl font-bold tracking-tighter mb-8 leading-tight text-zinc-900">
-                行政書士Legal_ J office<br />
+                <a href="https://legalj.jp/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                  行政書士Legal_ J office
+                </a><br />
                 & 오사카J부동산
               </h2>
               <p className="text-zinc-600 leading-relaxed mb-6 font-light">
@@ -586,9 +588,12 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mb-20">
             <div>
-              <div className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <div className="text-2xl font-bold mb-6 flex items-center gap-2 text-zinc-900">
                 <div className="w-6 h-6 bg-electric-blue rounded-xs flex items-center justify-center text-sm text-white">J</div>
-                <span className="tracking-tighter text-zinc-900">行政書士Legal_ J office & 오사카J부동산</span>
+                <a href="https://legalj.jp/" target="_blank" rel="noopener noreferrer" className="tracking-tighter hover:text-blue-600 transition-colors">
+                  行政書士Legal_ J office
+                </a>
+                <span className="tracking-tighter"> & 오사카J부동산</span>
               </div>
               <p className="text-zinc-600 max-w-md leading-relaxed text-sm font-medium">
                 오사카 한인 경제의 중심에서 정직과 신뢰를 바탕으로 한 <br />
