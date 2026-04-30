@@ -4,7 +4,6 @@ import {
   Search, 
   MapPin, 
   Home as HomeIcon, 
-  Building2, 
   Briefcase, 
   TrendingUp, 
   MessageCircle, 
@@ -17,7 +16,9 @@ import {
   ChevronRight,
   ArrowRight,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  ExternalLink,
+  Building2
 } from 'lucide-react';
 import { Property } from '../types';
 import { firebaseService } from '../services/firebaseService';
@@ -160,15 +161,31 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 glass-morphism h-20 flex items-center">
         <div className="max-w-7xl mx-auto w-full px-10 flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <img 
-              src="https://yt3.googleusercontent.com/ZNWF_L7kuC_cHkMdodV_-R27ac-oQModzDEdDhAm6h-qFoA9-mLjbJMi05MbA66tU8U7zqVN=s160-c-k-c0x00ffffff-no-rj" 
-              alt="J Logo" 
-              className="w-8 h-8 rounded-sm object-cover"
-              referrerPolicy="no-referrer"
-            />
-            <span className="text-xl font-bold tracking-tight text-zinc-900">오사카J부동산 <span className="text-blue-600 font-light ml-1 text-sm">OSAKA J</span></span>
-          </Link>
+          <div className="flex flex-col">
+            <Link to="/" className="flex items-center gap-2">
+              <img 
+                src="https://yt3.googleusercontent.com/ZNWF_L7kuC_cHkMdodV_-R27ac-oQModzDEdDhAm6h-qFoA9-mLjbJMi05MbA66tU8U7zqVN=s160-c-k-c0x00ffffff-no-rj" 
+                alt="J Logo" 
+                className="w-8 h-8 rounded-sm object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <span className="text-xl font-bold tracking-tight text-zinc-900">오사카J부동산</span>
+            </Link>
+            <a 
+              href="https://legalj.jp/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-xl font-bold tracking-tight text-zinc-900 hover:text-blue-600 transition-colors flex items-center gap-2 mt-2"
+            >
+              <img 
+                src="https://legalj.jp/wp-content/uploads/2025/01/favicon-e1737704245801.png" 
+                alt="Legal J Logo" 
+                className="w-8 h-8 rounded-sm object-contain"
+                referrerPolicy="no-referrer"
+              />
+              行政書士Legal_ J office <ExternalLink size={16} />
+            </a>
+          </div>
           
           <div className="hidden md:flex gap-8 text-sm font-medium text-zinc-500">
             <a href="#hero" className="text-zinc-900 border-b-2 border-electric-blue pb-1 transition-all font-bold">홈</a>

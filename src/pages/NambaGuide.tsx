@@ -8,7 +8,8 @@ import {
   Coffee, 
   Utensils,
   ChevronRight,
-  MessageCircle
+  MessageCircle,
+  ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -22,14 +23,30 @@ export default function NambaGuide() {
             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
             <span className="font-bold text-sm tracking-tight">홈으로 돌아가기</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <img 
-              src="https://yt3.googleusercontent.com/ZNWF_L7kuC_cHkMdodV_-R27ac-oQModzDEdDhAm6h-qFoA9-mLjbJMi05MbA66tU8U7zqVN=s160-c-k-c0x00ffffff-no-rj" 
-              alt="J Logo" 
-              className="w-8 h-8 rounded-sm object-cover"
-              referrerPolicy="no-referrer"
-            />
-            <span className="text-xl font-bold tracking-tight">오사카J부동산</span>
+          <div className="flex flex-col items-start">
+            <div className="flex items-center gap-2">
+              <img 
+                src="https://yt3.googleusercontent.com/ZNWF_L7kuC_cHkMdodV_-R27ac-oQModzDEdDhAm6h-qFoA9-mLjbJMi05MbA66tU8U7zqVN=s160-c-k-c0x00ffffff-no-rj" 
+                alt="J Logo" 
+                className="w-8 h-8 rounded-sm object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <span className="text-xl font-bold tracking-tight">오사카J부동산</span>
+            </div>
+            <a 
+              href="https://legalj.jp/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-xl font-bold tracking-tight text-zinc-900 hover:text-blue-600 transition-colors flex items-center gap-2 mt-2"
+            >
+              <img 
+                src="https://legalj.jp/wp-content/uploads/2025/01/favicon-e1737704245801.png" 
+                alt="Legal J Logo" 
+                className="w-8 h-8 rounded-sm object-contain"
+                referrerPolicy="no-referrer"
+              />
+              行政書士Legal_ J office <ExternalLink size={16} />
+            </a>
           </div>
         </div>
       </nav>
