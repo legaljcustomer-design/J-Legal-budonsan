@@ -8,6 +8,7 @@ import { firebaseService } from './services/firebaseService';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 import Recruitment from './pages/Recruitment';
+import NambaGuide from './pages/NambaGuide';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -41,6 +42,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home isAdmin={isAdmin} />} />
         <Route path="/recruitment" element={<Recruitment />} />
+        <Route path="/namba-guide" element={<NambaGuide />} />
         <Route 
           path="/admin" 
           element={<Admin />} 

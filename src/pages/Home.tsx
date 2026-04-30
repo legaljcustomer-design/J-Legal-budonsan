@@ -369,13 +369,39 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-light">
-            <div className="bg-slate-50 p-8 rounded-2xl border border-zinc-100 shadow-sm">
-               <h3 className="text-xl font-bold mb-4 text-electric-blue">난바 & 도톤보리</h3>
-               <p className="text-zinc-600 leading-relaxed text-sm">오사카의 중심지이자 여행객과 활기로 넘치는 지역입니다. 다양한 직업군이 선호하며 주거와 상권이 완벽하게 조화된 지역입니다.</p>
+            <div className="group bg-slate-50 rounded-2xl border border-zinc-100 shadow-sm overflow-hidden flex flex-col">
+               <div className="h-48 overflow-hidden">
+                  <img 
+                    src="https://i.namu.wiki/i/h972-p_G-i13DqN13Ulh4ktKLuwmaDrKsUCff62Ye7fstKQMlGTL9BK2K6rbqyJdutM7FWnvollhRsUDRVLGDr0NXsQpiOZQYraAfmzXkk_jl_kGpf1Vocoy2xFtfB9QHtZ9PR2shhdDiDxiY6jAZF47AzTgRsCTO7qZJSfX8Cs.webp" 
+                    alt="난바 & 도톤보리" 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    referrerPolicy="no-referrer"
+                  />
+               </div>
+               <div className="p-8 flex-grow">
+                  <h3 className="text-xl font-bold mb-4 text-electric-blue">난바 & 도톤보리</h3>
+                  <p className="text-zinc-600 leading-relaxed text-sm mb-6">오사카의 중심지이자 여행객과 활기로 넘치는 지역입니다. 다양한 직업군이 선호하며 주거와 상권이 완벽하게 조화된 지역입니다.</p>
+                  <Link to="/namba-guide" className="inline-flex items-center gap-2 bg-electric-blue text-white px-6 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-900 transition-colors">
+                     추천매물 바로가기 <ArrowRight size={14} />
+                  </Link>
+               </div>
             </div>
-            <div className="bg-slate-50 p-8 rounded-2xl border border-zinc-100 shadow-sm">
-               <h3 className="text-xl font-bold mb-4 text-electric-blue">우메다 & 키타구</h3>
-               <p className="text-zinc-600 leading-relaxed text-sm">오사카의 비즈니스 중심지로, 현대적인 오피스와 고급 아파트가 밀집해 있습니다. 교통의 요지이며 세련된 도시 생활을 원하시는 분들께 추천합니다.</p>
+            <div className="group bg-slate-50 rounded-2xl border border-zinc-100 shadow-sm overflow-hidden flex flex-col">
+               <div className="h-48 overflow-hidden">
+                  <img 
+                    src="https://i.namu.wiki/i/h972-p_G-i13DqN13Ulh4iQeDTIfbpYrTc3vkDRCGSdcB5dxNKqmpo5Yd6-MigBNaLATwqPSgqh7RuEVsut8r1WPHdMKfuYSa-FImQpLJBREdSeYO_-ts72oAkEgRk3hv4f9GUOnb5tA4tuIt6SDEPoq4eYi9RIf0MN6zxdT-3U.webp" 
+                    alt="우메다 & 키타구" 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    referrerPolicy="no-referrer"
+                  />
+               </div>
+               <div className="p-8 flex-grow">
+                  <h3 className="text-xl font-bold mb-4 text-electric-blue">우메다 & 키타구</h3>
+                  <p className="text-zinc-600 leading-relaxed text-sm mb-6">오사카의 비즈니스 중심지로, 현대적인 오피스와 고급 아파트가 밀집해 있습니다. 교통의 요지이며 세련된 도시 생활을 원하시는 분들께 추천합니다.</p>
+                  <button className="inline-flex items-center gap-2 bg-zinc-200 text-zinc-500 px-6 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-not-allowed">
+                     준비 중
+                  </button>
+               </div>
             </div>
           </div>
         </div>
