@@ -27,7 +27,14 @@ const SAMPLE_PROPERTIES: Property[] = [
     location: '키타구 우메다',
     type: 'Family',
     description: '오사카 최고의 스카이라인을 자랑하는 우메다 중심의 초고층 타워 맨션입니다. 최고급 자재와 최첨단 보안 시스템을 갖추고 있습니다. 우메다의 화려한 야경을 침실에서 감상하실 수 있으며, 입주민 전용 스카이라운지 및 피트니스 센터 이용이 가능합니다.',
-    images: ['https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop'],
+    images: [
+      'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1600566753190-17f0bb2a6c3e?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1600607687644-c7171b42498f?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1600566753086-00f18fb6f3ea?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?q=80&w=2070&auto=format&fit=crop'
+    ],
     features: ['초고층 뷰', '컨시어지 서비스', '전용 주차장', '피트니스 센터', '24시간 보안', '스카이라운지'],
     isFeatured: true,
     createdAt: new Date(),
@@ -40,7 +47,14 @@ const SAMPLE_PROPERTIES: Property[] = [
     location: '나니와구 난바',
     type: 'OneRoom',
     description: '난바역 도보 3분 거리의 초역세권 신축 맨션입니다. 직장인과 학생들에게 가장 인기 있는 위치와 설비를 자랑하며, 주변에 미츠코시 백화점, 도톤보리 상가 등이 인접해 있어 완벽한 생활 인프라를 제공합니다. 시스템 키친, 욕실 건조기, 택배 보관함 등 최신식 설비가 완비되어 있습니다.',
-    images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop'],
+    images: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1560448204-603b3fc33ddc?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?q=80&w=2070&auto=format&fit=crop'
+    ],
     features: ['역세권', '신축', '오토록', '택배함', '시스템 키친', '인터넷 무료'],
     isFeatured: false,
     createdAt: new Date(),
@@ -53,7 +67,12 @@ const SAMPLE_PROPERTIES: Property[] = [
     location: '주오구 신사이바시',
     type: 'Investment',
     description: '유동인구가 가장 많은 신사이바시 메인 스트리트에 위치한 8층 규모의 수익형 빌딩입니다. 현재 전 층 임대 완료 상태로 안정적인 임대 수익이 발생하고 있으며, 입지 조건이 워낙 뛰어나 향후 자산 가치 상승이 확실시되는 특급 매물입니다.',
-    images: ['https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2048&auto=format&fit=crop'],
+    images: [
+      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2048&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1497366216548-3752e0edcba4?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1497366811353-6870744d04b2?q=80&w=2070&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1497215842964-222b430dc094?q=80&w=2070&auto=format&fit=crop'
+    ],
     features: ['고수익', '핵심 상권', '엘리베이터 완비', '관리 용이', '내진 설계', '우수한 가시성'],
     isFeatured: true,
     createdAt: new Date(),
@@ -65,6 +84,7 @@ export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -125,28 +145,64 @@ export default function PropertyDetail() {
 
       <main className="pt-24 pb-20 px-6 md:px-10">
         <div className="max-w-7xl mx-auto">
+          
+          {/* Property Top Info Bar (Simulating the user's reference) */}
+          <div className="mb-10 bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
+               <div className="p-6 text-center">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Location / Station</p>
+                  <p className="text-sm font-bold text-zinc-900">{property.location}</p>
+               </div>
+               <div className="p-6 text-center">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Plan / Area</p>
+                  <p className="text-sm font-bold text-zinc-900">1LDK / Approx. 35㎡~</p>
+               </div>
+               <div className="p-6 text-center">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Type / Construction</p>
+                  <p className="text-sm font-bold text-zinc-900">{property.type} / 2024</p>
+               </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
             
-            {/* Left Column: Images & Description */}
+            {/* Left Column: Gallery & Description */}
             <div className="space-y-10">
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-3xl overflow-hidden shadow-2xl bg-zinc-200 aspect-[4/3]"
-              >
-                <img 
-                  src={property.images[0] || 'https://via.placeholder.com/800x600?text=Premium+Listing'} 
-                  alt={property.title}
-                  className="w-full h-full object-cover"
-                />
-              </motion.div>
+              {/* Photo Gallery System */}
+              <div className="flex flex-col md:flex-row gap-4">
+                 {/* Main Image */}
+                 <div className="flex-1">
+                    <motion.div 
+                      key={activeImageIndex}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="rounded-3xl overflow-hidden shadow-2xl bg-zinc-200 aspect-[4/5] md:aspect-[3/4] relative"
+                    >
+                      <img 
+                        src={property.images[activeImageIndex] || 'https://via.placeholder.com/800x600?text=Premium+Listing'} 
+                        alt={property.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-6 left-6 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-white text-[10px] font-bold tracking-widest uppercase">
+                         Exterior View
+                      </div>
+                    </motion.div>
+                 </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                {property.images.slice(1, 4).map((img, i) => (
-                  <div key={i} className="rounded-xl overflow-hidden bg-zinc-200 aspect-square shadow-md border border-zinc-100">
-                    <img src={img} alt={`${property.title} ${i + 2}`} className="w-full h-full object-cover" />
-                  </div>
-                ))}
+                 {/* Thumbnails Sidebar */}
+                 <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto max-h-[600px] no-scrollbar">
+                    {property.images.map((img, i) => (
+                       <button 
+                        key={i}
+                        onClick={() => setActiveImageIndex(i)}
+                        className={`relative w-20 h-24 md:w-24 md:h-24 shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
+                          activeImageIndex === i ? 'border-blue-600 scale-95' : 'border-transparent opacity-60 hover:opacity-100'
+                        }`}
+                       >
+                          <img src={img} alt={`${property.title} ${i + 1}`} className="w-full h-full object-cover" />
+                       </button>
+                    ))}
+                 </div>
               </div>
 
               <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-xl">
