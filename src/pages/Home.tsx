@@ -593,10 +593,10 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
               {[
-                { url: "https://legalj.jp/wp-content/uploads/2025/01/acc7ca0397ca9757de2dadff837859e3.png", label: "行政書士試験" },
-                { url: "https://legalj.jp/wp-content/uploads/2025/01/c53af1f0cba156493843f10955cbcc3f.png", label: "外国人雇用管理主任者" },
-                { url: "https://legalj.jp/wp-content/uploads/2025/01/4a29f6991741fa243bc2f110898e41a4.png", label: "宅地建物取引士" },
-                { url: "https://legalj.jp/wp-content/uploads/2025/01/3bf5e82c96385b7906d3ccf13505c5c4.png", label: "敷金診断士" }
+                { url: "https://images.weserv.nl/?url=https://legalj.jp/wp-content/uploads/2025/01/acc7ca0397ca9757de2dadff837859e3.png", label: "行政書士시험" },
+                { url: "https://images.weserv.nl/?url=https://legalj.jp/wp-content/uploads/2025/01/c53af1f0cba156493843f10955cbcc3f.png", label: "외국인고용관리주임자" },
+                { url: "https://images.weserv.nl/?url=https://legalj.jp/wp-content/uploads/2025/01/4a29f6991741fa243bc2f110898e41a4.png", label: "택지건물거래사" },
+                { url: "https://images.weserv.nl/?url=https://legalj.jp/wp-content/uploads/2025/01/3bf5e82c96385b7906d3ccf13505c5c4.png", label: "부증금진단사" }
               ].map((cert, idx) => (
                 <motion.div 
                   key={idx} 
