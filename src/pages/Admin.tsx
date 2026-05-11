@@ -97,7 +97,9 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAdminLocally, setIsAdminLocally] = useState<boolean | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   // Form States
   const [formData, setFormData] = useState({
@@ -133,46 +135,58 @@ export default function Admin() {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      if (activeTab === 'properties') {
-        const data = await firebaseService.getProperties();
-        setProperties(data);
-
-        // Handle direct edit via query param
-        const editId = searchParams.get('edit');
-        if (editId) {
-          const propertyToEdit = data.find(p => p.id === editId);
-          if (propertyToEdit) {
-            handleEditProperty(propertyToEdit);
-          }
-        }
-      } else if (activeTab === 'reviews') {
-        const data = await firebaseService.getReviews();
-        setReviews(data);
-      } else if (activeTab === 'settings') {
-        const data = await firebaseService.getSettings();
-        if (data) setSettingsData(prev => ({ ...prev, ...data }));
-      }
-      setLoading(false);
-    };
-    if (isAdminLocally) {
-      fetchData();
-    }
-  }, [activeTab, isAdminLocally, searchParams]);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) {
-        firebaseService.checkAdminStatus(user.uid).then(status => {
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        try {
+          const status = await firebaseService.checkAdminStatus(currentUser.uid);
           setIsAdminLocally(status);
-        });
+        } catch (error) {
+          console.error("Admin status check failed", error);
+          setIsAdminLocally(false);
+        }
       } else {
         setIsAdminLocally(null);
       }
+      setIsAuthChecking(false);
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!isAdminLocally) return;
+      
+      setLoading(true);
+      try {
+        if (activeTab === 'properties') {
+          const data = await firebaseService.getProperties();
+          setProperties(data);
+
+          // Handle direct edit via query param
+          const editId = searchParams.get('edit');
+          if (editId) {
+            const propertyToEdit = data.find(p => p.id === editId);
+            if (propertyToEdit) {
+              handleEditProperty(propertyToEdit);
+            }
+          }
+        } else if (activeTab === 'reviews') {
+          const data = await firebaseService.getReviews();
+          setReviews(data);
+        } else if (activeTab === 'settings') {
+          const data = await firebaseService.getSettings();
+          if (data) setSettingsData(prev => ({ ...prev, ...data }));
+        }
+      } catch (error) {
+        console.error("Fetch data error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [activeTab, isAdminLocally, searchParams]);
 
   const handleLogin = async () => {
     setLoginError(null);
@@ -180,28 +194,30 @@ export default function Admin() {
       await signInWithGoogle();
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
-        setLoginError('로그인 팝업이 닫혔습니다. 로그인 버튼을 눌러 다시 시도해 주세요.');
+        setLoginError('로그인 팝업이 닫혔습니다. 다시 시도해 주세요.');
       } else if (error.code === 'auth/popup-blocked') {
         setLoginError('브라우저의 팝업 차단 설정을 해제해 주세요.');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        setLoginError(`현재 도메인이 Firebase 승인 도메인에 등록되지 않았습니다. Firebase 콘솔에서 '${window.location.hostname}'을 추가해 주세요.`);
       } else {
-        setLoginError('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        setLoginError('로그인 중 오류가 발생했습니다. (도메인 승인 여부를 확인해 주세요)');
       }
       console.error(error);
     }
   };
 
   const claimAdmin = async () => {
-    if (!auth.currentUser) return;
+    if (!user) return;
     setLoginError(null);
     setClaiming(true);
     try {
-      await setDoc(doc(db, 'admins', auth.currentUser.uid), {
-        email: auth.currentUser.email,
+      await setDoc(doc(db, 'admins', user.uid), {
+        email: user.email,
         role: 'super'
       });
       setIsAdminLocally(true);
     } catch (error: any) {
-       setLoginError('권한 승인에 실패했습니다. (이메일 불일치 또는 규칙 위반)');
+       setLoginError('권한 승인에 실패했습니다. (Firestore 보안 규칙을 확인해 주세요)');
        console.error(error);
     } finally {
       setClaiming(false);
@@ -316,8 +332,16 @@ export default function Admin() {
     setEditingId(prop.id);
     setIsAdding(true);
   };
+  
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-luxury-black flex items-center justify-center">
+        <Loader2 className="animate-spin text-electric-blue" size={48} />
+      </div>
+    );
+  }
 
-  if (!auth.currentUser) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-luxury-black flex items-center justify-center p-10">
         <motion.div 
@@ -328,34 +352,36 @@ export default function Admin() {
           <div className="w-12 h-12 bg-electric-blue rounded-lg mx-auto flex items-center justify-center font-bold text-2xl mb-8">J</div>
           <h1 className="text-3xl font-bold mb-4 tracking-tighter uppercase">Admin Portal</h1>
           <p className="text-zinc-500 mb-10 font-light text-sm tracking-wide">관리자 계정으로 로그인이 필요합니다.</p>
-          <button 
-            onClick={handleLogin}
-            className="blue-glow-btn w-full py-4 flex items-center justify-center gap-3 text-sm"
-          >
-            Google 계정으로 로그인
-          </button>
           
-          {loginError && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-500 text-xs font-medium"
+          <div className="space-y-4">
+            <button 
+              onClick={handleLogin}
+              className="blue-glow-btn w-full py-4 flex items-center justify-center gap-3 text-sm"
             >
-              <AlertCircle size={14} className="flex-shrink-0" />
-              <p>{loginError}</p>
-            </motion.div>
-          )}
+              Google 계정으로 로그인
+            </button>
+            
+            {loginError && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex flex-col gap-2 text-red-500 text-[11px] text-left leading-relaxed"
+              >
+                <div className="flex items-center gap-2 font-bold">
+                  <AlertCircle size={14} className="flex-shrink-0" />
+                  <span>로그인 오류 발생</span>
+                </div>
+                <p>{loginError}</p>
+                <div className="mt-2 pt-2 border-t border-red-500/20 text-zinc-400">
+                  <p className="font-bold mb-1">안내:</p>
+                  <p>외부 페이지에서 이용하시려면 Firebase 콘솔의 Auth → Settings → Authorized Domains 섹션에 현재 주소의 도메인을 등록해 주셔야 합니다.</p>
+                </div>
+              </motion.div>
+            )}
+          </div>
           
           <Link to="/" className="block mt-8 text-zinc-500 hover:text-white transition-colors text-xs font-bold tracking-widest uppercase">홈으로 돌아가기</Link>
         </motion.div>
-      </div>
-    );
-  }
-
-  if (isAdminLocally === null) {
-    return (
-      <div className="min-h-screen bg-luxury-black flex items-center justify-center">
-        <Loader2 className="animate-spin text-electric-blue" size={48} />
       </div>
     );
   }
@@ -371,9 +397,9 @@ export default function Admin() {
             <AlertCircle size={48} className="text-electric-blue mx-auto mb-8 opacity-50" />
             <h1 className="text-3xl font-bold mb-4 tracking-tighter uppercase">Access Pending</h1>
             <p className="text-zinc-500 mb-10 font-light text-sm">
-                <span className="text-white marker:">{auth.currentUser.email}</span> 계정은 <br />현재 관리자로 등록되지 않았습니다.
+                <span className="text-white font-medium">{user.email}</span> 계정은 <br />현재 관리자로 등록되지 않았습니다.
             </p>
-            {auth.currentUser.email === 'legalj.customer@gmail.com' && (
+            {user.email === 'legalj.customer@gmail.com' && (
                 <button 
                     disabled={claiming}
                     onClick={claimAdmin}
@@ -394,11 +420,20 @@ export default function Admin() {
                 </motion.div>
             )}
 
-            <button onClick={handleLogout} className="block w-full mt-6 text-zinc-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">로그아웃</button>
+            <button onClick={handleLogout} className="block w-full mt-6 text-zinc-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">다른 계정으로 로그인</button>
             <Link to="/" className="block mt-10 text-zinc-600 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">홈으로 돌아가기</Link>
           </motion.div>
         </div>
       );
+  }
+
+  // Final fallback if isAdminLocally is still null for some reason
+  if (isAdminLocally === null) {
+    return (
+      <div className="min-h-screen bg-luxury-black flex items-center justify-center">
+        <Loader2 className="animate-spin text-electric-blue" size={48} />
+      </div>
+    );
   }
 
   return (

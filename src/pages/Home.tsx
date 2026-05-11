@@ -204,14 +204,14 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </a>
           </div>
           
-            <div className="hidden md:flex gap-8 text-sm font-medium text-zinc-500">
+            <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-500">
             <a href="#hero" className="text-zinc-900 border-b-2 border-electric-blue pb-1 transition-all font-bold">홈</a>
             <a href="#properties" className="hover:text-electric-blue transition-colors">매물검색</a>
             <a href="#guide" className="hover:text-electric-blue transition-colors">고객후기</a>
             <a href="#about" className="hover:text-electric-blue transition-colors">회사소개</a>
             <Link to="/recruitment" className="hover:text-electric-blue transition-colors">채용 정보</Link>
             <Link to="/admin" className="hover:text-electric-blue transition-colors flex items-center gap-1.5 group/admin">
-               <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 group-hover/admin:bg-electric-blue transition-colors" />
+               <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 group-hover/admin:bg-electric-blue transition-colors mb-[1px]" />
                관리자전용
             </Link>
           </div>

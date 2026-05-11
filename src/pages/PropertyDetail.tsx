@@ -95,13 +95,13 @@ export default function PropertyDetail() {
              {isAdmin && !id?.startsWith('sample') && (
                <Link 
                 to={`/admin?edit=${property.id}`}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full font-bold text-xs hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
+                className="flex items-center gap-2 h-10 px-5 bg-blue-600 text-white rounded-full font-bold text-xs hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
                >
                  <Edit3 size={14} /> 
                  <span>매물 수정</span>
                </Link>
              )}
-             <button className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
+             <button className="w-10 h-10 flex items-center justify-center hover:bg-zinc-100 rounded-full transition-colors">
                <Share2 size={20} />
              </button>
           </div>
