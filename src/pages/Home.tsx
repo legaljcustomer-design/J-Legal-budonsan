@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  ChevronLeft,
   ArrowRight,
   Loader2,
   CheckCircle2,
@@ -100,12 +101,74 @@ const SAMPLE_PROPERTIES: Property[] = [
   }
 ];
 
+interface Review {
+  id: string;
+  image: string;
+  title: string;
+  subtitle: string;
+}
+
+const REVIEWS: Review[] = [
+  {
+    id: '1',
+    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop',
+    title: '아베노구 / 1K / 남향',
+    subtitle: '阿倍野区 / 1K / 南向き'
+  },
+  {
+    id: '2',
+    image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1980&auto=format&fit=crop',
+    title: '미나토구 / 1K / 북향',
+    subtitle: '港区 / 1K / 北向き'
+  },
+  {
+    id: '3',
+    image: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=2070&auto=format&fit=crop',
+    title: '나니와구 / 1K / 북향',
+    subtitle: '浪速区 / 1K / 北向き'
+  },
+  {
+    id: '4',
+    image: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=2074&auto=format&fit=crop',
+    title: '추오구 / 1DK / 동향',
+    subtitle: '中央区 / 1DK / 東向き'
+  },
+  {
+    id: '5',
+    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop',
+    title: '요도가와구 / 2K / 남향',
+    subtitle: '淀川区 / 2K / 南向き'
+  }
+];
+
 export default function Home({ isAdmin }: { isAdmin: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [consultationCount, setConsultationCount] = useState(134);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const getVisibleItems = () => {
+    if (windowWidth >= 1024) return 3;
+    if (windowWidth >= 768) return 2;
+    return 1;
+  };
+
+  const getVisibleReviews = () => {
+    if (windowWidth >= 1280) return 4;
+    if (windowWidth >= 1024) return 3;
+    if (windowWidth >= 768) return 2;
+    return 1;
+  };
 
   useEffect(() => {
     const updateCount = () => {
@@ -152,9 +215,47 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
       
       setProperties([...filteredSamples, ...data]);
       setLoading(false);
+      setCurrentIndex(0);
     };
     fetchProperties();
   }, [activeCategory]);
+
+  useEffect(() => {
+    if (loading || properties.length === 0) return;
+    const interval = setInterval(() => {
+      const visibleItems = getVisibleItems();
+      setCurrentIndex((prev) => (prev >= properties.length - visibleItems ? 0 : prev + 1));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [loading, properties.length, windowWidth]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const visibleItems = getVisibleReviews();
+      setReviewIndex((prev) => (prev >= REVIEWS.length - visibleItems ? 0 : prev + 1));
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [windowWidth, properties.length]);
+
+  const nextSlide = () => {
+    const visibleItems = getVisibleItems();
+    setCurrentIndex((prev) => (prev >= properties.length - visibleItems ? 0 : prev + 1));
+  };
+
+  const prevSlide = () => {
+    const visibleItems = getVisibleItems();
+    setCurrentIndex((prev) => (prev === 0 ? Math.max(0, properties.length - visibleItems) : prev - 1));
+  };
+
+  const nextReview = () => {
+    const visibleItems = getVisibleReviews();
+    setReviewIndex((prev) => (prev >= REVIEWS.length - visibleItems ? 0 : prev + 1));
+  };
+
+  const prevReview = () => {
+    const visibleItems = getVisibleReviews();
+    setReviewIndex((prev) => (prev === 0 ? Math.max(0, REVIEWS.length - visibleItems) : prev - 1));
+  };
 
   return (
     <div className="min-h-screen bg-luxury-black text-zinc-900 font-sans overflow-x-hidden">
@@ -187,10 +288,10 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </a>
           </div>
           
-          <div className="hidden md:flex gap-8 text-sm font-medium text-zinc-500">
+            <div className="hidden md:flex gap-8 text-sm font-medium text-zinc-500">
             <a href="#hero" className="text-zinc-900 border-b-2 border-electric-blue pb-1 transition-all font-bold">홈</a>
             <a href="#properties" className="hover:text-electric-blue transition-colors">매물검색</a>
-            <a href="#guide" className="hover:text-electric-blue transition-colors">지역 가이드</a>
+            <a href="#guide" className="hover:text-electric-blue transition-colors">고객후기</a>
             <a href="#about" className="hover:text-electric-blue transition-colors">회사소개</a>
             <Link to="/recruitment" className="hover:text-electric-blue transition-colors">채용 정보</Link>
           </div>
@@ -223,7 +324,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             <div className="flex flex-col gap-8 text-3xl font-bold">
               <a href="#hero" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">H O M E</a>
               <a href="#properties" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">매물검색</a>
-              <a href="#guide" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">가이드</a>
+              <a href="#guide" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">고객후기</a>
               <a href="#about" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">회사소개</a>
               <Link to="/recruitment" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">채용 정보</Link>
               {isAdmin && <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="text-electric-blue">대시보드</Link>}
@@ -290,7 +391,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-10">
             <div>
               <div className="text-electric-blue text-xs font-bold uppercase tracking-[0.3em] mb-4">Properties</div>
-              <h2 className="text-4xl font-bold tracking-tighter text-zinc-900">추천 프리미엄 매물</h2>
+              <h2 className="text-4xl font-bold tracking-tighter text-zinc-900">오사카 추천 프리미엄 매물</h2>
               <p className="text-[11px] text-zinc-500 font-medium mt-2 leading-relaxed">
                 ※ 실시간 공실/만실 매물 상황은 무조건 문의바랍니다.
               </p>
@@ -319,118 +420,186 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 <Loader2 className="animate-spin text-electric-blue" size={40} />
              </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {properties.length > 0 ? (
-                properties.map((prop, index) => (
-                  <motion.div
-                    key={prop.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1, duration: 0.5 }}
-                    className="card-luxury group"
+            <div className="relative group/slider">
+              {/* Navigation Buttons */}
+              {properties.length > getVisibleItems() && (
+                <>
+                  <button 
+                    onClick={prevSlide}
+                    className="absolute -left-4 md:-left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center text-zinc-900 opacity-0 group-hover/slider:opacity-100 transition-all hover:bg-electric-blue hover:text-white border border-zinc-100"
                   >
-                    <div className="relative h-48 overflow-hidden bg-zinc-800">
-                      <img 
-                        src={prop.images[0] || 'https://via.placeholder.com/800x480?text=Premium+Listing'} 
-                        alt={prop.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <span className="absolute top-4 left-4 px-2 py-1 bg-electric-blue text-[10px] font-bold rounded uppercase tracking-wider text-white">
-                        {CATEGORIES.find(c => c.id === prop.type)?.label}
-                      </span>
-                      {prop.isFeatured && (
-                        <div className="absolute top-4 right-4 bg-emerald-600 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest text-white">
-                          FEATURED
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="p-8 bg-white flex flex-col flex-grow">
-                      <div className="mb-6">
-                        <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-2">{prop.location}</p>
-                        <h3 className="text-xl font-bold tracking-tight text-zinc-900 leading-snug h-[3.5rem] line-clamp-2">
-                          {prop.title}
-                        </h3>
-                      </div>
-
-                      <div className="flex justify-between items-end mb-6 pt-4 border-t border-zinc-100">
-                        <span className="text-2xl font-bold tracking-tighter text-zinc-900 whitespace-pre-wrap">{prop.price}</span>
-                        <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-medium">상담 문의</span>
-                      </div>
-                      
-                      <div className="flex gap-2 mb-8 flex-wrap">
-                        {prop.features.slice(0, 3).map((f, i) => (
-                            <span key={i} className="px-2 py-1 bg-slate-50 rounded text-[10px] text-zinc-500 font-bold border border-zinc-100 uppercase tracking-tighter">
-                                {f}
-                            </span>
-                        ))}
-                      </div>
-                      
-                      <Link 
-                        to={`/property/${prop.id}`}
-                        className="w-full py-4 bg-zinc-950 text-white text-[10px] font-bold tracking-[0.2em] uppercase transition-all rounded-xl flex items-center justify-center gap-2 hover:bg-electric-blue shadow-lg hover:shadow-blue-500/20 active:scale-[0.98]"
-                      >
-                        매물 정보 더보기 <ChevronRight size={14} />
-                      </Link>
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-24 text-zinc-500 text-sm tracking-widest uppercase bg-zinc-900/20 rounded-3xl border border-white/5">
-                  해당 카테고리에 등록된 매물이 없습니다.
-                </div>
+                    <ChevronLeft size={24} />
+                  </button>
+                  <button 
+                    onClick={nextSlide}
+                    className="absolute -right-4 md:-right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center text-zinc-900 opacity-0 group-hover/slider:opacity-100 transition-all hover:bg-electric-blue hover:text-white border border-zinc-100"
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+                </>
               )}
+
+              <div className="overflow-hidden">
+                <motion.div 
+                  className="flex gap-8"
+                  animate={{ x: `calc(-${currentIndex * (100 / getVisibleItems())}% - ${currentIndex * (32 / getVisibleItems())}px)` }}
+                  transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                >
+                  {properties.length > 0 ? (
+                    properties.map((prop, index) => (
+                      <motion.div
+                        key={prop.id}
+                        className="min-w-full md:min-w-[calc(50%-16px)] lg:min-w-[calc(33.333%-21.333px)] flex-shrink-0"
+                      >
+                        <motion.div
+                          initial={{ opacity: 0, y: 30 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: index * 0.1, duration: 0.5 }}
+                          className="card-luxury group h-full"
+                        >
+                          <div className="relative h-48 overflow-hidden bg-zinc-800">
+                            <img 
+                              src={prop.images[0] || 'https://via.placeholder.com/800x480?text=Premium+Listing'} 
+                              alt={prop.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                            <span className="absolute top-4 left-4 px-2 py-1 bg-electric-blue text-[10px] font-bold rounded uppercase tracking-wider text-white">
+                              {CATEGORIES.find(c => c.id === prop.type)?.label}
+                            </span>
+                            {prop.isFeatured && (
+                              <div className="absolute top-4 right-4 bg-emerald-600 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest text-white">
+                                FEATURED
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="p-8 bg-white flex flex-col h-[calc(100%-12rem)]">
+                            <div className="mb-6">
+                              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-2">{prop.location}</p>
+                              <h3 className="text-xl font-bold tracking-tight text-zinc-900 leading-snug h-[3.5rem] line-clamp-2">
+                                {prop.title}
+                              </h3>
+                            </div>
+
+                            <div className="flex justify-between items-end mb-6 pt-4 border-t border-zinc-100">
+                              <span className="text-2xl font-bold tracking-tighter text-zinc-900 whitespace-pre-wrap leading-tight">{prop.price}</span>
+                              <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-medium">상담 문의</span>
+                            </div>
+                            
+                            <div className="flex gap-2 mb-8 flex-wrap">
+                              {prop.features.slice(0, 3).map((f, i) => (
+                                  <span key={i} className="px-2 py-1 bg-slate-50 rounded text-[10px] text-zinc-500 font-bold border border-zinc-100 uppercase tracking-tighter">
+                                      {f}
+                                  </span>
+                              ))}
+                            </div>
+                            
+                            <div className="mt-auto">
+                              <Link 
+                                to={`/property/${prop.id}`}
+                                className="w-full py-4 bg-zinc-950 text-white text-[10px] font-bold tracking-[0.2em] uppercase transition-all rounded-xl flex items-center justify-center gap-2 hover:bg-electric-blue shadow-lg hover:shadow-blue-500/20 active:scale-[0.98]"
+                              >
+                                매물 정보 더보기 <ChevronRight size={14} />
+                              </Link>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="w-full text-center py-24 text-zinc-500 text-sm tracking-widest uppercase bg-zinc-900/20 rounded-3xl border border-white/5">
+                      해당 카테고리에 등록된 매물이 없습니다.
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+
+              {/* View More Button */}
+              <div className="mt-16 flex justify-center">
+                <motion.a
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  href="https://pf.kakao.com/_TSvgxb" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="bg-white border-2 border-zinc-950 text-zinc-950 px-12 py-5 rounded-2xl text-[11px] font-bold uppercase tracking-[0.3em] flex items-center gap-3 transition-all hover:bg-zinc-950 hover:text-white shadow-xl group"
+                >
+                  [매물 더보기] <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </motion.a>
+              </div>
             </div>
           )}
         </div>
       </section>
 
-      {/* Area Guide Section */}
+      {/* Customer Reviews Section */}
       <section id="guide" className="py-24 px-10 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center text-center mb-16">
-            <div className="tag-blue mb-4">Osaka Area Guide</div>
-            <h2 className="text-4xl font-bold tracking-tighter text-zinc-900">오사카 지역 가이드</h2>
-            <div className="w-12 h-1 bg-electric-blue mt-6" />
+            <h2 className="text-4xl font-bold tracking-tight text-zinc-900 mb-4">고객후기</h2>
+            <p className="text-lg text-zinc-400 font-medium tracking-tight">
+              고객님들의 소중한 후기입니다.
+            </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-light">
-            <div className="group bg-slate-50 rounded-2xl border border-zinc-100 shadow-sm overflow-hidden flex flex-col">
-               <div className="h-48 overflow-hidden">
-                  <img 
-                    src="https://i.namu.wiki/i/h972-p_G-i13DqN13Ulh4ktKLuwmaDrKsUCff62Ye7fstKQMlGTL9BK2K6rbqyJdutM7FWnvollhRsUDRVLGDr0NXsQpiOZQYraAfmzXkk_jl_kGpf1Vocoy2xFtfB9QHtZ9PR2shhdDiDxiY6jAZF47AzTgRsCTO7qZJSfX8Cs.webp" 
-                    alt="난바 & 도톤보리" 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    referrerPolicy="no-referrer"
-                  />
-               </div>
-               <div className="p-8 flex-grow">
-                  <h3 className="text-xl font-bold mb-4 text-electric-blue">난바 & 도톤보리</h3>
-                  <p className="text-zinc-600 leading-relaxed text-sm mb-6">오사카의 중심지이자 여행객과 활기로 넘치는 지역입니다. 다양한 직업군이 선호하며 주거와 상권이 완벽하게 조화된 지역입니다.</p>
-                  <Link to="/namba-guide" className="inline-flex items-center gap-2 bg-electric-blue text-white px-6 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-900 transition-colors">
-                     추천매물 바로가기 <ArrowRight size={14} />
-                  </Link>
-               </div>
+          <div className="relative group/reviews">
+            {/* Navigation Buttons */}
+            <button 
+              onClick={prevReview}
+              className="absolute left-4 top-[140px] -translate-y-1/2 z-20 text-white/70 hover:text-white transition-colors"
+            >
+              <ChevronLeft size={48} strokeWidth={1} />
+            </button>
+            <button 
+              onClick={nextReview}
+              className="absolute right-4 top-[140px] -translate-y-1/2 z-20 text-white/70 hover:text-white transition-colors"
+            >
+              <ChevronRight size={48} strokeWidth={1} />
+            </button>
+
+            <div className="overflow-hidden px-4">
+              <motion.div 
+                className="flex gap-6"
+                animate={{ x: `calc(-${reviewIndex * (100 / getVisibleReviews())}% - ${reviewIndex * (24 / getVisibleReviews())}px)` }}
+                transition={{ type: "spring", stiffness: 150, damping: 25 }}
+              >
+                {REVIEWS.map((review) => (
+                  <motion.div
+                    key={review.id}
+                    className="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] xl:min-w-[calc(25%-18px)] flex-shrink-0"
+                  >
+                    <div className="flex flex-col group cursor-pointer transition-all max-w-[280px] mx-auto">
+                      <div className="aspect-[3/2] rounded-lg overflow-hidden mb-4 bg-zinc-100">
+                        <img 
+                          src={review.image} 
+                          alt={review.title} 
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-[14px] font-bold text-zinc-800 mb-0.5">{review.title}</div>
+                        <div className="text-[12px] text-zinc-400 font-medium">{review.subtitle}</div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
             </div>
-            <div className="group bg-slate-50 rounded-2xl border border-zinc-100 shadow-sm overflow-hidden flex flex-col">
-               <div className="h-48 overflow-hidden">
-                  <img 
-                    src="https://i.namu.wiki/i/h972-p_G-i13DqN13Ulh4iQeDTIfbpYrTc3vkDRCGSdcB5dxNKqmpo5Yd6-MigBNaLATwqPSgqh7RuEVsut8r1WPHdMKfuYSa-FImQpLJBREdSeYO_-ts72oAkEgRk3hv4f9GUOnb5tA4tuIt6SDEPoq4eYi9RIf0MN6zxdT-3U.webp" 
-                    alt="우메다 & 키타구" 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    referrerPolicy="no-referrer"
-                  />
-               </div>
-               <div className="p-8 flex-grow">
-                  <h3 className="text-xl font-bold mb-4 text-electric-blue">우메다 & 키타구</h3>
-                  <p className="text-zinc-600 leading-relaxed text-sm mb-6">오사카의 비즈니스 중심지로, 현대적인 오피스와 고급 아파트가 밀집해 있습니다. 교통의 요지이며 세련된 도시 생활을 원하시는 분들께 추천합니다.</p>
-                  <button className="inline-flex items-center gap-2 bg-zinc-200 text-zinc-500 px-6 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-not-allowed">
-                     준비 중
-                  </button>
-               </div>
-            </div>
+          </div>
+
+          <div className="mt-20 flex justify-center">
+            <motion.a
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                href="https://www.google.com/search?q=%E8%A1%8C%E6%94%BF%E6%9B%B8%E5%A3%ABLegal_+J+office&sca_esv=af156264804c4707&sxsrf=ANbL-n6PTulvYeQ1YmirvQ-AV53HXGehcg%3A1778469294606&source=hp&ei=rkkBaozKIvLl2roPuaHh4A8&iflsig=AFdpzrgAAAAAagFXvl2eaiNjN4cYlTHs8BEqS-87wUCg&ved=0ahUKEwiM2a-0orCUAxXyslYBHblQGPwQ4dUDCCA&uact=5&oq=%E8%A1%8C%E6%94%BF%E6%9B%B8%E5%A3%ABLegal_+J+office&gs_lp=Egdnd3Mtd2l6IhvooYzmlL_mm7jlo6tMZWdhbF8gSiBvZmZpY2UyBBAAGB4yBRAAGO8FSOMCUABYAHAAeACQAQCYAX-gAX-qAQMwLjG4AQPIAQD4AQL4AQGYAgGgAoMBmAMAkgcDMC4xoAeDAbIHAzAuMbgHgwHCBwMwLjHIBwKACAE&sclient=gws-wiz#lrd=0x6000e7000e280a5f:0x9dd4ad1e88341176,1,,,," 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-16 py-4 rounded-full border border-zinc-600 text-zinc-700 text-sm font-medium hover:bg-zinc-50 transition-all flex items-center gap-2"
+            >
+              후기 더보기 <ChevronRight size={14} className="mt-0.5" />
+            </motion.a>
           </div>
         </div>
       </section>
