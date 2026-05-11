@@ -225,6 +225,7 @@ export default function PropertyDetail() {
                         src={property.images[activeImageIndex] || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
                         alt={property.title}
                         className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
                       />
                       <div className="absolute bottom-6 left-6 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-white text-[10px] font-bold tracking-widest uppercase">
                          Exterior View
@@ -242,7 +243,12 @@ export default function PropertyDetail() {
                           activeImageIndex === i ? 'border-blue-600 scale-95' : 'border-transparent opacity-60 hover:opacity-100'
                         }`}
                        >
-                          <img src={img} alt={`${property.title} ${i + 1}`} className="w-full h-full object-cover" />
+                          <img 
+                            src={img} 
+                            alt={`${property.title} ${i + 1}`} 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer"
+                          />
                        </button>
                     ))}
                  </div>

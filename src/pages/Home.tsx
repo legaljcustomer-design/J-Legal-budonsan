@@ -383,6 +383,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                               src={prop.images[0] || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
                               alt={prop.title}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                              referrerPolicy="no-referrer"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                             <span className="absolute top-4 left-4 px-2 py-1 bg-electric-blue text-[10px] font-bold rounded uppercase tracking-wider text-white">
@@ -550,6 +551,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   src="https://legalj.jp/wp-content/uploads/2025/02/Photo_25-02-05-10-38-56.243.jpg" 
                   alt="Legal J Office" 
                   className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                  referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
@@ -603,7 +605,12 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
                   <div className="aspect-[3/4] bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 mb-4 shadow-sm group-hover:shadow-2xl transition-all duration-500">
-                    <img src={cert.url} className="w-full h-full object-cover" alt={cert.label} />
+                    <img 
+                      src={cert.url} 
+                      className="w-full h-full object-cover" 
+                      alt={cert.label} 
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
                   <p className="text-[10px] font-bold text-center text-zinc-500 group-hover:text-blue-600 transition-colors uppercase tracking-widest leading-relaxed whitespace-pre-wrap">{cert.label}</p>
                 </motion.div>
