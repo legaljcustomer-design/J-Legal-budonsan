@@ -36,6 +36,8 @@ const SAMPLE_PROPERTIES: Property[] = [
       'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?q=80&w=2070&auto=format&fit=crop'
     ],
     features: ['초고층 뷰', '컨시어지 서비스', '전용 주차장', '피트니스 센터', '24시간 보안', '스카이라운지'],
+    construction: '철근 콘크리트(RC)',
+    completionYear: '2022년 5월',
     isFeatured: true,
     createdAt: new Date(),
     ownerId: 'system'
@@ -56,6 +58,8 @@ const SAMPLE_PROPERTIES: Property[] = [
       'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?q=80&w=2070&auto=format&fit=crop'
     ],
     features: ['역세권', '신축', '오토록', '택배함', '시스템 키친', '인터넷 무료'],
+    construction: '철골조(S)',
+    completionYear: '2023년 12월',
     isFeatured: false,
     createdAt: new Date(),
     ownerId: 'system'
@@ -74,6 +78,8 @@ const SAMPLE_PROPERTIES: Property[] = [
       'https://images.unsplash.com/photo-1497215842964-222b430dc094?q=80&w=2070&auto=format&fit=crop'
     ],
     features: ['고수익', '핵심 상권', '엘리베이터 완비', '관리 용이', '내진 설계', '우수한 가시성'],
+    construction: '철골 철근 콘크리트(SRC)',
+    completionYear: '2015년 3월',
     isFeatured: true,
     createdAt: new Date(),
     ownerId: 'system'
@@ -154,12 +160,12 @@ export default function PropertyDetail() {
                   <p className="text-sm font-bold text-zinc-900">{property.location}</p>
                </div>
                <div className="p-6 text-center">
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Plan / Area</p>
-                  <p className="text-sm font-bold text-zinc-900">1LDK + S / 50.14㎡~</p>
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Construction</p>
+                  <p className="text-sm font-bold text-zinc-900">{property.construction || '철근 콘크리트'}</p>
                </div>
                <div className="p-6 text-center">
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Type / Construction</p>
-                  <p className="text-sm font-bold text-zinc-900">1LDK+S / 2026</p>
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Completion Year</p>
+                  <p className="text-sm font-bold text-zinc-900">{property.completionYear || '상담 문의'}</p>
                </div>
             </div>
           </div>

@@ -7,6 +7,8 @@ export interface Property {
   description: string;
   images: string[];
   features: string[];
+  construction: string;
+  completionYear: string;
   googleMapUrl?: string;
   isFeatured: boolean;
   createdAt: any;

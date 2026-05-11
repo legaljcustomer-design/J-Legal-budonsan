@@ -107,6 +107,8 @@ export default function Admin() {
     description: '',
     images: [''],
     features: [''],
+    construction: '',
+    completionYear: '',
     isFeatured: false,
   });
 
@@ -219,6 +221,8 @@ export default function Admin() {
         description: '',
         images: [''],
         features: [''],
+        construction: '',
+        completionYear: '',
         isFeatured: false,
       });
     } catch (error) {
@@ -286,6 +290,8 @@ export default function Admin() {
       description: prop.description,
       images: prop.images,
       features: prop.features,
+      construction: prop.construction || '',
+      completionYear: prop.completionYear || '',
       isFeatured: prop.isFeatured,
     });
     setEditingId(prop.id);
@@ -440,6 +446,8 @@ export default function Admin() {
                                 description: '',
                                 images: [''],
                                 features: [''],
+                                construction: '',
+                                completionYear: '',
                                 isFeatured: false,
                             });
                         } else {
@@ -482,6 +490,14 @@ export default function Admin() {
                             <div>
                                 <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">위치</label>
                                 <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} placeholder="예: 오사카시 나니와구" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">건물 구조 (철근, 목조 등)</label>
+                                <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.construction} onChange={e => setFormData({ ...formData, construction: e.target.value })} placeholder="예: 철근 콘크리트(RC)" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">완공 연도 (축년)</label>
+                                <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.completionYear} onChange={e => setFormData({ ...formData, completionYear: e.target.value })} placeholder="예: 2024년 10월" />
                             </div>
                             <div>
                                 <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">매물 유형</label>

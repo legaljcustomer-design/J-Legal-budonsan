@@ -592,17 +592,22 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
               {[
-                { url: "acc7ca0397ca9757de2dadff837859e3.png", label: "行政書士試験" },
-                { url: "c53af1f0cba156493843f10955cbcc3f.png", label: "外国人雇用管理主任者" },
-                { url: "4a29f6991741fa243bc2f110898e41a4.png", label: "宅地建物取引士" },
-                { url: "f838dbca18a4a589700ac8a760f27464.png", label: "特定行政書士" }
+                { url: "https://legalj.jp/wp-content/uploads/2025/01/acc7ca0397ca9757de2dadff837859e3.png", label: "行政書士試験" },
+                { url: "https://legalj.jp/wp-content/uploads/2025/01/c53af1f0cba156493843f10955cbcc3f.png", label: "外国人雇用管理主任者" },
+                { url: "https://legalj.jp/wp-content/uploads/2025/01/4a29f6991741fa243bc2f110898e41a4.png", label: "宅地建物取引士" },
+                { url: "https://legalj.jp/wp-content/uploads/2025/01/3bf5e82c96385b7906d3ccf13505c5c4.png", label: "敷金診断士" }
               ].map((cert, idx) => (
-                <div key={idx} className="group">
-                  <div className="aspect-[3/4] bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 mb-4 shadow-sm group-hover:shadow-md transition-all">
-                    <img src={`https://legalj.jp/wp-content/uploads/2025/02/${cert.url}`} className="w-full h-full object-cover" alt={cert.label} />
+                <motion.div 
+                  key={idx} 
+                  className="group"
+                  whileHover={{ y: -16, scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <div className="aspect-[3/4] bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 mb-4 shadow-sm group-hover:shadow-2xl transition-all duration-500">
+                    <img src={cert.url} className="w-full h-full object-cover" alt={cert.label} />
                   </div>
-                  <p className="text-[10px] font-bold text-center text-zinc-500 uppercase tracking-widest leading-relaxed">{cert.label}</p>
-                </div>
+                  <p className="text-[10px] font-bold text-center text-zinc-500 group-hover:text-blue-600 transition-colors uppercase tracking-widest leading-relaxed whitespace-pre-wrap">{cert.label}</p>
+                </motion.div>
               ))}
             </div>
           </div>
