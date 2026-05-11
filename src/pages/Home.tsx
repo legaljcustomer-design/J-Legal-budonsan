@@ -29,7 +29,6 @@ const CATEGORIES = [
   { id: 'all', label: '전체', icon: HomeIcon },
   { id: 'OneRoom', label: '원룸/투룸', icon: Building2 },
   { id: 'Family', label: '타워맨션', icon: HomeIcon },
-  { id: '1LDK+S', label: '1LDK+S', icon: HomeIcon },
   { id: 'Office', label: '상가/사무실', icon: Briefcase },
   { id: 'Investment', label: '수익형 부동산', icon: TrendingUp },
 ];

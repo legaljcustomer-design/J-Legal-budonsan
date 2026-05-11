@@ -3,12 +3,15 @@ export interface Property {
   title: string;
   price: string;
   location: string;
-  type: 'OneRoom' | 'TwoRoom' | 'Family' | 'Office' | 'Investment' | '1LDK+S';
+  type: 'OneRoom' | 'TwoRoom' | 'Family' | 'Office' | 'Investment';
   description: string;
   images: string[];
   features: string[];
   construction: string;
   completionYear: string;
+  nearestStation?: string;
+  floorPlan?: string;
+  area?: string;
   googleMapUrl?: string;
   isFeatured: boolean;
   createdAt: any;

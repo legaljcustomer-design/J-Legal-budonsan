@@ -17,7 +17,7 @@ import {
 import { auth, signInWithGoogle, db } from '../lib/firebase';
 import { firebaseService } from '../services/firebaseService';
 import { Property } from '../types';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { doc, setDoc } from 'firebase/firestore';
 import { compressImage } from '../lib/imageUtils';
 
@@ -87,6 +87,7 @@ function ImageUpload({
 }
 
 export default function Admin() {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'properties' | 'reviews' | 'settings'>('properties');
   const [properties, setProperties] = useState<Property[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
@@ -109,6 +110,9 @@ export default function Admin() {
     features: [''],
     construction: '',
     completionYear: '',
+    nearestStation: '',
+    floorPlan: '',
+    area: '',
     isFeatured: false,
   });
 
@@ -134,6 +138,15 @@ export default function Admin() {
       if (activeTab === 'properties') {
         const data = await firebaseService.getProperties();
         setProperties(data);
+
+        // Handle direct edit via query param
+        const editId = searchParams.get('edit');
+        if (editId) {
+          const propertyToEdit = data.find(p => p.id === editId);
+          if (propertyToEdit) {
+            handleEditProperty(propertyToEdit);
+          }
+        }
       } else if (activeTab === 'reviews') {
         const data = await firebaseService.getReviews();
         setReviews(data);
@@ -146,7 +159,7 @@ export default function Admin() {
     if (isAdminLocally) {
       fetchData();
     }
-  }, [activeTab, isAdminLocally]);
+  }, [activeTab, isAdminLocally, searchParams]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -223,6 +236,9 @@ export default function Admin() {
         features: [''],
         construction: '',
         completionYear: '',
+        nearestStation: '',
+        floorPlan: '',
+        area: '',
         isFeatured: false,
       });
     } catch (error) {
@@ -292,6 +308,9 @@ export default function Admin() {
       features: prop.features,
       construction: prop.construction || '',
       completionYear: prop.completionYear || '',
+      nearestStation: prop.nearestStation || '',
+      floorPlan: prop.floorPlan || '',
+      area: prop.area || '',
       isFeatured: prop.isFeatured,
     });
     setEditingId(prop.id);
@@ -448,6 +467,9 @@ export default function Admin() {
                                 features: [''],
                                 construction: '',
                                 completionYear: '',
+                                nearestStation: '',
+                                floorPlan: '',
+                                area: '',
                                 isFeatured: false,
                             });
                         } else {
@@ -488,15 +510,27 @@ export default function Admin() {
                                 <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} placeholder="예: 월 8.5만엔" />
                             </div>
                             <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">위치</label>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">위치 (所在地)</label>
                                 <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} placeholder="예: 오사카시 나니와구" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">최근접 역 및 도보 (最寄駅)</label>
+                                <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.nearestStation} onChange={e => setFormData({ ...formData, nearestStation: e.target.value })} placeholder="예: 난바역 도보 5분" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">구조 (間取り)</label>
+                                <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.floorPlan} onChange={e => setFormData({ ...formData, floorPlan: e.target.value })} placeholder="예: 1LDK / 3LDK" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">전용 면적 (面積)</label>
+                                <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.area} onChange={e => setFormData({ ...formData, area: e.target.value })} placeholder="예: 50.14㎡" />
                             </div>
                             <div>
                                 <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">건물 구조 (철근, 목조 등)</label>
                                 <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.construction} onChange={e => setFormData({ ...formData, construction: e.target.value })} placeholder="예: 철근 콘크리트(RC)" />
                             </div>
                             <div>
-                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">완공 연도 (축년)</label>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">완공 연도 (建築年数/축년)</label>
                                 <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.completionYear} onChange={e => setFormData({ ...formData, completionYear: e.target.value })} placeholder="예: 2024년 10월" />
                             </div>
                             <div>
@@ -506,7 +540,6 @@ export default function Admin() {
                                     <option value="Family">타워맨션</option>
                                     <option value="Office">상가/사무실</option>
                                     <option value="Investment">수익형 부동산</option>
-                                    <option value="1LDK+S">1LDK+S</option>
                                 </select>
                             </div>
                             <div className="flex items-center gap-4 bg-white/5 px-6 rounded-xl border border-white/5">

@@ -14,10 +14,12 @@ import {
   CheckCircle2,
   Calendar,
   User,
-  Building2
+  Building2,
+  Edit3
 } from 'lucide-react';
 import { Property } from '../types';
 import { firebaseService } from '../services/firebaseService';
+import { auth } from '../lib/firebase';
 
 const SAMPLE_PROPERTIES: Property[] = [
   {
@@ -26,7 +28,7 @@ const SAMPLE_PROPERTIES: Property[] = [
     price: '¥285,000,000',
     location: '키타구 우메다',
     type: 'Family',
-    description: '오사카 최고의 스카이라인을 자랑하는 우메다 중심의 초고층 타워 맨션입니다. 최고급 자재와 최첨단 보안 시스템을 갖추고 있습니다. 우메다의 화려한 야경을 침실에서 감상하실 수 있으며, 입주민 전용 스카이라운지 및 피트니스 센터 이용이 가능합니다.',
+    description: '오사카 최고의 스카이라운지를 자랑하는 우메다 중심의 초고층 타워 맨션입니다. 최고급 자재와 최첨단 보안 시스템을 갖추고 있습니다. 우메다의 화려한 야경을 침실에서 감상하실 수 있으며, 입주민 전용 스카이라운지 및 피트니스 센터 이용이 가능합니다.',
     images: [
       'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1600566753190-17f0bb2a6c3e?q=80&w=2070&auto=format&fit=crop',
@@ -38,16 +40,19 @@ const SAMPLE_PROPERTIES: Property[] = [
     features: ['초고층 뷰', '컨시어지 서비스', '전용 주차장', '피트니스 센터', '24시간 보안', '스카이라운지'],
     construction: '철근 콘크리트(RC)',
     completionYear: '2022년 5월',
+    nearestStation: 'JR 우메다역 도보 5분',
+    floorPlan: '3LDK',
+    area: '120.5㎡',
     isFeatured: true,
     createdAt: new Date(),
     ownerId: 'system'
   },
   {
     id: 'sample-2',
-    title: '난바역 도보 7분 초프리미엄 1LDK+S',
+    title: '난바역 도보 7분 초프리미엄 원룸/투룸',
     price: '¥188,000円 / 월\n(관리비 별도)',
     location: '나니와구 난바',
-    type: '1LDK+S',
+    type: 'OneRoom',
     description: '난바 생활권에서 50㎡대 1LDK를 찾으신다면, 실제로 보셨을 때 “생각보다 훨씬 넓다”는 느낌이 먼저 들 만한 맨션입니다.\n톤 다운된 실내 분위기와 깔끔한 마감이 잘 잡혀 있어서, 혼자 사셔도 여유롭고 2인 입주로도 충분히 검토해보실 만했습니다.\n다이코쿠초역과 난바 접근성이 좋아서 출퇴근은 물론, 평소 생활 동선까지 편하게 가져가시기 좋았던 점도 장점이었습니다.\n외국인 계약 가능 조건이라 오사카에서 집을 구하시는 분들께도 비교적 현실적으로 계약을 추진해볼 수 있는 타입으로 보였습니다.\n이런 매물은 사진만 보고 넘기기엔 아쉬운 경우가 많아서, 조건이 맞으신다면 너무 오래 미루지 마시고 내람부터 한 번 잡아보시는 편이 좋겠습니다.',
     images: [
       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop',
@@ -60,6 +65,9 @@ const SAMPLE_PROPERTIES: Property[] = [
     features: ['역세권', '신축', '오토록', '택배함', '시스템 키친', '인터넷 무료'],
     construction: '철골조(S)',
     completionYear: '2023년 12월',
+    nearestStation: '난바역 도보 7분',
+    floorPlan: '1LDK',
+    area: '50.14㎡',
     isFeatured: false,
     createdAt: new Date(),
     ownerId: 'system'
@@ -80,6 +88,9 @@ const SAMPLE_PROPERTIES: Property[] = [
     features: ['고수익', '핵심 상권', '엘리베이터 완비', '관리 용이', '내진 설계', '우수한 가시성'],
     construction: '철골 철근 콘크리트(SRC)',
     completionYear: '2015년 3월',
+    nearestStation: '신사이바시역 도보 3분',
+    floorPlan: '전체 임대 중',
+    area: '450.8㎡',
     isFeatured: true,
     createdAt: new Date(),
     ownerId: 'system'
@@ -91,6 +102,7 @@ export default function PropertyDetail() {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -112,6 +124,19 @@ export default function PropertyDetail() {
     fetchProperty();
     window.scrollTo(0, 0);
   }, [id]);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) {
+        firebaseService.checkAdminStatus(user.uid).then(status => {
+          setIsAdmin(status);
+        });
+      } else {
+        setIsAdmin(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   if (loading) {
     return (
@@ -142,6 +167,15 @@ export default function PropertyDetail() {
             <span className="font-bold text-sm tracking-tight hidden sm:block">목록으로 돌아가기</span>
           </Link>
           <div className="flex items-center gap-4">
+             {isAdmin && !id?.startsWith('sample') && (
+               <Link 
+                to={`/admin?edit=${property.id}`}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full font-bold text-xs hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20"
+               >
+                 <Edit3 size={14} /> 
+                 <span>매물 수정</span>
+               </Link>
+             )}
              <button className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
                <Share2 size={20} />
              </button>
@@ -155,17 +189,20 @@ export default function PropertyDetail() {
           {/* Property Top Info Bar (Simulating the user's reference) */}
           <div className="mb-10 bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
-               <div className="p-6 text-center">
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Location / Station</p>
-                  <p className="text-sm font-bold text-zinc-900">{property.location}</p>
+               <div className="p-6 text-center group transition-colors hover:bg-orange-50/30">
+                  <p className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-3">所在地 / 最寄駅</p>
+                  <p className="text-[13px] font-bold text-zinc-900 mb-1">{property.location}</p>
+                  <p className="text-xs font-medium text-zinc-500">{property.nearestStation || '상담 문의'}</p>
                </div>
-               <div className="p-6 text-center">
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Construction</p>
-                  <p className="text-sm font-bold text-zinc-900">{property.construction || '철근 콘크리트'}</p>
+               <div className="p-6 text-center group transition-colors hover:bg-red-50/30">
+                  <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3">間取り / 面積</p>
+                  <p className="text-[13px] font-bold text-zinc-900 mb-1">{property.floorPlan || '상담 문의'}</p>
+                  <p className="text-xs font-medium text-zinc-500">{property.area || '실측 중'}</p>
                </div>
-               <div className="p-6 text-center">
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Completion Year</p>
-                  <p className="text-sm font-bold text-zinc-900">{property.completionYear || '상담 문의'}</p>
+               <div className="p-6 text-center group transition-colors hover:bg-emerald-50/30">
+                  <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3">物件種別 / 建築年数</p>
+                  <p className="text-[13px] font-bold text-zinc-900 mb-1">{property.type === 'OneRoom' ? '원룸/투룸' : property.type === 'Family' ? '타워맨션' : property.type === 'Office' ? '상가/사무실' : '수익형 부동산'}</p>
+                  <p className="text-xs font-medium text-zinc-500">{property.completionYear || '상담 문의'}</p>
                </div>
             </div>
           </div>
