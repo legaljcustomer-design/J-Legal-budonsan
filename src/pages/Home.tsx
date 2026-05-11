@@ -29,76 +29,9 @@ const CATEGORIES = [
   { id: 'all', label: '전체', icon: HomeIcon },
   { id: 'OneRoom', label: '원룸/투룸', icon: Building2 },
   { id: 'Family', label: '타워맨션', icon: HomeIcon },
+  { id: '1LDK+S', label: '1LDK+S', icon: HomeIcon },
   { id: 'Office', label: '상가/사무실', icon: Briefcase },
   { id: 'Investment', label: '수익형 부동산', icon: TrendingUp },
-];
-
-const SAMPLE_PROPERTIES: Property[] = [
-  {
-    id: 'sample-1',
-    title: '우메다 시티타워 자이 럭셔리 펜트하우스',
-    price: '¥285,000,000',
-    location: '키타구 우메다',
-    type: 'Family',
-    description: '오사카 최고의 스카이라인을 자랑하는 우메다 중심의 초고층 타워 맨션입니다. 최고급 자재와 최첨단 보안 시스템을 갖추고 있습니다.',
-    images: ['https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop'],
-    features: ['초고층 뷰', '컨시어지 서비스', '전용 주차장', '피트니스 센터'],
-    isFeatured: true,
-    createdAt: new Date(),
-    ownerId: 'system'
-  },
-  {
-    id: 'sample-2',
-    title: '난바역 도보 7분 초프리미엄 1LDK+S',
-    price: '¥188,000円 / 월\n(관리비 별도)',
-    location: '나니와구 난바',
-    type: '1LDK+S',
-    description: '난바 생활권에서 50㎡대 1LDK를 찾으신다면, 실제로 보셨을 때 “생각보다 훨씬 넓다”는 느낌이 먼저 들 만한 맨션입니다...',
-    images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop'],
-    features: ['역세권', '신축', '오토록', '택배함'],
-    isFeatured: false,
-    createdAt: new Date(),
-    ownerId: 'system'
-  },
-  {
-    id: 'sample-3',
-    title: '신사이바시 상업지구 수익형 빌딩',
-    price: '¥850,000,000',
-    location: '주오구 신사이바시',
-    type: 'Investment',
-    description: '유동인구가 가장 많은 신사이바시 메인 스트리트에 위치한 8층 규모의 수익형 빌딩입니다. 안정적인 임대 수익이 보장됩니다.',
-    images: ['https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2048&auto=format&fit=crop'],
-    features: ['고수익', '핵심 상권', '엘리베이터 완비', '관리 용이'],
-    isFeatured: true,
-    createdAt: new Date(),
-    ownerId: 'system'
-  },
-  {
-    id: 'sample-4',
-    title: '혼마치 비즈니스 지구 모던 오피스',
-    price: '¥420,000 / 월',
-    location: '주오구 혼마치',
-    type: 'Office',
-    description: '기업체 밀집 지역인 혼마치에 위치한 대형 평수 오피스입니다. 세련된 인테리어와 쾌적한 업무 환경을 제공합니다.',
-    images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069&auto=format&fit=crop'],
-    features: ['대형 평수', '중심 업무 지구', '개별 냉난방', '회의실 가능'],
-    isFeatured: false,
-    createdAt: new Date(),
-    ownerId: 'system'
-  },
-  {
-    id: 'sample-5',
-    title: '텐노지 공원 근교 파노라마 뷰 맨션',
-    price: '¥198,000 / 월',
-    location: '덴노지구 덴노지',
-    type: 'Family',
-    description: '덴노지 공원과 하루카스가 한눈에 보이는 조망권을 가진 가족형 맨션입니다. 교육 환경과 편의시설이 우수합니다.',
-    images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=2080&auto=format&fit=crop'],
-    features: ['공원 근처', '파노라마 뷰', '대형 수납장', '바닥 난방'],
-    isFeatured: true,
-    createdAt: new Date(),
-    ownerId: 'system'
-  }
 ];
 
 interface Review {
@@ -108,48 +41,34 @@ interface Review {
   subtitle: string;
 }
 
-const REVIEWS: Review[] = [
-  {
-    id: '1',
-    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop',
-    title: '아베노구 / 1K / 남향',
-    subtitle: '阿倍野区 / 1K / 南向き'
-  },
-  {
-    id: '2',
-    image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1980&auto=format&fit=crop',
-    title: '미나토구 / 1K / 북향',
-    subtitle: '港区 / 1K / 北向き'
-  },
-  {
-    id: '3',
-    image: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=2070&auto=format&fit=crop',
-    title: '나니와구 / 1K / 북향',
-    subtitle: '浪速区 / 1K / 北向き'
-  },
-  {
-    id: '4',
-    image: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=2074&auto=format&fit=crop',
-    title: '추오구 / 1DK / 동향',
-    subtitle: '中央区 / 1DK / 東向き'
-  },
-  {
-    id: '5',
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop',
-    title: '요도가와구 / 2K / 남향',
-    subtitle: '淀川区 / 2K / 南向き'
-  }
-];
-
 export default function Home({ isAdmin }: { isAdmin: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [properties, setProperties] = useState<Property[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [consultationCount, setConsultationCount] = useState(134);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+
+  const [settings, setSettings] = useState({
+    heroTitle: '오사카 최고의 매물을 찾으시나요?',
+    heroSubtitle: '난바, 우메다 등 주요 거점의 신축 맨션부터 수익형 빌딩까지, 오사카 거주 한국인 및 투자자를 위한 맞춤형 럭셔리 컨설팅을 제공합니다.',
+    consultationBaseCount: 102,
+    kakaoId: 'oosakaj',
+    lineId: '@845immxy',
+    instagramId: 'oosaka_j',
+    youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=fyvJj_s_8MHE-l7W'
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const data = await firebaseService.getSettings();
+      if (data) setSettings(prev => ({ ...prev, ...data }));
+    };
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -181,14 +100,13 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
       startOfDay.setHours(0, 0, 0, 0);
       
       const minutesPassed = Math.floor((jstNow.getTime() - startOfDay.getTime()) / 60000);
-      // Base 102 + 1 every 12 minutes (approx 120 per day increase)
-      setConsultationCount(102 + Math.floor(minutesPassed / 12));
+      setConsultationCount(settings.consultationBaseCount + Math.floor(minutesPassed / 12));
     };
 
     updateCount();
     const interval = setInterval(updateCount, 60000); // Check every minute
     return () => clearInterval(interval);
-  }, []);
+  }, [settings.consultationBaseCount]);
 
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -204,20 +122,19 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   }, []);
 
   useEffect(() => {
-    const fetchProperties = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      const data = await firebaseService.getProperties(activeCategory);
+      const [propData, reviewData] = await Promise.all([
+        firebaseService.getProperties(activeCategory),
+        firebaseService.getReviews()
+      ]);
       
-      // Filter samples based on active category
-      const filteredSamples = activeCategory === 'all' 
-        ? SAMPLE_PROPERTIES 
-        : SAMPLE_PROPERTIES.filter(p => p.type === activeCategory);
-      
-      setProperties([...filteredSamples, ...data]);
+      setProperties(propData);
+      setReviews(reviewData);
       setLoading(false);
       setCurrentIndex(0);
     };
-    fetchProperties();
+    fetchData();
   }, [activeCategory]);
 
   useEffect(() => {
@@ -232,10 +149,10 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   useEffect(() => {
     const interval = setInterval(() => {
       const visibleItems = getVisibleReviews();
-      setReviewIndex((prev) => (prev >= REVIEWS.length - visibleItems ? 0 : prev + 1));
+      setReviewIndex((prev) => (prev >= reviews.length - visibleItems ? 0 : prev + 1));
     }, 4500);
     return () => clearInterval(interval);
-  }, [windowWidth, properties.length]);
+  }, [windowWidth, reviews.length]);
 
   const nextSlide = () => {
     const visibleItems = getVisibleItems();
@@ -249,12 +166,12 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
 
   const nextReview = () => {
     const visibleItems = getVisibleReviews();
-    setReviewIndex((prev) => (prev >= REVIEWS.length - visibleItems ? 0 : prev + 1));
+    setReviewIndex((prev) => (prev >= reviews.length - visibleItems ? 0 : prev + 1));
   };
 
   const prevReview = () => {
     const visibleItems = getVisibleReviews();
-    setReviewIndex((prev) => (prev === 0 ? Math.max(0, REVIEWS.length - visibleItems) : prev - 1));
+    setReviewIndex((prev) => (prev === 0 ? Math.max(0, reviews.length - visibleItems) : prev - 1));
   };
 
   return (
@@ -294,6 +211,10 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             <a href="#guide" className="hover:text-electric-blue transition-colors">고객후기</a>
             <a href="#about" className="hover:text-electric-blue transition-colors">회사소개</a>
             <Link to="/recruitment" className="hover:text-electric-blue transition-colors">채용 정보</Link>
+            <Link to="/admin" className="hover:text-electric-blue transition-colors flex items-center gap-1.5 group/admin">
+               <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 group-hover/admin:bg-electric-blue transition-colors" />
+               관리자전용
+            </Link>
           </div>
 
           <div className="flex items-center gap-4">
@@ -327,7 +248,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               <a href="#guide" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">고객후기</a>
               <a href="#about" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">회사소개</a>
               <Link to="/recruitment" onClick={() => setIsMenuOpen(false)} className="hover:text-electric-blue">채용 정보</Link>
-              {isAdmin && <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="text-electric-blue">대시보드</Link>}
+              <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="text-electric-blue">관리자전용</Link>
             </div>
             <a 
               href="https://pf.kakao.com/_TSvgxb" 
@@ -367,12 +288,12 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             현재 오사카J부동산에서 <span className="text-yellow-300 underline underline-offset-8 decoration-yellow-400/50 decoration-2">{consultationCount}명</span>이 상담 받고 계세요 ❤️
           </div>
           <h1 className="text-6xl md:text-8xl font-bold mb-8 tracking-tighter leading-tight drop-shadow-2xl text-white">
-            오사카 최고의 매물을 <br />
-            <span className="text-gradient">찾으시나요?</span>
+            {settings.heroTitle.split('\n').map((line, i) => (
+              <React.Fragment key={i}>{line}<br /></React.Fragment>
+            ))}
           </h1>
-          <p className="text-white max-w-2xl mx-auto text-lg md:text-xl leading-relaxed mb-12 drop-shadow-lg">
-            난바, 우메다 등 주요 거점의 <span className="font-bold text-electric-blue">신축 맨션</span>부터 <span className="font-bold text-electric-blue">수익형 빌딩</span>까지, <br />
-            오사카 거주 한국인 및 투자자를 위한 맞춤형 럭셔리 컨설팅을 제공합니다.
+          <p className="text-white max-w-2xl mx-auto text-lg md:text-xl leading-relaxed mb-12 drop-shadow-lg whitespace-pre-line">
+            {settings.heroSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <a href="#properties" className="blue-glow-btn px-12 py-5 flex items-center justify-center gap-2 text-lg">
@@ -460,7 +381,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                         >
                           <div className="relative h-48 overflow-hidden bg-zinc-800">
                             <img 
-                              src={prop.images[0] || 'https://via.placeholder.com/800x480?text=Premium+Listing'} 
+                              src={prop.images[0] || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
                               alt={prop.title}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                             />
@@ -519,14 +440,14 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               {/* View More Button */}
               <div className="mt-16 flex justify-center">
                 <motion.a
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   href="https://pf.kakao.com/_TSvgxb" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="bg-white border-2 border-zinc-950 text-zinc-950 px-12 py-5 rounded-2xl text-[11px] font-bold uppercase tracking-[0.3em] flex items-center gap-3 transition-all hover:bg-zinc-950 hover:text-white shadow-xl group"
+                  className="px-16 py-4 rounded-full border border-zinc-600 text-zinc-700 text-sm font-medium hover:bg-zinc-50 transition-all flex items-center gap-2"
                 >
-                  [매물 더보기] <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  매물 더보기 <ChevronRight size={14} className="mt-0.5" />
                 </motion.a>
               </div>
             </div>
@@ -565,7 +486,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 animate={{ x: `calc(-${reviewIndex * (100 / getVisibleReviews())}% - ${reviewIndex * (24 / getVisibleReviews())}px)` }}
                 transition={{ type: "spring", stiffness: 150, damping: 25 }}
               >
-                {REVIEWS.map((review) => (
+                {reviews.map((review) => (
                   <motion.div
                     key={review.id}
                     className="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] xl:min-w-[calc(25%-18px)] flex-shrink-0"
@@ -674,82 +595,77 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 { url: "acc7ca0397ca9757de2dadff837859e3.png", label: "行政書士試験" },
                 { url: "c53af1f0cba156493843f10955cbcc3f.png", label: "外国人雇用管理主任者" },
                 { url: "4a29f6991741fa243bc2f110898e41a4.png", label: "宅地建物取引士" },
-                { url: "3bf5e82c96385b7906d3ccf13505c5c4.png", label: "敷金診断士" }
-              ].map((cert, index) => (
-                <div key={index} className="flex flex-col items-center group">
-                  <div className="bg-white p-8 rounded-2xl border border-zinc-100 shadow-sm mb-4 transition-all duration-500 group-hover:shadow-xl group-hover:border-blue-200 group-hover:-translate-y-1">
-                    <img 
-                      src={`https://legalj.jp/wp-content/uploads/2025/01/${cert.url}`} 
-                      alt={cert.label} 
-                      className="h-64 md:h-80 w-auto object-contain transition-all duration-500"
-                    />
+                { url: "f838dbca18a4a589700ac8a760f27464.png", label: "特定行政書士" }
+              ].map((cert, idx) => (
+                <div key={idx} className="group">
+                  <div className="aspect-[3/4] bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 mb-4 shadow-sm group-hover:shadow-md transition-all">
+                    <img src={`https://legalj.jp/wp-content/uploads/2025/02/${cert.url}`} className="w-full h-full object-cover" alt={cert.label} />
                   </div>
-                  <span className="text-[12px] font-bold text-zinc-500 tracking-tight text-center group-hover:text-blue-600 transition-colors">
-                    {cert.label}
-                  </span>
+                  <p className="text-[10px] font-bold text-center text-zinc-500 uppercase tracking-widest leading-relaxed">{cert.label}</p>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Trust Stats Section */}
-      <section className="px-10 py-10 bg-electric-blue flex items-center justify-center">
-        <div className="max-w-7xl w-full flex flex-col md:flex-row items-center justify-between gap-10">
-          <div className="flex items-center gap-12 flex-wrap justify-center">
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Years of Trust</span>
-              <span className="text-3xl font-bold tracking-tighter">10+</span>
-            </div>
-            <div className="flex flex-col border-l border-white/20 pl-12">
-              <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Properties Managed</span>
-              <span className="text-3xl font-bold tracking-tighter">1,240+</span>
-            </div>
-            <div className="flex flex-col border-l border-white/20 pl-12">
-              <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Customer Rating</span>
-              <span className="text-3xl font-bold tracking-tighter">4.9 / 5.0</span>
-            </div>
-          </div>
-          
-          <div className="flex gap-6 items-center">
-            <div className="hidden lg:flex flex-col items-end">
-              <p className="text-sm font-bold">지금 바로 전문가와 상담하세요</p>
-              <p className="text-xs opacity-80">카카오톡 ID: jhome1749</p>
-            </div>
-            <div className="flex gap-3">
-                <a 
-                  href="https://pf.kakao.com/_TSvgxb" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 bg-black rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-xl"
-                >
-                   <MessageCircle className="w-6 h-6 text-yellow-400" />
-                </a>
-                <a 
-                  href="https://line.me/R/ti/p/@845immxy" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-xl"
-                >
-                   <MessageSquare className="w-6 h-6 text-emerald-500" />
-                </a>
-                <a 
-                  href="https://www.instagram.com/oosaka_j/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-xl"
-                >
-                   <Instagram className="w-6 h-6 text-pink-500" />
-                </a>
-                <a 
-                  href="https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=fyvJj_s_8MHE-l7W" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-xl"
-                >
-                   <Youtube className="w-6 h-6 text-red-600" />
-                </a>
+          {/* Trust Bar */}
+          <div className="mt-32 bg-zinc-950 text-white rounded-[40px] p-12 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-electric-blue/10 rounded-full blur-[120px] -mr-64 -mt-64 group-hover:bg-electric-blue/20 transition-colors duration-1000" />
+            <div className="max-w-7xl w-full flex flex-col lg:flex-row items-center justify-between gap-10 relative z-10">
+              <div className="flex items-center gap-12 flex-wrap justify-center">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Years of Trust</span>
+                  <span className="text-3xl font-bold tracking-tighter">10+</span>
+                </div>
+                <div className="flex flex-col border-l border-white/20 pl-12">
+                  <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Properties Managed</span>
+                  <span className="text-3xl font-bold tracking-tighter">1,240+</span>
+                </div>
+                <div className="flex flex-col border-l border-white/20 pl-12">
+                  <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Customer Rating</span>
+                  <span className="text-3xl font-bold tracking-tighter">4.9 / 5.0</span>
+                </div>
+              </div>
+              
+              <div className="flex gap-6 items-center">
+                <div className="hidden lg:flex flex-col items-end text-right">
+                  <p className="text-sm font-bold">지금 바로 전문가와 상담하세요</p>
+                  <p className="text-xs opacity-80">카카오톡 ID: {settings.kakaoId}</p>
+                </div>
+                <div className="flex gap-3">
+                    <a 
+                      href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-black rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl border border-white/10"
+                    >
+                       <MessageCircle className="w-6 h-6 text-yellow-400" />
+                    </a>
+                    <a 
+                      href={`https://line.me/R/ti/p/${settings.lineId}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
+                    >
+                       <MessageSquare className="w-6 h-6 text-emerald-500" />
+                    </a>
+                    <a 
+                      href={`https://www.instagram.com/${settings.instagramId}/`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
+                    >
+                       <Instagram className="w-6 h-6 text-pink-500" />
+                    </a>
+                    <a 
+                      href={settings.youtubeUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
+                    >
+                       <Youtube className="w-6 h-6 text-red-600" />
+                    </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>

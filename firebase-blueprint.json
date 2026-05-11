@@ -20,6 +20,33 @@
       },
       "required": ["title", "price", "location", "type", "description", "images", "features", "isFeatured", "createdAt", "ownerId"]
     },
+    "SiteSettings": {
+      "title": "Site Settings",
+      "description": "Global configuration for the website",
+      "type": "object",
+      "properties": {
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "consultationBaseCount": { "type": "number" },
+        "kakaoId": { "type": "string" },
+        "lineId": { "type": "string" },
+        "instagramId": { "type": "string" },
+        "youtubeUrl": { "type": "string" }
+      },
+      "required": ["heroTitle", "heroSubtitle"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Customer feedback",
+      "type": "object",
+      "properties": {
+        "image": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["image", "title", "subtitle", "createdAt"]
+    },
     "Admin": {
       "title": "Admin",
       "description": "User with administrative privileges",
@@ -36,9 +63,17 @@
       "schema": "Property",
       "description": "Collection of all real estate listings"
     },
+    "reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Collection of customer reviews"
+    },
     "admins/{adminId}": {
       "schema": "Admin",
       "description": "Collection of users authorized to manage properties"
+    },
+    "settings/general": {
+      "schema": "SiteSettings",
+      "description": "Global singleton for site configuration"
     }
   }
 }

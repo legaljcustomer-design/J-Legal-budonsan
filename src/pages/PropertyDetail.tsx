@@ -176,10 +176,10 @@ export default function PropertyDetail() {
                       key={activeImageIndex}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="rounded-3xl overflow-hidden shadow-2xl bg-zinc-200 aspect-[4/5] md:aspect-[3/4] relative"
+                      className="rounded-3xl overflow-hidden shadow-2xl bg-zinc-200 aspect-square relative"
                     >
                       <img 
-                        src={property.images[activeImageIndex] || 'https://via.placeholder.com/800x600?text=Premium+Listing'} 
+                        src={property.images[activeImageIndex] || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
                         alt={property.title}
                         className="w-full h-full object-cover"
                       />

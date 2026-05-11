@@ -4,6 +4,7 @@ import {
   updateDoc, 
   deleteDoc, 
   doc, 
+  setDoc,
   getDocs, 
   query, 
   where, 
@@ -101,6 +102,68 @@ export const firebaseService = {
     } catch (error) {
       handleFirestoreError(error, OperationType.GET, path);
       return null;
+    }
+  },
+
+  // Site Settings
+  async getSettings(): Promise<any> {
+    const path = 'settings/general';
+    try {
+      const docRef = doc(db, 'settings', 'general');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data();
+      }
+      return null;
+    } catch (error) {
+       handleFirestoreError(error, OperationType.GET, path);
+       return null;
+    }
+  },
+
+  async updateSettings(data: any): Promise<void> {
+    if (!auth.currentUser) throw new Error("Auth required");
+    try {
+      const docRef = doc(db, 'settings', 'general');
+      await setDoc(docRef, data, { merge: true });
+    } catch (error) {
+       handleFirestoreError(error, OperationType.UPDATE, 'settings/general');
+    }
+  },
+
+  // Reviews
+  async getReviews(): Promise<any[]> {
+    const path = 'reviews';
+    try {
+      const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+       handleFirestoreError(error, OperationType.LIST, path);
+       return [];
+    }
+  },
+
+  async addReview(data: any): Promise<string> {
+    if (!auth.currentUser) throw new Error("Auth required");
+    try {
+      const docRef = await addDoc(collection(db, 'reviews'), {
+        ...data,
+        createdAt: serverTimestamp()
+      });
+      return docRef.id;
+    } catch (error) {
+       handleFirestoreError(error, OperationType.CREATE, 'reviews');
+       return "";
+    }
+  },
+
+  async deleteReview(id: string): Promise<void> {
+    if (!auth.currentUser) throw new Error("Auth required");
+    try {
+      await deleteDoc(doc(db, 'reviews', id));
+    } catch (error) {
+       handleFirestoreError(error, OperationType.DELETE, `reviews/${id}`);
     }
   }
 };

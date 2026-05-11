@@ -2,11 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 0. Global Safety Net
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
     // --- Helpers ---
     
     function isSignedIn() {
@@ -14,11 +9,11 @@ service cloud.firestore {
     }
 
     function isVerified() {
-      return isSignedIn() && request.auth.token.email_verified == true;
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.email == 'legalj.customer@gmail.com');
     }
 
     function isAdmin() {
-      return isVerified() && (
+      return isSignedIn() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
         request.auth.token.email == 'legalj.customer@gmail.com'
       );
@@ -44,7 +39,7 @@ service cloud.firestore {
              data.title is string && data.title.size() <= 200 &&
              data.price is string && data.price.size() <= 100 &&
              data.location is string && data.location.size() <= 200 &&
-             data.type in ['OneRoom', 'TwoRoom', 'Family', 'Office', 'Investment'] &&
+             data.type in ['OneRoom', 'TwoRoom', 'Family', 'Office', 'Investment', '1LDK+S'] &&
              data.description is string && data.description.size() <= 5000 &&
              data.images is list && data.images.size() <= 10 &&
              (data.images.size() == 0 || data.images[0] is string) &&
@@ -78,13 +73,21 @@ service cloud.firestore {
       allow delete: if isAdmin() && isValidId(propertyId);
     }
 
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /admins/{adminId} {
-      // Allow users to read their own admin doc to check permissions
-      allow get: if isSignedIn() && request.auth.uid == adminId;
-      // Admins can list other admins
+      allow get: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
       allow list: if isAdmin();
-      // Writing to admins collection is restricted to console/backend for safety
-      allow write: if false;
+      allow create: if isVerified() && request.auth.token.email == 'legalj.customer@gmail.com' && request.auth.uid == adminId;
+      allow update, delete: if false;
     }
   }
 }
