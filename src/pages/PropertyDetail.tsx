@@ -132,19 +132,18 @@ export default function PropertyDetail() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch mb-12">
             
-            {/* Left Column: Gallery & Description */}
-            <div className="space-y-10">
-              {/* Photo Gallery System */}
-              <div className="flex flex-col md:flex-row gap-4">
-                 {/* Main Image */}
-                 <div className="flex-1">
+            {/* Left Card: Gallery */}
+            <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-200 shadow-2xl flex flex-col h-full justify-between">
+              <div className="flex flex-col gap-6 flex-1">
+                 {/* Main Image - Controlled Height for balance */}
+                 <div className="relative aspect-square md:aspect-[4/3] max-h-[500px] overflow-hidden rounded-2xl shadow-lg bg-zinc-200">
                     <motion.div 
                       key={activeImageIndex}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="rounded-3xl overflow-hidden shadow-2xl bg-zinc-200 aspect-square relative"
+                      className="w-full h-full"
                     >
                       <img 
                         src={property.images[activeImageIndex] || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
@@ -158,13 +157,13 @@ export default function PropertyDetail() {
                     </motion.div>
                  </div>
 
-                 {/* Thumbnails Sidebar */}
-                 <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto max-h-[600px] no-scrollbar">
+                 {/* Thumbnails */}
+                 <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                     {property.images.map((img, i) => (
                        <button 
                         key={i}
                         onClick={() => setActiveImageIndex(i)}
-                        className={`relative w-20 h-24 md:w-24 md:h-24 shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
+                        className={`relative w-20 h-20 shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
                           activeImageIndex === i ? 'border-blue-600 scale-95' : 'border-transparent opacity-60 hover:opacity-100'
                         }`}
                        >
@@ -178,118 +177,133 @@ export default function PropertyDetail() {
                     ))}
                  </div>
               </div>
+              <p className="mt-4 text-[10px] text-zinc-400 font-bold uppercase tracking-widest text-center">이미지를 클릭하여 확대보기 (준비중)</p>
+            </div>
+
+            {/* Right Card: Property Info & Contact */}
+            <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-2xl relative overflow-hidden flex flex-col h-full justify-between">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full blur-[60px]" />
+                
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="px-3 py-1 bg-blue-600 text-[10px] font-bold text-white uppercase tracking-widest rounded-full">
+                      {property.type}
+                    </span>
+                    <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
+                      <MapPin size={12} /> {property.location}
+                    </span>
+                  </div>
+
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tighter mb-6 leading-tight text-zinc-900">
+                    {property.title}
+                  </h1>
+
+                  <div className="text-4xl font-black text-blue-600 tracking-tighter mb-8 bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50 inline-block w-full text-center whitespace-pre-wrap">
+                    {property.price}
+                  </div>
+
+                  <div className="space-y-4 mb-10 border-t border-zinc-100 pt-8">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-500 font-bold uppercase tracking-widest">담당자</span>
+                      <span className="font-bold text-zinc-900">오사카J부동산 전담팀</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-500 font-bold uppercase tracking-widest">등록일</span>
+                      <span className="font-bold text-zinc-900">상시공고</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-zinc-500 font-bold uppercase tracking-widest">상태</span>
+                      <span className="text-blue-600 font-bold uppercase tracking-widest flex items-center gap-1">
+                         <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                         문의 요망
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <p className="text-center text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-4">지금 바로 상담하기</p>
+                    
+                    <a 
+                      href="https://pf.kakao.com/_TSvgxb" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full py-5 bg-[#FEE500] text-[#3C1E1E] font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    >
+                      <MessageCircle size={24} /> 카카오톡 실시간 상담
+                    </a>
+                    
+                    <a 
+                      href="https://line.me/R/ti/p/@845immxy" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full py-5 bg-[#06C755] text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    >
+                      <MessageSquare size={24} /> 라인(LINE) 상담
+                    </a>
+                  </div>
+                </div>
+            </div>
+          </div>
+
+          {/* Bottom Sections: Features, Description, and Video */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            
+            <div className="space-y-8">
+              {property.mansionFeatures && (
+                <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-xl">
+                  <h2 className="text-xl font-bold mb-6 border-b border-zinc-100 pb-4 flex items-center gap-2">
+                    <Building2 size={20} className="text-blue-600" />
+                    맨션 특징
+                  </h2>
+                  <p className="text-zinc-700 leading-relaxed whitespace-pre-wrap font-bold text-sm">
+                    {property.mansionFeatures}
+                  </p>
+                </div>
+              )}
 
               <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-xl">
-                <h2 className="text-2xl font-bold mb-6 border-b border-zinc-100 pb-4">상세 설명</h2>
-                <p className="text-zinc-600 leading-relaxed whitespace-pre-wrap font-medium">
+                <h2 className="text-xl font-bold mb-6 border-b border-zinc-100 pb-4">상세 설명</h2>
+                <p className="text-zinc-600 leading-relaxed whitespace-pre-wrap font-medium text-sm">
                   {property.description}
                 </p>
               </div>
-
-              <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-xl">
-                <h2 className="text-2xl font-bold mb-6 border-b border-zinc-100 pb-4">주요 특징</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {property.features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-2 text-zinc-700 text-sm font-bold">
-                      <CheckCircle2 size={16} className="text-blue-600 shrink-0" />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
-            {/* Right Column: Property Info & Contact */}
             <div className="space-y-8">
-              <div className="sticky top-24">
-                <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-2xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full blur-[60px]" />
-                  
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="px-3 py-1 bg-blue-600 text-[10px] font-bold text-white uppercase tracking-widest rounded-full">
-                        {property.type}
-                      </span>
-                      <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
-                        <MapPin size={12} /> {property.location}
-                      </span>
-                    </div>
-
-                    <h1 className="text-3xl md:text-4xl font-bold tracking-tighter mb-6 leading-tight text-zinc-900">
-                      {property.title}
-                    </h1>
-
-                    <div className="text-4xl font-black text-blue-600 tracking-tighter mb-8 bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50 inline-block w-full text-center whitespace-pre-wrap">
-                      {property.price}
-                    </div>
-
-                    <div className="space-y-4 mb-20 border-t border-zinc-100 pt-8">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-zinc-500 font-bold uppercase tracking-widest">담당자</span>
-                        <span className="font-bold text-zinc-900">오사카J 전문가팀</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-zinc-500 font-bold uppercase tracking-widest">등록일</span>
-                        <span className="font-bold text-zinc-900">상시공고</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-zinc-500 font-bold uppercase tracking-widest">상태</span>
-                        <span className="text-emerald-600 font-bold uppercase tracking-widest flex items-center gap-1">
-                           <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                           상담 가능
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <p className="text-center text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-4">지금 바로 상담하기</p>
-                      
-                      <a 
-                        href="https://pf.kakao.com/_TSvgxb" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="w-full py-5 bg-[#FEE500] text-[#3C1E1E] font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
-                      >
-                        <MessageCircle size={24} /> 카카오톡 실시간 상담
-                      </a>
-                      
-                      <a 
-                        href="https://line.me/R/ti/p/@845immxy" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="w-full py-5 bg-[#06C755] text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
-                      >
-                        <MessageSquare size={24} /> 라인(LINE) 상담
-                      </a>
-
-                      <button 
-                        onClick={() => window.print()}
-                        className="w-full py-4 text-zinc-500 font-bold text-xs uppercase tracking-widest bg-zinc-100 rounded-xl hover:bg-zinc-200 transition-colors"
-                      >
-                        매물 정보 인쇄하기
-                      </button>
-                    </div>
+              {/* YouTube Video Section */}
+              {property.youtubeUrl && (
+                <div className="bg-zinc-950 p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-[60px] -translate-y-12 translate-x-12" />
+                  <div className="relative z-10 flex flex-col items-center">
+                     <div className="flex items-center gap-3 mb-8">
+                       <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/20">
+                         <Youtube size={20} className="text-white" />
+                       </div>
+                       <h3 className="font-bold text-lg text-white tracking-tight">유튜브 쇼츠 현장 매물 영상</h3>
+                     </div>
+                     
+                     <div className="w-full aspect-[9/16] max-w-[280px] rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/5">
+                       <iframe
+                         width="100%"
+                         height="100%"
+                         src={`https://www.youtube.com/embed/${property.youtubeUrl.includes('shorts/') ? property.youtubeUrl.split('shorts/')[1].split('?')[0] : property.youtubeUrl.split('v=')[1]?.split('&')[0]}`}
+                         title="YouTube video player"
+                         frameBorder="0"
+                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                         allowFullScreen
+                         className="w-full h-full"
+                       ></iframe>
+                     </div>
+                     
+                     <div className="mt-8 flex flex-col items-center">
+                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mb-2">Editor's Choice</p>
+                        <p className="text-xs text-zinc-400 font-medium italic">"현장의 감동을 영상으로 직접 확인해보세요"</p>
+                     </div>
                   </div>
                 </div>
-
-                <div className="mt-8 bg-zinc-900 text-white p-8 rounded-3xl shadow-xl overflow-hidden relative">
-                   <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/20 rounded-full blur-[40px] -translate-y-12 translate-x-12" />
-                   <div className="relative z-10 flex flex-col items-center text-center">
-                      <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 text-xl font-bold shadow-lg shadow-blue-500/20">J</div>
-                      <h3 className="font-bold mb-2">행정서사 Legal_ J 오피스</h3>
-                      <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em] mb-6">부동산 전문 협력 행정지원</p>
-                      <a 
-                        href="https://legalj.jp/" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-8"
-                      >
-                         공식 웹사이트 바로가기 <ExternalLink size={12} className="inline ml-1" />
-                      </a>
-                   </div>
-                </div>
-              </div>
+              )}
             </div>
+
 
           </div>
         </div>

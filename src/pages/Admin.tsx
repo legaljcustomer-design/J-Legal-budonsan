@@ -115,6 +115,8 @@ export default function Admin() {
     nearestStation: '',
     floorPlan: '',
     area: '',
+    youtubeUrl: '',
+    mansionFeatures: '',
     isFeatured: false,
   });
 
@@ -255,6 +257,8 @@ export default function Admin() {
         nearestStation: '',
         floorPlan: '',
         area: '',
+        youtubeUrl: '',
+        mansionFeatures: '',
         isFeatured: false,
       });
     } catch (error) {
@@ -327,6 +331,8 @@ export default function Admin() {
       nearestStation: prop.nearestStation || '',
       floorPlan: prop.floorPlan || '',
       area: prop.area || '',
+      youtubeUrl: prop.youtubeUrl || '',
+      mansionFeatures: prop.mansionFeatures || '',
       isFeatured: prop.isFeatured,
     });
     setEditingId(prop.id);
@@ -565,6 +571,10 @@ export default function Admin() {
                                 <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.construction} onChange={e => setFormData({ ...formData, construction: e.target.value })} placeholder="예: 철근 콘크리트(RC)" />
                             </div>
                             <div>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">YouTube 영상 링크 (Shorts 포함)</label>
+                                <input className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.youtubeUrl} onChange={e => setFormData({ ...formData, youtubeUrl: e.target.value })} placeholder="예: https://youtube.com/shorts/..." />
+                            </div>
+                            <div>
                                 <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">완공 연도 (建築年数/축년)</label>
                                 <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={formData.completionYear} onChange={e => setFormData({ ...formData, completionYear: e.target.value })} placeholder="예: 2024년 10월" />
                             </div>
@@ -619,6 +629,10 @@ export default function Admin() {
                                     )}
                                 </div>
                                 <p className="text-[10px] text-zinc-600">※ 파일 첨부 시 자동으로 최적화되어 업로드됩니다.</p>
+                            </div>
+                            <div className="col-span-full">
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">맨션 특징 (Mansion Features)</label>
+                                <textarea rows={3} className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all resize-none" value={formData.mansionFeatures} onChange={e => setFormData({ ...formData, mansionFeatures: e.target.value })} placeholder="예: 최고급 가전 완비, 펫 가능, 주차장 1대 무료 등" />
                             </div>
                             <div className="col-span-full">
                                 <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">상세 설명</label>

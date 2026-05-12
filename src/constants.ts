@@ -40,6 +40,8 @@ export const SAMPLE_PROPERTIES: Property[] = [
     nearestStation: '난바역 도보 7분',
     floorPlan: '1LDK',
     area: '50.14㎡',
+    youtubeUrl: 'https://youtube.com/shorts/lNfqfRe-rKo?si=bjab3m-djnCXwSGC',
+    mansionFeatures: '• 고급스러운 차콜 계열 인테리어\n• 쾌적한 수납 공간 및 드레스룸\n• 최첨단 보안 오토록 시스템\n• 전 세대 남향 배치로 뛰어난 채광',
     isFeatured: true,
     createdAt: Date.now(),
     ownerId: 'system',

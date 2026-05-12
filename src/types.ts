@@ -13,6 +13,8 @@ export interface Property {
   floorPlan?: string;
   area?: string;
   googleMapUrl?: string;
+  youtubeUrl?: string;
+  mansionFeatures?: string;
   isFeatured: boolean;
   createdAt: any;
   updatedAt?: any;

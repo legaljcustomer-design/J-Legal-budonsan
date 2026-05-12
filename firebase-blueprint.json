@@ -18,6 +18,8 @@
         "floorPlan": { "type": "string" },
         "area": { "type": "string" },
         "googleMapUrl": { "type": "string" },
+        "youtubeUrl": { "type": "string", "description": "YouTube link for the property tour" },
+        "mansionFeatures": { "type": "string", "description": "Specific features of the mansion" },
         "isFeatured": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" },

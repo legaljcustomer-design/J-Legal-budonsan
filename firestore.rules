@@ -50,6 +50,8 @@ service cloud.firestore {
              (!('floorPlan' in data) || data.floorPlan is string) &&
              (!('area' in data) || data.area is string) &&
              (!('googleMapUrl' in data) || data.googleMapUrl is string) &&
+             (!('youtubeUrl' in data) || data.youtubeUrl is string) &&
+             (!('mansionFeatures' in data) || data.mansionFeatures is string) &&
              (!('updatedAt' in data) || data.updatedAt is timestamp || data.updatedAt == null);
     }
 
@@ -69,7 +71,7 @@ service cloud.firestore {
                       isValidProperty(incoming()) &&
                       (
                         // Action: General Update
-                        (incoming().diff(existing()).affectedKeys().hasOnly(['title', 'price', 'location', 'type', 'description', 'images', 'features', 'isFeatured', 'updatedAt', 'construction', 'completionYear', 'nearestStation', 'floorPlan', 'area', 'googleMapUrl']) &&
+                        (incoming().diff(existing()).affectedKeys().hasOnly(['title', 'price', 'location', 'type', 'description', 'images', 'features', 'isFeatured', 'updatedAt', 'construction', 'completionYear', 'nearestStation', 'floorPlan', 'area', 'googleMapUrl', 'youtubeUrl', 'mansionFeatures']) &&
                          incoming().updatedAt == request.time &&
                          incoming().createdAt == existing().createdAt &&
                          incoming().ownerId == existing().ownerId)
