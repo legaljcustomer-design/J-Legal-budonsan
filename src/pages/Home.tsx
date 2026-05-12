@@ -621,9 +621,9 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                       href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="w-12 h-12 bg-black rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl border border-white/10"
+                      className="w-12 h-12 bg-[#FEE500] rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl border-2 border-white/20"
                     >
-                       <MessageCircle className="w-6 h-6 text-yellow-400" />
+                       <MessageCircle className="w-6 h-6 text-[#3C1E1E]" />
                     </a>
                     <a 
                       href={`https://line.me/R/ti/p/${settings.lineId}`} 
