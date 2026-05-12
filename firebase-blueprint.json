@@ -60,12 +60,13 @@
       "type": "object",
       "properties": {
         "title": { "type": "string", "description": "Title of the info card" },
-        "desc": { "type": "string", "description": "Short description" },
+        "desc": { "type": "string", "description": "Short description (hidden on main page)" },
         "tag": { "type": "string", "description": "Category tag" },
         "img": { "type": "string", "description": "Image URL" },
+        "instagramUrl": { "type": "string", "description": "Instagram link for details" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "desc", "tag", "img", "createdAt"]
+      "required": ["title", "desc", "tag", "img", "instagramUrl", "createdAt"]
     },
     "Admin": {
       "title": "Admin",

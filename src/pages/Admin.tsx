@@ -150,6 +150,7 @@ export default function Admin() {
     desc: '',
     tag: '',
     img: '',
+    instagramUrl: '',
   });
 
   const [settingsData, setSettingsData] = useState({
@@ -333,7 +334,7 @@ export default function Admin() {
       }
       setIsAdding(false);
       setEditingId(null);
-      setOsakaInfoData({ title: '', desc: '', tag: '', img: '' });
+      setOsakaInfoData({ title: '', desc: '', tag: '', img: '', instagramUrl: '' });
     } catch (error) {
       console.error(error);
     } finally {
@@ -422,6 +423,7 @@ export default function Admin() {
       desc: info.desc,
       tag: info.tag,
       img: info.img,
+      instagramUrl: info.instagramUrl || '',
     });
     setEditingId(info.id);
     setIsAdding(true);
@@ -640,7 +642,7 @@ export default function Admin() {
                         } else if (activeTab === 'reviews') {
                             setReviewData({ title: '', subtitle: '', image: '' });
                         } else if (activeTab === 'osakaInfo') {
-                            setOsakaInfoData({ title: '', desc: '', tag: '', img: '' });
+                            setOsakaInfoData({ title: '', desc: '', tag: '', img: '', instagramUrl: '' });
                         }
                     }}
                     className="blue-glow-btn px-8 py-3 text-[10px]"
@@ -821,6 +823,10 @@ export default function Admin() {
                             <div>
                                 <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">태그 (카테고리)</label>
                                 <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={osakaInfoData.tag} onChange={e => setOsakaInfoData({ ...osakaInfoData, tag: e.target.value })} placeholder="예: 생활 정보 / 교통 / 인프라" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">인스타그램 링크</label>
+                                <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={osakaInfoData.instagramUrl} onChange={e => setOsakaInfoData({ ...osakaInfoData, instagramUrl: e.target.value })} placeholder="https://instagram.com/..." />
                             </div>
                             <div className="pt-4">
                                 <button disabled={saving} className="blue-glow-btn w-full py-4 text-xs">

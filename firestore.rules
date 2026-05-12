@@ -68,11 +68,12 @@ service cloud.firestore {
     // --- OsakaInfo Validation ---
     
     function isValidOsakaInfo(data) {
-      return data.keys().hasAll(['title', 'desc', 'tag', 'img', 'createdAt']) &&
+      return data.keys().hasAll(['title', 'desc', 'tag', 'img', 'instagramUrl', 'createdAt']) &&
              data.title is string && data.title.size() <= 500 &&
              data.desc is string && data.desc.size() <= 10000 &&
              data.tag is string && data.tag.size() <= 100 &&
              data.img is string && data.img.size() <= 1000000 &&
+             data.instagramUrl is string && data.instagramUrl.size() <= 2000 &&
              data.createdAt is timestamp;
     }
 
@@ -111,7 +112,7 @@ service cloud.firestore {
     match /osakaInfo/{infoId} {
       allow read: if true;
       allow create: if isAdmin() && isValidOsakaInfo(incoming()) && incoming().createdAt == request.time;
-      allow update: if isAdmin() && isValidOsakaInfo(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'desc', 'tag', 'img', 'updatedAt']) && (incoming().updatedAt == request.time || !('updatedAt' in incoming()));
+      allow update: if isAdmin() && isValidOsakaInfo(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'desc', 'tag', 'img', 'instagramUrl', 'updatedAt']) && (incoming().updatedAt == request.time || !('updatedAt' in incoming()));
       allow delete: if isAdmin();
     }
 
