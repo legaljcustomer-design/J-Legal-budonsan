@@ -17,9 +17,10 @@ import {
 import { auth, signInWithGoogle, db } from '../lib/firebase';
 import { firebaseService } from '../services/firebaseService';
 import { Property } from '../types';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { doc, setDoc } from 'firebase/firestore';
 import { compressImage } from '../lib/imageUtils';
+import { AnimatePresence } from 'motion/react';
 
 function ImageUpload({ 
     label, 
@@ -100,6 +101,23 @@ export default function Admin() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAdminLocally, setIsAdminLocally] = useState<boolean | null>(null);
   const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
+  const [showRedirectWarning, setShowRedirectWarning] = useState(false);
+
+  useEffect(() => {
+    // Check if we are in AI Studio environment
+    const isAiStudio = 
+      window.location.hostname.includes('ais-dev-') || 
+      window.location.hostname.includes('ais-pre-') ||
+      window.location.hostname === 'localhost';
+
+    if (!isAiStudio) {
+      setShowRedirectWarning(true);
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+    }
+  }, [navigate]);
 
   // Form States
   const [formData, setFormData] = useState({
@@ -355,6 +373,33 @@ export default function Admin() {
     setIsAdding(true);
   };
   
+  if (showRedirectWarning) {
+    return (
+      <div className="min-h-screen bg-luxury-black flex items-center justify-center p-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-zinc-900 border border-white/10 p-10 rounded-3xl max-w-sm"
+        >
+          <AlertCircle size={48} className="text-red-500 mx-auto mb-6" />
+          <h2 className="text-2xl font-bold mb-4 tracking-tight">접근 권한이 없습니다</h2>
+          <p className="text-zinc-500 text-sm leading-relaxed mb-8">
+            이 페이지는 관리자 전용입니다.<br />
+            잠시 후 메인 화면으로 이동합니다.
+          </p>
+          <div className="w-12 h-1 bg-white/10 mx-auto rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ x: "-100%" }}
+              animate={{ x: "0%" }}
+              transition={{ duration: 2, ease: "linear" }}
+              className="h-full bg-electric-blue"
+            />
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (isAuthChecking) {
     return (
       <div className="min-h-screen bg-luxury-black flex items-center justify-center">
