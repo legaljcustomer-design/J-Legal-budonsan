@@ -451,12 +451,12 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 className="flex gap-6 w-max"
                 animate={{ x: ["-50%", "0%"] }}
                 transition={{
-                  duration: reviews.length * 10,
+                  duration: reviews.length * 13.33,
                   repeat: Infinity,
                   ease: "linear",
                 }}
               >
-                {[...reviews, ...reviews, ...reviews, ...reviews].map((review, idx) => (
+                {[...reviews, ...reviews].map((review, idx) => (
                   <div
                     key={`${review.id}-${idx}`}
                     className="min-w-[280px] md:min-w-[320px] flex-shrink-0"
@@ -517,7 +517,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             <motion.div 
               animate={{ x: ["-50%", "0%"] }}
               transition={{ 
-                duration: 40, 
+                duration: (osakaInfos.length > 0 ? osakaInfos.length : 3) * 13.33, 
                 ease: "linear", 
                 repeat: Infinity 
               }}
