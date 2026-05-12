@@ -49,6 +49,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   const [consultationCount, setConsultationCount] = useState(134);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [selectedReviewImage, setSelectedReviewImage] = useState<string | null>(null);
 
   const [settings, setSettings] = useState({
     heroTitle: '오사카 최고의 매물을 찾으시나요?',
@@ -446,7 +447,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               animate={{ x: ["0%", "-50%"] }}
               transition={{
                 x: {
-                  duration: reviews.length * 8,
+                  duration: reviews.length * 6,
                   repeat: Infinity,
                   ease: "linear",
                 },
@@ -456,14 +457,20 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 <div
                   key={`${review.id}-${idx}`}
                   className="min-w-[280px] md:min-w-[320px] flex-shrink-0"
+                  onClick={() => setSelectedReviewImage(review.image)}
                 >
                   <div className="flex flex-col group cursor-pointer transition-all max-w-[280px] mx-auto">
-                    <div className="aspect-[3/2] rounded-lg overflow-hidden mb-4 bg-zinc-100 shadow-lg border border-zinc-100">
+                    <div className="aspect-[3/2] rounded-lg overflow-hidden mb-4 bg-zinc-100 shadow-lg border border-zinc-100 relative">
                       <img 
                         src={review.image} 
                         alt={review.title} 
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="bg-white/20 backdrop-blur-md rounded-full p-3 text-white border border-white/30">
+                          <Search size={20} />
+                        </div>
+                      </div>
                     </div>
                     <div className="text-center">
                       <div className="text-[14px] font-bold text-zinc-800 mb-0.5">{review.title}</div>
@@ -761,6 +768,39 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           </span>
         </motion.a>
       </div>
+
+      {/* Review Image Modal */}
+      <AnimatePresence>
+        {selectedReviewImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedReviewImage(null)}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 md:p-10 cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-full max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setSelectedReviewImage(null)}
+                className="absolute -top-12 right-0 text-white hover:text-electric-blue transition-colors p-2"
+              >
+                <X size={32} />
+              </button>
+              <img 
+                src={selectedReviewImage} 
+                alt="Full review" 
+                className="max-w-full max-h-[85vh] object-contain rounded-lg border border-white/10 shadow-2xl"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
