@@ -55,6 +55,27 @@ service cloud.firestore {
              (!('updatedAt' in data) || data.updatedAt is timestamp || data.updatedAt == null);
     }
 
+    // --- Review Validation ---
+    
+    function isValidReview(data) {
+      return data.keys().hasAll(['image', 'title', 'subtitle', 'createdAt']) &&
+             data.image is string && data.image.size() <= 2000 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.subtitle is string && data.subtitle.size() <= 200 &&
+             data.createdAt is timestamp;
+    }
+
+    // --- OsakaInfo Validation ---
+    
+    function isValidOsakaInfo(data) {
+      return data.keys().hasAll(['title', 'desc', 'tag', 'img', 'createdAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.desc is string && data.desc.size() <= 2000 &&
+             data.tag is string && data.tag.size() <= 50 &&
+             data.img is string && data.img.size() <= 2000 &&
+             data.createdAt is timestamp;
+    }
+
     // --- Collections ---
 
     match /properties/{propertyId} {
@@ -82,12 +103,16 @@ service cloud.firestore {
 
     match /reviews/{reviewId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isAdmin() && isValidReview(incoming()) && incoming().createdAt == request.time;
+      allow update: if isAdmin() && isValidReview(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['image', 'title', 'subtitle', 'updatedAt']) && (incoming().updatedAt == request.time || !('updatedAt' in incoming()));
+      allow delete: if isAdmin();
     }
 
     match /osakaInfo/{infoId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isAdmin() && isValidOsakaInfo(incoming()) && incoming().createdAt == request.time;
+      allow update: if isAdmin() && isValidOsakaInfo(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'desc', 'tag', 'img', 'updatedAt']) && (incoming().updatedAt == request.time || !('updatedAt' in incoming()));
+      allow delete: if isAdmin();
     }
 
     match /settings/{docId} {
