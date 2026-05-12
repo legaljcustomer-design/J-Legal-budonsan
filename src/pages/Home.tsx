@@ -513,66 +513,95 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {(osakaInfos.length > 0 ? osakaInfos : [
-              {
-                title: "일본 거주 초기 설정 가이드",
-                desc: "주소지 등록부터 건강보험 가입까지, 정착의 첫걸음을 도와드립니다.",
-                tag: "생활 정보",
-                img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2694&auto=format&fit=crop",
-                instagramUrl: settings.youtubeUrl
-              },
-              {
-                title: "수도/가스/전기 신청 방법",
-                desc: "이사 후 가장 먼저 해야 할 라이프라인 신청 절차를 정리했습니다.",
-                tag: "인프라",
-                img: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2670&auto=format&fit=crop",
-                instagramUrl: settings.youtubeUrl
-              },
-              {
-                title: "오사카 지하철 노선 완전 정복",
-                desc: "미도스지선, 다니마치선 등 주요 노선 이용 팁과 교통카드 정보.",
-                tag: "교통",
-                img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=2670&auto=format&fit=crop",
-                instagramUrl: settings.youtubeUrl
-              }
-            ]).map((info, idx) => (
-              <motion.div
-                key={info.id || idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="bg-white rounded-3xl overflow-hidden border border-zinc-100 shadow-sm hover:shadow-xl transition-all group flex flex-col h-full"
-              >
-                <div className="relative h-64 bg-zinc-100 overflow-hidden flex items-center justify-center p-4">
-                  <img 
-                    src={info.img} 
-                    alt={info.title} 
-                    className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-105"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold text-zinc-900 border border-white/20">
-                      {info.tag}
-                    </span>
+          <div className="relative overflow-hidden group/slider">
+            <motion.div 
+              animate={{ x: ["-50%", "0%"] }}
+              transition={{ 
+                duration: 40, 
+                ease: "linear", 
+                repeat: Infinity 
+              }}
+              whileHover={{ animationPlayState: "paused" }} // Optional: pause on hover
+              className="flex gap-8 w-max"
+            >
+              {[...(osakaInfos.length > 0 ? osakaInfos : [
+                {
+                  title: "일본 거주 초기 설정 가이드",
+                  desc: "주소지 등록부터 건강보험 가입까지, 정착의 첫걸음을 도와드립니다.",
+                  tag: "생활 정보",
+                  img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2694&auto=format&fit=crop",
+                  instagramUrl: settings.youtubeUrl
+                },
+                {
+                  title: "수도/가스/전기 신청 방법",
+                  desc: "이사 후 가장 먼저 해야 할 라이프라인 신청 절차를 정리했습니다.",
+                  tag: "인프라",
+                  img: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2670&auto=format&fit=crop",
+                  instagramUrl: settings.youtubeUrl
+                },
+                {
+                  title: "오사카 지하철 노선 완전 정복",
+                  desc: "미도스지선, 다니마치선 등 주요 노선 이용 팁과 교통카드 정보.",
+                  tag: "교통",
+                  img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=2670&auto=format&fit=crop",
+                  instagramUrl: settings.youtubeUrl
+                }
+              ]), ...(osakaInfos.length > 0 ? osakaInfos : [
+                {
+                  title: "일본 거주 초기 설정 가이드",
+                  desc: "주소지 등록부터 건강보험 가입까지, 정착의 첫걸음을 도와드립니다.",
+                  tag: "생활 정보",
+                  img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2694&auto=format&fit=crop",
+                  instagramUrl: settings.youtubeUrl
+                },
+                {
+                  title: "수도/가스/전기 신청 방법",
+                  desc: "이사 후 가장 먼저 해야 할 라이프라인 신청 절차를 정리했습니다.",
+                  tag: "인프라",
+                  img: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2670&auto=format&fit=crop",
+                  instagramUrl: settings.youtubeUrl
+                },
+                {
+                  title: "오사카 지하철 노선 완전 정복",
+                  desc: "미도스지선, 다니마치선 등 주요 노선 이용 팁과 교통카드 정보.",
+                  tag: "교통",
+                  img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=2670&auto=format&fit=crop",
+                  instagramUrl: settings.youtubeUrl
+                }
+              ])].map((info, idx) => (
+                <div
+                  key={info.id ? `${info.id}-${idx}` : idx}
+                  className="bg-white rounded-3xl overflow-hidden border border-zinc-100 shadow-sm hover:shadow-xl transition-all group/card flex flex-col h-full w-[350px] flex-none"
+                >
+                  <div className="relative h-64 bg-zinc-100 overflow-hidden flex items-center justify-center p-4">
+                    <img 
+                      src={info.img} 
+                      alt={info.title} 
+                      className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover/card:scale-105"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold text-zinc-900 border border-white/20">
+                        {info.tag}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-8 flex flex-col flex-grow items-center text-center">
+                    <h3 className="text-xl font-bold text-zinc-900 mb-6 group-hover/card:text-electric-blue transition-colors">
+                      {info.title}
+                    </h3>
+                    <a 
+                      href={info.instagramUrl || settings.youtubeUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="flex items-center gap-2 text-xs font-bold text-zinc-900 group/btn mt-auto px-6 py-3 border border-zinc-200 rounded-full hover:bg-zinc-50 transition-all"
+                    >
+                      자세히 보기 <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                    </a>
                   </div>
                 </div>
-                <div className="p-8 flex flex-col flex-grow items-center text-center">
-                  <h3 className="text-xl font-bold text-zinc-900 mb-6 group-hover:text-electric-blue transition-colors">
-                    {info.title}
-                  </h3>
-                  <a 
-                    href={info.instagramUrl || settings.youtubeUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="flex items-center gap-2 text-xs font-bold text-zinc-900 group/btn mt-auto px-6 py-3 border border-zinc-200 rounded-full hover:bg-zinc-50 transition-all"
-                  >
-                    자세히 보기 <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                  </a>
-                </div>
-              </motion.div>
-            ))}
+              ))}
+            </motion.div>
           </div>
 
           <div className="mt-16 flex justify-center">
