@@ -442,44 +442,46 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           </div>
           
           <div className="relative overflow-hidden py-10">
-            <motion.div 
-              className="flex gap-6 w-max"
-              animate={{ x: ["0%", "-50%"] }}
-              transition={{
-                x: {
-                  duration: reviews.length * 6,
+            {reviews.length > 0 && (
+              <motion.div 
+                key={`marquee-${reviews.length}`}
+                className="flex gap-6 w-max"
+                animate={{ x: ["-50%", "0%"] }}
+                transition={{
+                  duration: reviews.length * 10,
                   repeat: Infinity,
                   ease: "linear",
-                },
-              }}
-            >
-              {[...reviews, ...reviews, ...reviews, ...reviews].map((review, idx) => (
-                <div
-                  key={`${review.id}-${idx}`}
-                  className="min-w-[280px] md:min-w-[320px] flex-shrink-0"
-                  onClick={() => setSelectedReviewImage(review.image)}
-                >
-                  <div className="flex flex-col group cursor-pointer transition-all max-w-[280px] mx-auto">
-                    <div className="aspect-[3/2] rounded-lg overflow-hidden mb-4 bg-zinc-100 shadow-lg border border-zinc-100 relative">
-                      <img 
-                        src={review.image} 
-                        alt={review.title} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="bg-white/20 backdrop-blur-md rounded-full p-3 text-white border border-white/30">
-                          <Search size={20} />
+                }}
+              >
+                {[...reviews, ...reviews, ...reviews, ...reviews].map((review, idx) => (
+                  <div
+                    key={`${review.id}-${idx}`}
+                    className="min-w-[280px] md:min-w-[320px] flex-shrink-0"
+                    onClick={() => setSelectedReviewImage(review.image)}
+                  >
+                    <div className="flex flex-col group cursor-pointer transition-all max-w-[280px] mx-auto">
+                      <div className="aspect-[3/2] rounded-lg overflow-hidden mb-4 bg-zinc-100 shadow-lg border border-zinc-100 relative">
+                        <img 
+                          src={review.image} 
+                          alt={review.title} 
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="bg-white/20 backdrop-blur-md rounded-full p-3 text-white border border-white/30">
+                            <Search size={20} />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[14px] font-bold text-zinc-800 mb-0.5">{review.title}</div>
-                      <div className="text-[12px] text-zinc-400 font-medium">{review.subtitle}</div>
+                      <div className="text-center">
+                        <div className="text-[14px] font-bold text-zinc-800 mb-0.5">{review.title}</div>
+                        <div className="text-[12px] text-zinc-400 font-medium">{review.subtitle}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </motion.div>
+                ))}
+              </motion.div>
+            )}
           </div>
 
           <div className="mt-20 flex justify-center">
