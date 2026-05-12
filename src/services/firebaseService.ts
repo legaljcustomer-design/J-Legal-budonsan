@@ -165,5 +165,18 @@ export const firebaseService = {
     } catch (error) {
        handleFirestoreError(error, OperationType.DELETE, `reviews/${id}`);
     }
+  },
+
+  async updateReview(id: string, data: any): Promise<void> {
+    if (!auth.currentUser) throw new Error("Auth required");
+    try {
+      const docRef = doc(db, 'reviews', id);
+      await updateDoc(docRef, {
+        ...data,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+       handleFirestoreError(error, OperationType.UPDATE, `reviews/${id}`);
+    }
   }
 };

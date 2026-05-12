@@ -272,10 +272,16 @@ export default function Admin() {
     e.preventDefault();
     setSaving(true);
     try {
-      await firebaseService.addReview(reviewData);
-      const freshData = await firebaseService.getReviews();
-      setReviews(freshData);
+      if (editingId) {
+        await firebaseService.updateReview(editingId, reviewData);
+        setReviews(reviews.map(r => r.id === editingId ? { ...r, ...reviewData } : r));
+      } else {
+        await firebaseService.addReview(reviewData);
+        const freshData = await firebaseService.getReviews();
+        setReviews(freshData);
+      }
       setIsAdding(false);
+      setEditingId(null);
       setReviewData({ title: '', subtitle: '', image: '' });
     } catch (error) {
       console.error(error);
@@ -336,6 +342,16 @@ export default function Admin() {
       isFeatured: prop.isFeatured,
     });
     setEditingId(prop.id);
+    setIsAdding(true);
+  };
+
+  const handleEditReview = (review: any) => {
+    setReviewData({
+      title: review.title,
+      subtitle: review.subtitle,
+      image: review.image,
+    });
+    setEditingId(review.id);
     setIsAdding(true);
   };
   
@@ -456,7 +472,7 @@ export default function Admin() {
                 />
                 <h1 className="text-2xl font-bold tracking-tighter uppercase">Admin Management</h1>
             </div>
-            <div className="tag-blue lowercase tracking-normal px-2 py-0.5">signed in as {auth.currentUser.email}</div>
+            <div className="tag-blue lowercase tracking-normal px-2 py-0.5">signed in as {auth.currentUser?.email}</div>
           </div>
           <div className="flex gap-4">
             <button onClick={handleLogout} className="bg-white/5 border border-white/10 p-3 rounded-full hover:bg-white/10 transition-all">
@@ -651,7 +667,7 @@ export default function Admin() {
                 ) : (
                     <>
                         <div className="text-electric-blue text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Review Form</div>
-                        <h2 className="text-3xl font-bold mb-10 tracking-tighter">신규 후기 등록</h2>
+                        <h2 className="text-3xl font-bold mb-10 tracking-tighter">{editingId ? '후기 정보 수정' : '신규 후기 등록'}</h2>
                         <form onSubmit={handleSaveReview} className="space-y-6">
                             <ImageUpload 
                                 label="후기 이미지" 
@@ -670,7 +686,7 @@ export default function Admin() {
                             <div className="pt-4">
                                 <button disabled={saving} className="blue-glow-btn w-full py-4 text-xs">
                                     {saving ? <Loader2 className="animate-spin inline mr-2" size={16} /> : <Save size={16} className="inline mr-2" />}
-                                    후기 등록 완료
+                                    {editingId ? '후기 수정 완료' : '후기 등록 완료'}
                                 </button>
                             </div>
                         </form>
@@ -753,8 +769,11 @@ export default function Admin() {
                     <div key={review.id} className="bg-zinc-900 border border-white/5 rounded-2xl overflow-hidden group hover:border-white/10 transition-all">
                         <div className="aspect-[3/2] relative">
                             <img src={review.image} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <button onClick={() => handleDeleteReview(review.id)} className="p-3 bg-red-500 rounded-full text-white shadow-xl">
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                <button onClick={() => handleEditReview(review)} className="p-3 bg-white/10 rounded-full text-white shadow-xl hover:bg-electric-blue transition-colors">
+                                    <Edit3 size={20} />
+                                </button>
+                                <button onClick={() => handleDeleteReview(review.id)} className="p-3 bg-red-500 rounded-full text-white shadow-xl hover:bg-red-600 transition-colors">
                                     <Trash2 size={20} />
                                 </button>
                             </div>
