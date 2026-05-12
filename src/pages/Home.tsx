@@ -424,9 +424,9 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   href="https://pf.kakao.com/_TSvgxb" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="px-16 py-4 rounded-full border border-zinc-600 text-zinc-700 text-sm font-medium hover:bg-zinc-50 transition-all flex items-center gap-2"
+                  className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
                 >
-                  매물 더보기 <ChevronRight size={14} className="mt-0.5" />
+                  매물 더보기 <ChevronRight size={14} />
                 </motion.a>
               </div>
             </div>
@@ -494,9 +494,9 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 href="https://www.google.com/search?q=%E8%A1%8C%E6%94%BF%E6%9B%B8%E5%A3%ABLegal_+J+office&sca_esv=af156264804c4707&sxsrf=ANbL-n6PTulvYeQ1YmirvQ-AV53HXGehcg%3A1778469294606&source=hp&ei=rkkBaozKIvLl2roPuaHh4A8&iflsig=AFdpzrgAAAAAagFXvl2eaiNjN4cYlTHs8BEqS-87wUCg&ved=0ahUKEwiM2a-0orCUAxXyslYBHblQGPwQ4dUDCCA&uact=5&oq=%E8%A1%8C%E6%94%BF%E6%9B%B8%E5%A3%ABLegal_+J+office&gs_lp=Egdnd3Mtd2l6IhvooYzmlL_mm7jlo6tMZWdhbF8gSiBvZmZpY2UyBBAAGB4yBRAAGO8FSOMCUABYAHAAeACQAQCYAX-gAX-qAQMwLjG4AQPIAQD4AQL4AQGYAgGgAoMBmAMAkgcDMC4xoAeDAbIHAzAuMbgHgwHCBwMwLjHIBwKACAE&sclient=gws-wiz#lrd=0x6000e7000e280a5f:0x9dd4ad1e88341176,1,,,," 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="px-16 py-4 rounded-full border border-zinc-600 text-zinc-700 text-sm font-medium hover:bg-zinc-50 transition-all flex items-center gap-2"
+                className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
             >
-              후기 더보기 <ChevronRight size={14} className="mt-0.5" />
+              후기 더보기 <ChevronRight size={14} />
             </motion.a>
           </div>
         </div>
