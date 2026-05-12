@@ -117,7 +117,7 @@ export default function PropertyDetail() {
                <div className="p-6 text-center group transition-colors hover:bg-orange-50/30">
                   <p className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-3">所在地 / 最寄駅</p>
                   <p className="text-[13px] font-bold text-zinc-900 mb-1">{property.location}</p>
-                  <p className="text-xs font-medium text-zinc-400">데이터를 불러오는 중...</p>
+                  <p className="text-xs font-medium text-zinc-400">{property.nearestStation || '-'}</p>
                </div>
                <div className="p-6 text-center group transition-colors hover:bg-red-50/30">
                   <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3">間取り / 面積</p>
@@ -247,12 +247,11 @@ export default function PropertyDetail() {
             </div>
           </div>
 
-          {/* Bottom Sections: Features, Description, and Video */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             
-            <div className="space-y-8">
+            <div className="flex flex-col h-full">
               {property.mansionFeatures && (
-                <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-xl">
+                <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-xl h-full">
                   <h2 className="text-xl font-bold mb-6 border-b border-zinc-100 pb-4 flex items-center gap-2">
                     <Building2 size={20} className="text-blue-600" />
                     맨션 특징
@@ -262,21 +261,14 @@ export default function PropertyDetail() {
                   </p>
                 </div>
               )}
-
-              <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-xl">
-                <h2 className="text-xl font-bold mb-6 border-b border-zinc-100 pb-4">상세 설명</h2>
-                <p className="text-zinc-600 leading-relaxed whitespace-pre-wrap font-medium text-sm">
-                  {property.description}
-                </p>
-              </div>
             </div>
 
-            <div className="space-y-8">
+            <div className="flex flex-col h-full">
               {/* YouTube Video Section */}
               {property.youtubeUrl && (
-                <div className="bg-zinc-950 p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group">
+                <div className="bg-zinc-950 p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group h-full">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-[60px] -translate-y-12 translate-x-12" />
-                  <div className="relative z-10 flex flex-col items-center">
+                  <div className="relative z-10 flex flex-col items-center h-full justify-center">
                      <div className="flex items-center gap-3 mb-8">
                        <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/20">
                          <Youtube size={20} className="text-white" />
@@ -305,8 +297,6 @@ export default function PropertyDetail() {
                 </div>
               )}
             </div>
-
-
           </div>
         </div>
       </main>

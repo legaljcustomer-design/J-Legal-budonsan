@@ -29,7 +29,7 @@ export const SAMPLE_PROPERTIES: Property[] = [
     price: '¥188,000円 / 월',
     location: '나니와구 난바',
     type: 'OneRoom',
-    description: '난바 생활권에서 50㎡대 1LDK를 찾으신다면, 실제로 보셨을 때 “생각보다 훨씬 넓다”는 느낌이 먼저 들 만한 맨션입니다. 톤 다운된 실내 분위기와 깔끔한 마감이 잘 잡혀 있어서, 혼자 사셔도 여유롭고 2인 입주로도 충분히 검토해보실 만했습니다.',
+    description: '외국인 계약 상담이 가능한 맨션으로, 한국인 고객님께도 소개드리기 좋은 물건입니다.\n\n욕실·화장실 분리, 독립 세면대, 실내 세탁기 공간, 욕실 건조기 등 생활 편의 설비가 잘 갖춰져 있으며,\n오토록·방범카메라·모니터 인터폰·택배박스까지 있어 보안성과 편리함도 뛰어납니다.\n\n또한 반려동물 상담이 가능하고, 엘리베이터와 자전거·오토바이 주차장도 마련되어 있어 다양한 고객층께 추천드릴 수 있습니다.\n\n※ 실시간 공실상황은 반드시 연락주시기 바랍니다!',
     images: [
       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=800',
       'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=2070&auto=format&fit=crop'

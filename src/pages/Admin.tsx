@@ -511,6 +511,8 @@ export default function Admin() {
                                 nearestStation: '',
                                 floorPlan: '',
                                 area: '',
+                                youtubeUrl: '',
+                                mansionFeatures: '',
                                 isFeatured: false,
                             });
                         } else {
