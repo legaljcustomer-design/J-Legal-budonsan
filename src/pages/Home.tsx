@@ -48,7 +48,6 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   const [loading, setLoading] = useState(true);
   const [consultationCount, setConsultationCount] = useState(134);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [reviewIndex, setReviewIndex] = useState(0);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
 
   const [settings, setSettings] = useState({
@@ -76,13 +75,6 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   }, []);
 
   const getVisibleItems = () => {
-    if (windowWidth >= 1024) return 3;
-    if (windowWidth >= 768) return 2;
-    return 1;
-  };
-
-  const getVisibleReviews = () => {
-    if (windowWidth >= 1280) return 4;
     if (windowWidth >= 1024) return 3;
     if (windowWidth >= 768) return 2;
     return 1;
@@ -145,14 +137,6 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     return () => clearInterval(interval);
   }, [loading, properties.length, windowWidth]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const visibleItems = getVisibleReviews();
-      setReviewIndex((prev) => (prev >= reviews.length - visibleItems ? 0 : prev + 1));
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [windowWidth, reviews.length]);
-
   const nextSlide = () => {
     const visibleItems = getVisibleItems();
     setCurrentIndex((prev) => (prev >= properties.length - visibleItems ? 0 : prev + 1));
@@ -161,16 +145,6 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   const prevSlide = () => {
     const visibleItems = getVisibleItems();
     setCurrentIndex((prev) => (prev === 0 ? Math.max(0, properties.length - visibleItems) : prev - 1));
-  };
-
-  const nextReview = () => {
-    const visibleItems = getVisibleReviews();
-    setReviewIndex((prev) => (prev >= reviews.length - visibleItems ? 0 : prev + 1));
-  };
-
-  const prevReview = () => {
-    const visibleItems = getVisibleReviews();
-    setReviewIndex((prev) => (prev === 0 ? Math.max(0, reviews.length - visibleItems) : prev - 1));
   };
 
   return (
@@ -466,49 +440,39 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </p>
           </div>
           
-          <div className="relative group/reviews">
-            {/* Navigation Buttons */}
-            <button 
-              onClick={prevReview}
-              className="absolute left-4 top-[140px] -translate-y-1/2 z-20 text-white/70 hover:text-white transition-colors"
+          <div className="relative overflow-hidden py-10">
+            <motion.div 
+              className="flex gap-6 w-max"
+              animate={{ x: ["0%", "-50%"] }}
+              transition={{
+                x: {
+                  duration: reviews.length * 8,
+                  repeat: Infinity,
+                  ease: "linear",
+                },
+              }}
             >
-              <ChevronLeft size={48} strokeWidth={1} />
-            </button>
-            <button 
-              onClick={nextReview}
-              className="absolute right-4 top-[140px] -translate-y-1/2 z-20 text-white/70 hover:text-white transition-colors"
-            >
-              <ChevronRight size={48} strokeWidth={1} />
-            </button>
-
-            <div className="overflow-hidden px-4">
-              <motion.div 
-                className="flex gap-6"
-                animate={{ x: `calc(-${reviewIndex * (100 / getVisibleReviews())}% - ${reviewIndex * (24 / getVisibleReviews())}px)` }}
-                transition={{ type: "spring", stiffness: 150, damping: 25 }}
-              >
-                {reviews.map((review) => (
-                  <motion.div
-                    key={review.id}
-                    className="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] xl:min-w-[calc(25%-18px)] flex-shrink-0"
-                  >
-                    <div className="flex flex-col group cursor-pointer transition-all max-w-[280px] mx-auto">
-                      <div className="aspect-[3/2] rounded-lg overflow-hidden mb-4 bg-zinc-100">
-                        <img 
-                          src={review.image} 
-                          alt={review.title} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                      </div>
-                      <div className="text-center">
-                        <div className="text-[14px] font-bold text-zinc-800 mb-0.5">{review.title}</div>
-                        <div className="text-[12px] text-zinc-400 font-medium">{review.subtitle}</div>
-                      </div>
+              {[...reviews, ...reviews, ...reviews, ...reviews].map((review, idx) => (
+                <div
+                  key={`${review.id}-${idx}`}
+                  className="min-w-[280px] md:min-w-[320px] flex-shrink-0"
+                >
+                  <div className="flex flex-col group cursor-pointer transition-all max-w-[280px] mx-auto">
+                    <div className="aspect-[3/2] rounded-lg overflow-hidden mb-4 bg-zinc-100 shadow-lg border border-zinc-100">
+                      <img 
+                        src={review.image} 
+                        alt={review.title} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
                     </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
+                    <div className="text-center">
+                      <div className="text-[14px] font-bold text-zinc-800 mb-0.5">{review.title}</div>
+                      <div className="text-[12px] text-zinc-400 font-medium">{review.subtitle}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
           </div>
 
           <div className="mt-20 flex justify-center">
