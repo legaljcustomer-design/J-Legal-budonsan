@@ -117,18 +117,18 @@ export default function PropertyDetail() {
                <div className="p-6 text-center group transition-colors hover:bg-orange-50/30">
                   <p className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-3">所在地 / 最寄駅</p>
                   <p className="text-[13px] font-bold text-zinc-900 mb-1">{property.location}</p>
-                  <p className="text-xs font-medium text-zinc-500">{property.nearestStation || '상담 문의'}</p>
+                  <p className="text-xs font-medium text-zinc-400">데이터를 불러오는 중...</p>
                </div>
                <div className="p-6 text-center group transition-colors hover:bg-red-50/30">
                   <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3">間取り / 面積</p>
-                  <p className="text-[13px] font-bold text-zinc-900 mb-1">{property.floorPlan || '상담 문의'}</p>
-                  <p className="text-xs font-medium text-zinc-500">{property.area || '실측 중'}</p>
+                  <p className="text-[13px] font-bold text-zinc-900 mb-1">{property.floorPlan || '-'}</p>
+                  <p className="text-xs font-medium text-zinc-400">{property.area || '실측대기'}</p>
                </div>
-               <div className="p-6 text-center group transition-colors hover:bg-emerald-50/30">
+                <div className="p-6 text-center group transition-colors hover:bg-emerald-50/30">
                   <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3">物件種別 / 建築年数</p>
                   <p className="text-[13px] font-bold text-zinc-900 mb-1">{property.type === 'OneRoom' ? '원룸/투룸' : property.type === 'Family' ? '타워맨션' : property.type === 'Office' ? '상가/사무실' : '수익형 부동산'}</p>
-                  <p className="text-xs font-medium text-zinc-500">{property.completionYear || '상담 문의'}</p>
-               </div>
+                  <p className="text-xs font-medium text-zinc-400">{property.completionYear || '-'}</p>
+                </div>
             </div>
           </div>
 
@@ -138,7 +138,7 @@ export default function PropertyDetail() {
             <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-200 shadow-2xl flex flex-col h-full justify-between">
               <div className="flex flex-col gap-6 flex-1">
                  {/* Main Image - Controlled Height for balance */}
-                 <div className="relative aspect-square md:aspect-[4/3] max-h-[500px] overflow-hidden rounded-2xl shadow-lg bg-zinc-200">
+                 <div className="relative aspect-square max-h-[550px] overflow-hidden rounded-2xl shadow-lg bg-zinc-200">
                     <motion.div 
                       key={activeImageIndex}
                       initial={{ opacity: 0 }}
@@ -181,11 +181,12 @@ export default function PropertyDetail() {
             </div>
 
             {/* Right Card: Property Info & Contact */}
-            <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-2xl relative overflow-hidden flex flex-col h-full justify-between">
+            <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-200 shadow-2xl relative overflow-hidden flex flex-col h-full">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full blur-[60px]" />
                 
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-4">
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
                     <span className="px-3 py-1 bg-blue-600 text-[10px] font-bold text-white uppercase tracking-widest rounded-full">
                       {property.type}
                     </span>
@@ -194,15 +195,15 @@ export default function PropertyDetail() {
                     </span>
                   </div>
 
-                  <h1 className="text-3xl md:text-4xl font-bold tracking-tighter mb-6 leading-tight text-zinc-900">
+                  <h1 className="text-xl md:text-2xl font-bold tracking-tighter mb-3 leading-tight text-zinc-900">
                     {property.title}
                   </h1>
 
-                  <div className="text-4xl font-black text-blue-600 tracking-tighter mb-8 bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50 inline-block w-full text-center whitespace-pre-wrap">
-                    {property.price}
+                  <div className="text-2xl font-black text-blue-600 tracking-tighter mb-4 bg-blue-50/30 p-4 rounded-xl border border-blue-100/20 inline-block w-full text-center whitespace-pre-wrap">
+                    {property.price.replace(/상담\s*문의/g, '').trim()}
                   </div>
 
-                  <div className="space-y-4 mb-10 border-t border-zinc-100 pt-8">
+                  <div className="space-y-3 mb-4 border-t border-zinc-100 pt-5 text-zinc-700">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-zinc-500 font-bold uppercase tracking-widest">담당자</span>
                       <span className="font-bold text-zinc-900">오사카J부동산 전담팀</span>
@@ -242,6 +243,7 @@ export default function PropertyDetail() {
                     </a>
                   </div>
                 </div>
+              </div>
             </div>
           </div>
 

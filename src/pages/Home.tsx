@@ -378,7 +378,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                           transition={{ delay: index * 0.1, duration: 0.5 }}
                           className="card-luxury group h-full"
                         >
-                          <div className="relative h-48 overflow-hidden bg-zinc-800">
+                          <div className="relative h-52 overflow-hidden bg-zinc-800">
                             <img 
                               src={prop.images[0] || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
                               alt={prop.title}
@@ -396,22 +396,23 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                             )}
                           </div>
                           
-                          <div className="p-8 bg-white flex flex-col h-[calc(100%-12rem)]">
-                            <div className="mb-6">
-                              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-2">{prop.location}</p>
-                              <h3 className="text-xl font-bold tracking-tight text-zinc-900 leading-snug h-[3.5rem] line-clamp-2">
+                          <div className="p-5 bg-white flex flex-col h-[calc(100%-13rem)]">
+                            <div className="mb-2">
+                              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-1">{prop.location}</p>
+                              <h3 className="text-base font-bold tracking-tight text-zinc-900 leading-tight line-clamp-2">
                                 {prop.title}
                               </h3>
                             </div>
 
-                            <div className="flex justify-between items-end mb-6 pt-4 border-t border-zinc-100">
-                              <span className="text-2xl font-bold tracking-tighter text-zinc-900 whitespace-pre-wrap leading-tight">{prop.price}</span>
-                              <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-medium">상담 문의</span>
+                            <div className="flex flex-col mb-1 pt-3 border-t border-zinc-100">
+                              <span className="text-2xl font-black tracking-tighter text-zinc-900 whitespace-pre-wrap leading-tight">
+                                {prop.price.replace(/상담\s*문의/g, '').trim()}
+                              </span>
                             </div>
                             
-                            <div className="flex gap-2 mb-8 flex-wrap">
+                            <div className="flex gap-1.5 mb-2 flex-wrap">
                               {prop.features.slice(0, 3).map((f, i) => (
-                                  <span key={i} className="px-2 py-1 bg-slate-50 rounded text-[10px] text-zinc-500 font-bold border border-zinc-100 uppercase tracking-tighter">
+                                  <span key={i} className="px-1.5 py-0.5 bg-slate-50 rounded text-[9px] text-zinc-400 font-bold border border-zinc-50 uppercase tracking-tighter">
                                       {f}
                                   </span>
                               ))}

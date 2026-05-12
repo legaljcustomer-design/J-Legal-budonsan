@@ -174,18 +174,18 @@ export default function NambaGuide() {
                   BEST RECOMENDED
                 </div>
               </div>
-              <div className="p-8">
-                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-2">Chuo-ku, Namba</p>
-                <h3 className="text-xl font-bold mb-4 tracking-tight">난바역 도보 7분 초프리미엄 1LDK+S</h3>
-                <div className="flex justify-between items-center border-t border-zinc-100 pt-6 mb-6">
-                  <p className="text-2xl font-bold tracking-tighter leading-tight text-right">¥188,000円 / 월<br /><span className="text-sm font-medium opacity-60">(관리비 별도)</span></p>
+              <div className="p-5">
+                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-1">Chuo-ku, Namba</p>
+                <h3 className="text-lg font-bold mb-3 tracking-tight">난바역 도보 7분 초프리미엄 1LDK+S</h3>
+                <div className="flex justify-between items-center border-t border-zinc-100 pt-4 mb-4">
+                  <p className="text-xl font-bold tracking-tighter leading-tight text-zinc-900">¥188,000 / 월 <span className="text-[10px] font-medium opacity-50">(관리비 별도)</span></p>
                   <a 
                     href="https://pf.kakao.com/_TSvgxb" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                    className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-md"
                   >
-                    <MessageCircle size={20} className="text-[#3C1E1E]" />
+                    <MessageCircle size={18} className="text-[#3C1E1E]" />
                   </a>
                 </div>
                 <Link 
@@ -208,18 +208,18 @@ export default function NambaGuide() {
                    MODERN TOWER
                 </div>
               </div>
-              <div className="p-8">
-                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-2">Chuo-ku, Dotonbori</p>
-                <h3 className="text-xl font-bold mb-4 tracking-tight">도톤보리 리버뷰 펜트하우스</h3>
-                <div className="flex justify-between items-center border-t border-zinc-100 pt-6 mb-6">
-                  <p className="text-2xl font-bold tracking-tighter">¥2,300,000 / 월</p>
+              <div className="p-5">
+                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-1">Chuo-ku, Dotonbori</p>
+                <h3 className="text-lg font-bold mb-3 tracking-tight">도톤보리 리버뷰 펜트하우스</h3>
+                <div className="flex justify-between items-center border-t border-zinc-100 pt-4 mb-4">
+                  <p className="text-xl font-bold tracking-tighter text-zinc-900">¥2,300,000 / 월</p>
                   <a 
                     href="https://pf.kakao.com/_TSvgxb" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                    className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-md"
                   >
-                    <MessageCircle size={20} className="text-[#3C1E1E]" />
+                    <MessageCircle size={18} className="text-[#3C1E1E]" />
                   </a>
                 </div>
                 <Link 
