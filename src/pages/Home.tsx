@@ -45,6 +45,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [properties, setProperties] = useState<Property[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [osakaInfos, setOsakaInfos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [consultationCount, setConsultationCount] = useState(134);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -58,7 +59,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     kakaoId: 'oosakaj',
     lineId: '@845immxy',
     instagramId: 'oosaka_j',
-    youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=fyvJj_s_8MHE-l7W'
+    youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=Fvg2lwsd-_UGjgSx'
   });
 
   useEffect(() => {
@@ -116,13 +117,15 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [propData, reviewData] = await Promise.all([
+      const [propData, reviewData, osakaData] = await Promise.all([
         firebaseService.getProperties(activeCategory),
-        firebaseService.getReviews()
+        firebaseService.getReviews(),
+        firebaseService.getOsakaInfos()
       ]);
       
       setProperties(propData);
       setReviews(reviewData);
+      setOsakaInfos(osakaData);
       setLoading(false);
       setCurrentIndex(0);
     };
@@ -494,6 +497,94 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 className="px-16 py-4 rounded-full border border-zinc-600 text-zinc-700 text-sm font-medium hover:bg-zinc-50 transition-all flex items-center gap-2"
             >
               후기 더보기 <ChevronRight size={14} className="mt-0.5" />
+            </motion.a>
+          </div>
+        </div>
+      </section>
+
+      {/* Osaka Info Section */}
+      <section id="osaka-info" className="py-24 px-10 bg-zinc-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-16">
+            <div className="text-electric-blue text-xs font-bold uppercase tracking-[0.3em] mb-4">Osaka Guide</div>
+            <h2 className="text-4xl font-bold tracking-tight text-zinc-900 mb-4">오사카 정보</h2>
+            <p className="text-lg text-zinc-500 font-medium tracking-tight">
+              오사카 생활에 도움이 되는 정보
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {(osakaInfos.length > 0 ? osakaInfos : [
+              {
+                title: "일본 거주 초기 설정 가이드",
+                desc: "주소지 등록부터 건강보험 가입까지, 정착의 첫걸음을 도와드립니다.",
+                tag: "생활 정보",
+                img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2694&auto=format&fit=crop"
+              },
+              {
+                title: "수도/가스/전기 신청 방법",
+                desc: "이사 후 가장 먼저 해야 할 라이프라인 신청 절차를 정리했습니다.",
+                tag: "인프라",
+                img: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2670&auto=format&fit=crop"
+              },
+              {
+                title: "오사카 지하철 노선 완전 정복",
+                desc: "미도스지선, 다니마치선 등 주요 노선 이용 팁과 교통카드 정보.",
+                tag: "교통",
+                img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=2670&auto=format&fit=crop"
+              }
+            ]).map((info, idx) => (
+              <motion.div
+                key={info.id || idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className="bg-white rounded-3xl overflow-hidden border border-zinc-100 shadow-sm hover:shadow-xl transition-all group flex flex-col h-full"
+              >
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src={info.img} 
+                    alt={info.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute top-4 left-4">
+                    <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold text-zinc-900 border border-white/20">
+                      {info.tag}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-8 flex flex-col flex-grow">
+                  <h3 className="text-xl font-bold text-zinc-900 mb-4 group-hover:text-electric-blue transition-colors">
+                    {info.title}
+                  </h3>
+                  <p className="text-zinc-500 text-sm leading-relaxed mb-6 flex-grow">
+                    {info.desc}
+                  </p>
+                  <a 
+                    href={settings.youtubeUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center gap-2 text-xs font-bold text-zinc-900 group/btn mt-auto"
+                  >
+                    자세히 보기 <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                  </a>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-16 flex justify-center">
+            <motion.a
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                href={settings.youtubeUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
+            >
+              더 많은 정보 보기 <ExternalLink size={14} />
             </motion.a>
           </div>
         </div>

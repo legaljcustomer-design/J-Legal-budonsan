@@ -89,9 +89,10 @@ function ImageUpload({
 
 export default function Admin() {
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'properties' | 'reviews' | 'settings'>('properties');
+  const [activeTab, setActiveTab] = useState<'properties' | 'reviews' | 'settings' | 'osakaInfo'>('properties');
   const [properties, setProperties] = useState<Property[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [osakaInfos, setOsakaInfos] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -144,6 +145,13 @@ export default function Admin() {
     image: '',
   });
 
+  const [osakaInfoData, setOsakaInfoData] = useState({
+    title: '',
+    desc: '',
+    tag: '',
+    img: '',
+  });
+
   const [settingsData, setSettingsData] = useState({
     heroTitle: '오사카 최고의 매물을 찾으시나요?',
     heroSubtitle: '난바, 우메다 등 주요 거점의 신축 맨션부터 수익형 빌딩까지, 오사카 거주 한국인 및 투자자를 위한 맞춤형 럭셔리 컨설팅을 제공합니다.',
@@ -151,7 +159,7 @@ export default function Admin() {
     kakaoId: 'oosakaj',
     lineId: '@845immxy',
     instagramId: 'oosaka_j',
-    youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=fyvJj_s_8MHE-l7W'
+    youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=Fvg2lwsd-_UGjgSx'
   });
 
   useEffect(() => {
@@ -194,6 +202,9 @@ export default function Admin() {
         } else if (activeTab === 'reviews') {
           const data = await firebaseService.getReviews();
           setReviews(data);
+        } else if (activeTab === 'osakaInfo') {
+          const data = await firebaseService.getOsakaInfos();
+          setOsakaInfos(data);
         } else if (activeTab === 'settings') {
           const data = await firebaseService.getSettings();
           if (data) setSettingsData(prev => ({ ...prev, ...data }));
@@ -308,6 +319,28 @@ export default function Admin() {
     }
   };
 
+  const handleSaveOsakaInfo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      if (editingId) {
+        await firebaseService.updateOsakaInfo(editingId, osakaInfoData);
+        setOsakaInfos(osakaInfos.map(i => i.id === editingId ? { ...i, ...osakaInfoData } : i));
+      } else {
+        await firebaseService.addOsakaInfo(osakaInfoData);
+        const freshData = await firebaseService.getOsakaInfos();
+        setOsakaInfos(freshData);
+      }
+      setIsAdding(false);
+      setEditingId(null);
+      setOsakaInfoData({ title: '', desc: '', tag: '', img: '' });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -336,6 +369,16 @@ export default function Admin() {
     try {
       await firebaseService.deleteReview(id);
       setReviews(reviews.filter(r => r.id !== id));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteOsakaInfo = async (id: string) => {
+    if (!window.confirm("정보를 삭제하시겠습니까?")) return;
+    try {
+      await firebaseService.deleteOsakaInfo(id);
+      setOsakaInfos(osakaInfos.filter(i => i.id !== id));
     } catch (error) {
       console.error(error);
     }
@@ -370,6 +413,17 @@ export default function Admin() {
       image: review.image,
     });
     setEditingId(review.id);
+    setIsAdding(true);
+  };
+
+  const handleEditOsakaInfo = (info: any) => {
+    setOsakaInfoData({
+      title: info.title,
+      desc: info.desc,
+      tag: info.tag,
+      img: info.img,
+    });
+    setEditingId(info.id);
     setIsAdding(true);
   };
   
@@ -543,6 +597,13 @@ export default function Admin() {
                 {activeTab === 'reviews' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-electric-blue shadow-[0_0_10px_#2563eb]" />}
             </button>
             <button 
+                onClick={() => setActiveTab('osakaInfo')}
+                className={`pb-4 px-2 text-xs font-bold tracking-widest transition-all relative ${activeTab === 'osakaInfo' ? 'text-electric-blue' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+                오사카 정보 관리
+                {activeTab === 'osakaInfo' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-electric-blue shadow-[0_0_10px_#2563eb]" />}
+            </button>
+            <button 
                 onClick={() => setActiveTab('settings')}
                 className={`pb-4 px-2 text-xs font-bold tracking-widest transition-all relative ${activeTab === 'settings' ? 'text-electric-blue' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
@@ -576,14 +637,16 @@ export default function Admin() {
                                 mansionFeatures: '',
                                 isFeatured: false,
                             });
-                        } else {
+                        } else if (activeTab === 'reviews') {
                             setReviewData({ title: '', subtitle: '', image: '' });
+                        } else if (activeTab === 'osakaInfo') {
+                            setOsakaInfoData({ title: '', desc: '', tag: '', img: '' });
                         }
                     }}
                     className="blue-glow-btn px-8 py-3 text-[10px]"
                 >
                     <Plus size={14} className="inline mr-2" /> 
-                    {activeTab === 'properties' ? '신규 매물 등록' : '신규 후기 등록'}
+                    {activeTab === 'properties' ? '신규 매물 등록' : activeTab === 'reviews' ? '신규 후기 등록' : '신규 정보 등록'}
                 </button>
             </div>
         )}
@@ -709,7 +772,7 @@ export default function Admin() {
                             </div>
                         </form>
                     </>
-                ) : (
+                ) : activeTab === 'reviews' ? (
                     <>
                         <div className="text-electric-blue text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Review Form</div>
                         <h2 className="text-3xl font-bold mb-10 tracking-tighter">{editingId ? '후기 정보 수정' : '신규 후기 등록'}</h2>
@@ -732,6 +795,37 @@ export default function Admin() {
                                 <button disabled={saving} className="blue-glow-btn w-full py-4 text-xs">
                                     {saving ? <Loader2 className="animate-spin inline mr-2" size={16} /> : <Save size={16} className="inline mr-2" />}
                                     {editingId ? '후기 수정 완료' : '후기 등록 완료'}
+                                </button>
+                            </div>
+                        </form>
+                    </>
+                ) : (
+                    <>
+                        <div className="text-electric-blue text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Osaka Info Form</div>
+                        <h2 className="text-3xl font-bold mb-10 tracking-tighter">{editingId ? '정보 수정' : '신규 정보 등록'}</h2>
+                        <form onSubmit={handleSaveOsakaInfo} className="space-y-6">
+                            <ImageUpload 
+                                label="정보 이미지" 
+                                value={osakaInfoData.img} 
+                                onChange={(val) => setOsakaInfoData({ ...osakaInfoData, img: val })}
+                                onRemove={() => setOsakaInfoData({ ...osakaInfoData, img: '' })}
+                            />
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">제목</label>
+                                <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={osakaInfoData.title} onChange={e => setOsakaInfoData({ ...osakaInfoData, title: e.target.value })} placeholder="예: 일본 거주 초기 설정 가이드" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">설명</label>
+                                <textarea required rows={3} className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all resize-none" value={osakaInfoData.desc} onChange={e => setOsakaInfoData({ ...osakaInfoData, desc: e.target.value })} placeholder="정보에 대한 짧은 설명을 입력하세요." />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold">태그 (카테고리)</label>
+                                <input required className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 focus:border-electric-blue/50 outline-none transition-all" value={osakaInfoData.tag} onChange={e => setOsakaInfoData({ ...osakaInfoData, tag: e.target.value })} placeholder="예: 생활 정보 / 교통 / 인프라" />
+                            </div>
+                            <div className="pt-4">
+                                <button disabled={saving} className="blue-glow-btn w-full py-4 text-xs">
+                                    {saving ? <Loader2 className="animate-spin inline mr-2" size={16} /> : <Save size={16} className="inline mr-2" />}
+                                    저장하기
                                 </button>
                             </div>
                         </form>
@@ -826,6 +920,34 @@ export default function Admin() {
                         <div className="p-4">
                             <div className="font-bold text-sm mb-1">{review.title}</div>
                             <div className="text-zinc-500 text-xs">{review.subtitle}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
+
+        {!loading && activeTab === 'osakaInfo' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {osakaInfos.length === 0 && (
+                    <div className="col-span-full text-center py-20 text-zinc-500 text-sm">등록된 정보가 없습니다.</div>
+                )}
+                {osakaInfos.map(info => (
+                    <div key={info.id} className="bg-zinc-900 border border-white/5 rounded-2xl overflow-hidden group hover:border-white/10 transition-all">
+                        <div className="aspect-[3/2] relative">
+                            <img src={info.img} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                <button onClick={() => handleEditOsakaInfo(info)} className="p-3 bg-white/10 rounded-full text-white shadow-xl hover:bg-electric-blue transition-colors">
+                                    <Edit3 size={20} />
+                                </button>
+                                <button onClick={() => handleDeleteOsakaInfo(info.id)} className="p-3 bg-red-500 rounded-full text-white shadow-xl hover:bg-red-600 transition-colors">
+                                    <Trash2 size={20} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-4">
+                            <div className="text-[8px] text-electric-blue font-bold uppercase tracking-widest mb-1">{info.tag}</div>
+                            <div className="font-bold text-sm mb-1">{info.title}</div>
+                            <div className="text-zinc-500 text-xs line-clamp-2">{info.desc}</div>
                         </div>
                     </div>
                 ))}

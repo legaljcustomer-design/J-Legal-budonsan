@@ -178,5 +178,54 @@ export const firebaseService = {
     } catch (error) {
        handleFirestoreError(error, OperationType.UPDATE, `reviews/${id}`);
     }
+  },
+
+  // Osaka Info
+  async getOsakaInfos(): Promise<any[]> {
+    const path = 'osakaInfo';
+    try {
+      const q = query(collection(db, 'osakaInfo'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+       handleFirestoreError(error, OperationType.LIST, path);
+       return [];
+    }
+  },
+
+  async addOsakaInfo(data: any): Promise<string> {
+    if (!auth.currentUser) throw new Error("Auth required");
+    try {
+      const docRef = await addDoc(collection(db, 'osakaInfo'), {
+        ...data,
+        createdAt: serverTimestamp()
+      });
+      return docRef.id;
+    } catch (error) {
+       handleFirestoreError(error, OperationType.CREATE, 'osakaInfo');
+       return "";
+    }
+  },
+
+  async updateOsakaInfo(id: string, data: any): Promise<void> {
+    if (!auth.currentUser) throw new Error("Auth required");
+    try {
+      const docRef = doc(db, 'osakaInfo', id);
+      await updateDoc(docRef, {
+        ...data,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+       handleFirestoreError(error, OperationType.UPDATE, `osakaInfo/${id}`);
+    }
+  },
+
+  async deleteOsakaInfo(id: string): Promise<void> {
+    if (!auth.currentUser) throw new Error("Auth required");
+    try {
+      await deleteDoc(doc(db, 'osakaInfo', id));
+    } catch (error) {
+       handleFirestoreError(error, OperationType.DELETE, `osakaInfo/${id}`);
+    }
   }
 };
