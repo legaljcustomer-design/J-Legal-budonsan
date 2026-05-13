@@ -5,6 +5,7 @@ import {
   ArrowLeft, 
   MapPin, 
   Share2, 
+  ChevronLeft,
   ChevronRight, 
   MessageCircle, 
   MessageSquare,
@@ -15,12 +16,14 @@ import {
   Calendar,
   User,
   Building2,
-  Edit3
+  Edit3,
+  X
 } from 'lucide-react';
 import { Property } from '../types';
 import { firebaseService } from '../services/firebaseService';
 import { auth } from '../lib/firebase';
 import { SAMPLE_PROPERTIES } from '../constants';
+import { AnimatePresence } from 'motion/react';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +31,21 @@ export default function PropertyDetail() {
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  const nextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (property) {
+      setActiveImageIndex((prev) => (prev + 1) % property.images.length);
+    }
+  };
+
+  const prevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (property) {
+      setActiveImageIndex((prev) => (prev - 1 + property.images.length) % property.images.length);
+    }
+  };
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -62,6 +80,18 @@ export default function PropertyDetail() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isZoomed) {
+        if (e.key === 'ArrowRight') nextImage();
+        if (e.key === 'ArrowLeft') prevImage();
+        if (e.key === 'Escape') setIsZoomed(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isZoomed, property]);
 
   if (loading) {
     return (
@@ -138,12 +168,13 @@ export default function PropertyDetail() {
             <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-200 shadow-2xl flex flex-col h-full justify-between">
               <div className="flex flex-col gap-6 flex-1">
                  {/* Main Image - Controlled Height for balance */}
-                 <div className="relative aspect-square max-h-[550px] overflow-hidden rounded-2xl shadow-lg bg-zinc-200">
+                 <div className="relative aspect-square max-h-[550px] overflow-hidden rounded-2xl shadow-lg bg-zinc-200 group/main cursor-zoom-in">
                     <motion.div 
                       key={activeImageIndex}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="w-full h-full"
+                      onClick={() => setIsZoomed(true)}
                     >
                       <img 
                         src={property.images[activeImageIndex] || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
@@ -152,7 +183,25 @@ export default function PropertyDetail() {
                         referrerPolicy="no-referrer"
                       />
                       <div className="absolute bottom-6 left-6 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-white text-[10px] font-bold tracking-widest uppercase">
-                         Exterior View
+                         {activeImageIndex + 1} / {property.images.length}
+                      </div>
+
+                      {/* Navigation Overlays */}
+                      <div className="absolute inset-0 flex items-center justify-between px-6 opacity-0 group-hover/main:opacity-100 transition-opacity">
+                         <button 
+                          onClick={prevImage}
+                          className="w-14 h-14 flex items-center justify-center bg-white/95 backdrop-blur-md rounded-full shadow-2xl hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 active:scale-95"
+                          title="이전 이미지"
+                         >
+                           <ChevronLeft size={28} />
+                         </button>
+                         <button 
+                          onClick={nextImage}
+                          className="w-14 h-14 flex items-center justify-center bg-white/95 backdrop-blur-md rounded-full shadow-2xl hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 active:scale-95"
+                          title="다음 이미지"
+                         >
+                           <ChevronRight size={28} />
+                         </button>
                       </div>
                     </motion.div>
                  </div>
@@ -177,7 +226,7 @@ export default function PropertyDetail() {
                     ))}
                  </div>
               </div>
-              <p className="mt-4 text-[10px] text-zinc-400 font-bold uppercase tracking-widest text-center">이미지를 클릭하여 확대보기 (준비중)</p>
+              <p className="mt-4 text-[10px] text-zinc-400 font-bold uppercase tracking-widest text-center">이미지를 클릭하여 전체 화면으로 보기</p>
             </div>
 
             {/* Right Card: Property Info & Contact */}
@@ -300,6 +349,60 @@ export default function PropertyDetail() {
           </div>
         </div>
       </main>
+
+      {/* Zoom Modal */}
+      <AnimatePresence>
+        {isZoomed && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-zinc-950 flex flex-col items-center justify-center p-4 md:p-10"
+            onClick={() => setIsZoomed(false)}
+          >
+            <button 
+              onClick={() => setIsZoomed(false)}
+              className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[110]"
+            >
+              <X size={24} />
+            </button>
+
+            <div className="relative w-full h-full flex items-center justify-center pt-10 pb-20">
+              <motion.img 
+                key={activeImageIndex}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                src={property.images[activeImageIndex]} 
+                alt={property.title}
+                className="max-w-full max-h-full object-contain select-none"
+                referrerPolicy="no-referrer"
+                onClick={(e) => e.stopPropagation()}
+              />
+
+              {/* Zoomed Navigation */}
+              <button 
+                onClick={prevImage}
+                className="absolute left-4 md:left-10 w-16 h-16 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                title="이전 이미지"
+              >
+                <ChevronLeft size={32} />
+              </button>
+              <button 
+                onClick={nextImage}
+                className="absolute right-4 md:right-10 w-16 h-16 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                title="다음 이미지"
+              >
+                <ChevronRight size={32} />
+              </button>
+            </div>
+
+            {/* Image Counter */}
+            <div className="absolute bottom-10 text-white/50 text-xs font-bold tracking-widest uppercase">
+              {activeImageIndex + 1} / {property.images.length}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Footer */}
       <footer className="bg-white py-12 px-6 md:px-10 border-t border-zinc-100 text-center">

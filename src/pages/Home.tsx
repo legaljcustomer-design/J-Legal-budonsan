@@ -117,17 +117,22 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [propData, reviewData, osakaData] = await Promise.all([
-        firebaseService.getProperties(activeCategory),
-        firebaseService.getReviews(),
-        firebaseService.getOsakaInfos()
-      ]);
-      
-      setProperties(propData);
-      setReviews(reviewData);
-      setOsakaInfos(osakaData);
-      setLoading(false);
-      setCurrentIndex(0);
+      try {
+        const [propData, reviewData, osakaData] = await Promise.all([
+          firebaseService.getProperties(activeCategory),
+          firebaseService.getReviews(),
+          firebaseService.getOsakaInfos()
+        ]);
+        
+        setProperties(propData);
+        setReviews(reviewData);
+        setOsakaInfos(osakaData);
+        setCurrentIndex(0);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [activeCategory]);
