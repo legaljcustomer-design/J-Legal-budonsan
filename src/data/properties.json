@@ -8,10 +8,16 @@
     "description": "오사카 최고의 스카이라운지를 자랑하는 우메다 중심의 초고층 타워 맨션입니다. 최고급 자재와 최첨단 보안 시스템을 갖추고 있습니다. 우메다의 화려한 야경을 침실에서 감상하실 수 있으며, 입주민 전용 스카이라운지 및 피트니스 센터 이용이 가능합니다.",
     "images": [
       "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2070&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1600566753190-17f0bb2a6c3e?q=80&w=2070&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop"
     ],
-    "features": ["초고층 뷰", "컨시어지 서비스", "전용 주차장", "피트니스 센터", "24시간 보안", "스카이라운지"],
+    "features": [
+      "초고층 뷰",
+      "컨시어지 서비스",
+      "전용 주차장",
+      "피트니스 센터",
+      "24시간 보안",
+      "스카이라운지"
+    ],
     "construction": "철근 콘크리트(RC)",
     "completionYear": "2022년 5월",
     "nearestStation": "JR 우메다역 도보 5분",
@@ -32,7 +38,12 @@
       "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=800",
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=2070&auto=format&fit=crop"
     ],
-    "features": ["역세권", "신축", "오토록", "택배함"],
+    "features": [
+      "역세권",
+      "신축",
+      "오토록",
+      "택배함"
+    ],
     "construction": "철골조(S)",
     "completionYear": "2023년 12월",
     "nearestStation": "난바역 도보 7분",
@@ -55,7 +66,11 @@
       "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2048&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1497366216548-3752e00edcba4?q=80&w=2070&auto=format&fit=crop"
     ],
-    "features": ["고수익", "핵심 상권", "내진 설계"],
+    "features": [
+      "고수익",
+      "핵심 상권",
+      "내진 설계"
+    ],
     "construction": "철골 철근 콘크리트(SRC)",
     "completionYear": "2015년 3월",
     "nearestStation": "신사이바시역 도보 3분",
