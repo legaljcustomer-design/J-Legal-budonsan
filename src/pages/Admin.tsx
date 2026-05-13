@@ -121,6 +121,16 @@ export default function Admin() {
     return JSON.stringify(originalData) !== JSON.stringify(pendingData);
   };
 
+  // Handle Save Status Timeout
+  useEffect(() => {
+    if (saveStatus) {
+      const timer = setTimeout(() => {
+        setSaveStatus(null);
+      }, 8000); // 8 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [saveStatus]);
+
   const saveToGitHub = async () => {
     if (!ghService || !pendingData) return;
     setIsSaving(true);
@@ -151,10 +161,19 @@ export default function Admin() {
       await ghService.commitMultipleFiles(filesToUpdate, 'chore: update site content via admin CMS');
       
       setOriginalData(JSON.parse(JSON.stringify(pendingData)));
-      setSaveStatus({ success: true, message: 'GitHub 반영 완료! 배포가 곧 시작됩니다.' });
+      setSaveStatus({ 
+        success: true, 
+        message: 'GitHub 반영이 완료되었습니다! Cloudflare Pages 배포 후 실제 홈페이지에 반영됩니다. (반영까지 1~2분 정도 소요될 수 있습니다.)' 
+      });
     } catch (err: any) {
       console.error(err);
-      setSaveStatus({ success: false, message: `저장 실패: ${err.message}` });
+      let errorMsg = `저장 실패: ${err.message}`;
+      if (err.message.includes('401')) {
+        errorMsg = '저장 실패: GitHub 토큰이 만료되었거나 권한(Contents: Write)이 부족합니다.';
+      } else if (err.message.includes('409')) {
+        errorMsg = '저장 실패: GitHub 저장소에 병렬적인 변경이 발생했습니다. 새로고침 후 다시 시도해 주세요.';
+      }
+      setSaveStatus({ success: false, message: errorMsg });
     } finally {
       setIsSaving(false);
     }
@@ -688,35 +707,47 @@ export default function Admin() {
 
       {/* Main Content Area */}
       <main className="flex-grow min-h-screen bg-zinc-950 p-8 md:p-16 relative">
-        {/* Global Save Action Floating Bar */}
-        {hasChanges() && (
-          <motion.div 
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="fixed bottom-10 inset-x-0 md:left-auto md:right-10 flex flex-col items-end gap-3 z-40 p-6 pointer-events-none md:p-0"
-          >
-             {saveStatus && (
-               <motion.div 
+        {/* Global Save Action Floating Bar & Notifications */}
+        <div className="fixed bottom-10 inset-x-0 md:left-auto md:right-10 flex flex-col items-end gap-3 z-40 p-6 pointer-events-none md:p-0">
+          <AnimatePresence>
+            {saveStatus && (
+              <motion.div 
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 20, opacity: 0 }}
-                className={`px-6 py-4 rounded-2xl border flex items-center gap-3 text-xs font-bold pointer-events-auto shadow-2xl ${saveStatus.success ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}
-               >
-                 {saveStatus.success ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                 {saveStatus.message}
-                 <button onClick={() => setSaveStatus(null)} className="ml-2 hover:opacity-50"><X size={14} /></button>
-               </motion.div>
-             )}
-             <button 
-               onClick={saveToGitHub}
-               disabled={isSaving}
-               className="pointer-events-auto blue-glow-btn flex items-center gap-3 px-10 py-5 text-sm shadow-2xl scale-110 md:scale-100"
-             >
-               {isSaving ? <Loader2 className="animate-spin" size={18} /> : <CloudUpload size={18} />}
-               {isSaving ? '저장 중...' : '사이트에 반영하기'}
-             </button>
-          </motion.div>
-        )}
+                className={`px-6 py-4 rounded-2xl border flex items-center gap-3 text-[11px] font-black uppercase tracking-widest pointer-events-auto shadow-2xl backdrop-blur-md max-w-sm ${
+                  saveStatus.success 
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+                    : 'bg-red-500/10 border-red-500/20 text-red-500'
+                }`}
+              >
+                {saveStatus.success ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                <div className="flex-grow">
+                  <p className="leading-tight">{saveStatus.message}</p>
+                </div>
+                <button onClick={() => setSaveStatus(null)} className="p-1 hover:bg-white/5 rounded-md transition-all"><X size={14} /></button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {hasChanges() && (
+            <motion.button 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              onClick={saveToGitHub}
+              disabled={isSaving}
+              className={`pointer-events-auto flex items-center gap-3 px-10 py-5 text-sm shadow-2xl scale-110 md:scale-100 rounded-2xl font-black uppercase tracking-widest transition-all ${
+                isSaving 
+                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' 
+                  : 'bg-electric-blue text-white hover:scale-105 active:scale-95 shadow-electric-blue/20'
+              }`}
+            >
+              {isSaving ? <Loader2 className="animate-spin" size={18} /> : <CloudUpload size={18} />}
+              {isSaving ? 'GitHub 반영 중...' : '사이트에 반영하기'}
+            </motion.button>
+          )}
+        </div>
 
         <div className="max-w-5xl mx-auto">
           {activeTab === 'overview' && (
