@@ -115,26 +115,35 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const [propData, reviewData, osakaData] = await Promise.all([
-          firebaseService.getProperties(activeCategory),
+        const [reviewData, osakaData] = await Promise.all([
           firebaseService.getReviews(),
           firebaseService.getOsakaInfos()
         ]);
-        
-        setProperties(propData);
         setReviews(reviewData);
         setOsakaInfos(osakaData);
-        setCurrentIndex(0);
       } catch (error) {
-        console.error("Error fetching initial data:", error);
+        console.error("Error fetching initial static data:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchInitialData();
+  }, []);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const propData = await firebaseService.getProperties(activeCategory);
+        setProperties(propData);
+        setCurrentIndex(0);
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+      }
+    };
+    fetchProperties();
   }, [activeCategory]);
 
   useEffect(() => {
