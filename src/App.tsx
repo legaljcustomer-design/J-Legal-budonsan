@@ -26,8 +26,7 @@ export default function App() {
         <Route path="/recruitment" element={<Recruitment />} />
         <Route path="/namba-guide" element={<NambaGuide />} />
         <Route path="/property/:id" element={<PropertyDetail />} />
-        {/* Admin route disabled in static mode */}
-        <Route path="/admin" element={<Navigate to="/" replace />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

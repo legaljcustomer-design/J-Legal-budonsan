@@ -1,8 +1,10 @@
 import { Property } from '../types';
-import { PROPERTIES } from '../data/properties';
-import { REVIEWS } from '../data/reviews';
-import { OSAKA_INFOS } from '../data/osakaInfo';
-import { SITE_SETTINGS } from '../data/siteConfig';
+import _PROPERTIES from '../data/properties.json';
+import REVIEWS from '../data/reviews.json';
+import OSAKA_INFOS from '../data/osakaInfo.json';
+import SITE_SETTINGS from '../data/siteConfig.json';
+
+const PROPERTIES = _PROPERTIES as Property[];
 
 export const firebaseService = {
   // Check if current user is admin (Always false in static mode, or mock check)
