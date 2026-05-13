@@ -89,10 +89,10 @@ export class GithubService {
   }
 
   /**
-   * 여러 파일을 하나의 커밋으로 묶어 저장 (Stage 2 핵심 기능)
+   * 여러 파일(텍스트, 이미지)을 하나의 커밋으로 묶어 저장 및 삭제 (Stage 3 확장)
    */
   async commitMultipleFiles(
-    files: { path: string; content: string }[],
+    files: { path: string; content?: string; base64?: string; delete?: boolean }[],
     message: string,
     branch: string = 'main'
   ): Promise<boolean> {
@@ -115,15 +115,48 @@ export class GithubService {
       const commitData = await commitResponse.json();
       const baseTreeSha = commitData.tree.sha;
 
-      // 3. 새로운 Tree 생성 
-      // (기존 tree를 베이스로 하여 변경된 파일들만 덮어쓰기)
-      const treeItems = files.map(file => ({
-        path: file.path,
-        mode: '100644', // 일반 파일
-        type: 'blob',
-        content: file.content
+      // 3. 바이너리 파일 처리 (이미지 등을 Blob으로 생성)
+      const treeItems = await Promise.all(files.map(async (file) => {
+        if (file.delete) {
+          // 삭제 요청: sha를 null로 설정하여 트리에서 제거
+          return {
+            path: file.path,
+            mode: '100644',
+            type: 'blob',
+            sha: null
+          };
+        }
+
+        if (file.base64) {
+          // 바이너리 데이터 (이미지) -> Blob API 사용
+          const blobResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/blobs`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              content: file.base64,
+              encoding: 'base64'
+            })
+          });
+          if (!blobResponse.ok) throw new Error(`Failed to create blob for ${file.path}`);
+          const blobData = await blobResponse.json();
+          return {
+            path: file.path,
+            mode: '100644',
+            type: 'blob',
+            sha: blobData.sha
+          };
+        }
+
+        // 일반 텍스트 데이터 (JSON)
+        return {
+          path: file.path,
+          mode: '100644',
+          type: 'blob',
+          content: file.content
+        };
       }));
 
+      // 4. 새로운 Tree 생성
       const newTreeResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/trees`, {
         method: 'POST',
         headers,
@@ -132,11 +165,14 @@ export class GithubService {
           tree: treeItems
         })
       });
-      if (!newTreeResponse.ok) throw new Error('Failed to create new tree');
+      if (!newTreeResponse.ok) {
+         const err = await newTreeResponse.json();
+         throw new Error(`Failed to create tree: ${err.message}`);
+      }
       const newTreeData = await newTreeResponse.json();
       const newTreeSha = newTreeData.sha;
 
-      // 4. 새로운 Commit 생성
+      // 5. 새로운 Commit 생성
       const newCommitResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/commits`, {
         method: 'POST',
         headers,
@@ -150,13 +186,13 @@ export class GithubService {
       const newCommitData = await newCommitResponse.json();
       const newCommitSha = newCommitData.sha;
 
-      // 5. Ref 업데이트 (브랜치 포인터를 새 커밋으로 이동)
+      // 6. Ref 업데이트
       const updateRefResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/refs/heads/${branch}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({
           sha: newCommitSha,
-          force: false // 비강제 업데이트 (충돌 시 실패하도록 함)
+          force: false
         })
       });
 

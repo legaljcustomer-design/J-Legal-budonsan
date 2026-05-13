@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createGithubService, GithubService } from '../services/githubService';
+import ImageManager from '../components/admin/ImageManager';
 
 interface StorageData {
   token: string;
@@ -59,6 +60,10 @@ export default function Admin() {
   const [editingItem, setEditingItem] = useState<{ type: string; item: any; index: number } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ success?: boolean; message?: string } | null>(null);
+
+  // New Image States for Stage 3
+  const [pendingImageFiles, setPendingImageFiles] = useState<{ path: string; base64: string }[]>([]);
+  const [deletedImagePaths, setDeletedImagePaths] = useState<string[]>([]);
 
   // Load from sessionStorage on mount
   useEffect(() => {
@@ -118,7 +123,9 @@ export default function Admin() {
 
   // CRUD Helpers
   const hasChanges = () => {
-    return JSON.stringify(originalData) !== JSON.stringify(pendingData);
+    const jsonChanged = JSON.stringify(originalData) !== JSON.stringify(pendingData);
+    const imagesChanged = pendingImageFiles.length > 0 || deletedImagePaths.length > 0;
+    return jsonChanged || imagesChanged;
   };
 
   // Handle Save Status Timeout
@@ -137,7 +144,8 @@ export default function Admin() {
     setSaveStatus(null);
     
     try {
-      const filesToUpdate = [];
+      // 1. JSON 파일 변경사항 수집
+      const filesToUpdate: { path: string; content?: string; base64?: string; delete?: boolean }[] = [];
       
       if (JSON.stringify(originalData.properties) !== JSON.stringify(pendingData.properties)) {
         filesToUpdate.push({ path: 'src/data/properties.json', content: JSON.stringify(pendingData.properties, null, 2) });
@@ -152,18 +160,33 @@ export default function Admin() {
         filesToUpdate.push({ path: 'src/data/siteConfig.json', content: JSON.stringify(pendingData.siteConfig, null, 2) });
       }
 
+      // 2. 새로운 이미지 파일 추가
+      pendingImageFiles.forEach(file => {
+        filesToUpdate.push({ path: file.path, base64: file.base64 });
+      });
+
+      // 3. 삭제 요청된 이미지 처리
+      deletedImagePaths.forEach(path => {
+        filesToUpdate.push({ path, delete: true });
+      });
+
       if (filesToUpdate.length === 0) {
          setSaveStatus({ success: true, message: '변경사항이 없습니다.' });
          setIsSaving(false);
          return;
       }
 
-      await ghService.commitMultipleFiles(filesToUpdate, 'chore: update site content via admin CMS');
+      // 4. 단일 커밋 실행
+      await ghService.commitMultipleFiles(filesToUpdate, 'chore: update site content and assets via admin CMS');
       
+      // 5. 성공 후 상태 동기화
       setOriginalData(JSON.parse(JSON.stringify(pendingData)));
+      setPendingImageFiles([]);
+      setDeletedImagePaths([]);
+      
       setSaveStatus({ 
         success: true, 
-        message: 'GitHub 반영이 완료되었습니다! Cloudflare Pages 배포 후 실제 홈페이지에 반영됩니다. (반영까지 1~2분 정도 소요될 수 있습니다.)' 
+        message: '이미지와 데이터 반영이 완료되었습니다! Cloudflare Pages 배포 후 공개 홈페이지에 반영됩니다. (1~2분 소요)' 
       });
     } catch (err: any) {
       console.error(err);
@@ -429,6 +452,31 @@ export default function Admin() {
       setEditingItem({ ...editingItem, item: { ...item, [key]: value } });
     };
 
+    const handleImageChange = (newUrls: string[], newFiles: { path: string; base64: string }[], deletedPaths: string[], type: string) => {
+      const isReview = type === 'review';
+      const isInfo = type === 'osakaInfo';
+      
+      const updatedItem = { ...item };
+      if (isReview) updatedItem.image = newUrls[0] || '';
+      else if (isInfo) updatedItem.img = newUrls[0] || '';
+      else updatedItem.images = newUrls;
+
+      setEditingItem({ ...editingItem, item: updatedItem });
+      
+      // Update pending image files state
+      setPendingImageFiles(prev => {
+        // Filter out any existing pending files for this specific ID/item to avoid duplicates or stale files
+        const filtered = prev.filter(f => !f.path.includes(`/${item.id}/`));
+        return [...filtered, ...newFiles];
+      });
+
+      // Update deleted image paths state
+      setDeletedImagePaths(prev => {
+        const combined = new Set([...prev, ...deletedPaths]);
+        return Array.from(combined);
+      });
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       const updatedPending = { ...pendingData };
@@ -458,100 +506,98 @@ export default function Admin() {
              <button onClick={() => setEditingItem(null)} className="p-2 hover:bg-white/5 rounded-lg transition-colors"><X size={20} /></button>
           </div>
           
-          <form id="modal-form" onSubmit={handleSubmit} className="p-8 overflow-y-auto flex-grow grid grid-cols-1 md:grid-cols-2 gap-8 custom-scrollbar">
+          <form id="modal-form" onSubmit={handleSubmit} className="p-8 overflow-y-auto flex-grow space-y-10 custom-scrollbar">
             {type === 'property' && (
-              <>
-                <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">매물 제목</label>
-                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+              <div className="space-y-8">
+                 <ImageManager 
+                  title="매물 이미지 관리"
+                  folderPath={`properties/${item.id}`}
+                  images={item.images || []}
+                  mode="multiple"
+                  onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'property')}
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="md:col-span-2">
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">매물 제목</label>
+                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가격</label>
+                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.price} onChange={e => handleFormChange('price', e.target.value)} placeholder="예: ¥188,000" required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">위치 (구/동)</label>
+                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.location} onChange={e => handleFormChange('location', e.target.value)} required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">타입</label>
+                    <select className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.type} onChange={e => handleFormChange('type', e.target.value)}>
+                      <option value="OneRoom">OneRoom</option>
+                      <option value="Family">Family</option>
+                      <option value="TwoRoom">TwoRoom</option>
+                      <option value="Investment">Investment</option>
+                      <option value="Office">Office</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가까운 역</label>
+                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.nearestStation} onChange={e => handleFormChange('nearestStation', e.target.value)} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">상세 설명</label>
+                    <textarea rows={6} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.description} onChange={e => handleFormChange('description', e.target.value)} />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가격</label>
-                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.price} onChange={e => handleFormChange('price', e.target.value)} placeholder="예: ¥188,000" required />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">위치 (구/동)</label>
-                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.location} onChange={e => handleFormChange('location', e.target.value)} required />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">타입</label>
-                  <select className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.type} onChange={e => handleFormChange('type', e.target.value)}>
-                    <option value="OneRoom">OneRoom</option>
-                    <option value="Family">Family</option>
-                    <option value="TwoRoom">TwoRoom</option>
-                    <option value="Investment">Investment</option>
-                    <option value="Office">Office</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가까운 역</label>
-                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.nearestStation} onChange={e => handleFormChange('nearestStation', e.target.value)} />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">상세 설명</label>
-                  <textarea rows={4} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm leading-relaxed" value={item.description} onChange={e => handleFormChange('description', e.target.value)} />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" className="hidden" checked={item.isFeatured} onChange={e => handleFormChange('isFeatured', e.target.checked)} />
-                    <div className={`w-5 h-5 rounded border ${item.isFeatured ? 'bg-amber-500 border-amber-500' : 'border-white/20'} flex items-center justify-center transition-all`}>
-                      {item.isFeatured && <Check size={14} className="text-white" />}
-                    </div>
-                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-amber-500 transition-colors">추천 매물로 설정 (featured)</span>
-                  </label>
-                </div>
-                <div className="md:col-span-2 p-6 bg-zinc-950 rounded-2xl border border-white/5">
-                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-4 flex items-center gap-2"><CloudUpload size={14} /> 미디어 및 링크 (Stage 3 업로드 예정)</p>
-                   <div className="space-y-4">
-                     <div>
-                       <label className="block text-[9px] uppercase font-bold text-zinc-600 mb-1">이미지 URL (엔터로 구분)</label>
-                       <textarea rows={3} className="w-full bg-white/5 border border-white/5 rounded-lg px-4 py-2 text-[11px] font-mono" value={item.images?.join('\n')} onChange={e => handleFormChange('images', e.target.value.split('\n'))} />
-                     </div>
-                     <div>
-                       <label className="block text-[9px] uppercase font-bold text-zinc-600 mb-1">유튜브 링크</label>
-                       <input className="w-full bg-white/5 border border-white/5 rounded-lg px-4 py-2 text-[11px]" value={item.youtubeUrl || ''} onChange={e => handleFormChange('youtubeUrl', e.target.value)} />
-                     </div>
-                   </div>
-                </div>
-              </>
+              </div>
             )}
 
             {type === 'review' && (
-              <>
-                 <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">리뷰 제목</label>
-                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+              <div className="space-y-8">
+                <ImageManager 
+                  title="후기 대표 이미지"
+                  folderPath={`reviews`}
+                  images={item.image ? [item.image] : []}
+                  mode="single"
+                  onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'review')}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <div className="md:col-span-2">
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">리뷰 제목</label>
+                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">작성자</label>
+                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.author} onChange={e => handleFormChange('author', e.target.value)} required />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">후기 내용</label>
+                    <textarea rows={6} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.content} onChange={e => handleFormChange('content', e.target.value)} required />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">작성자</label>
-                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.author} onChange={e => handleFormChange('author', e.target.value)} required />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">이미지 URL</label>
-                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm font-mono text-[11px]" value={item.image} onChange={e => handleFormChange('image', e.target.value)} />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">후기 내용</label>
-                  <textarea rows={4} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm leading-relaxed" value={item.content} onChange={e => handleFormChange('content', e.target.value)} required />
-                </div>
-              </>
+              </div>
             )}
 
             {type === 'osakaInfo' && (
-              <>
-                 <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">글 제목</label>
-                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+              <div className="space-y-8">
+                <ImageManager 
+                  title="정보글 대표 이미지"
+                  folderPath={`osaka-info`}
+                  images={item.img ? [item.img] : []}
+                  mode="single"
+                  onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'osakaInfo')}
+                />
+                <div className="space-y-8">
+                   <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">글 제목</label>
+                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">설명 (요약)</label>
+                    <textarea rows={4} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.description} onChange={e => handleFormChange('description', e.target.value)} required />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">대표 이미지 URL</label>
-                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm font-mono text-[11px]" value={item.img} onChange={e => handleFormChange('img', e.target.value)} />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">설명 (요약)</label>
-                  <textarea rows={4} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm leading-relaxed" value={item.description} onChange={e => handleFormChange('description', e.target.value)} required />
-                </div>
-              </>
+              </div>
             )}
           </form>
 
