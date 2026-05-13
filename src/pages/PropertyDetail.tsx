@@ -30,6 +30,12 @@ export default function PropertyDetail() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [settings, setSettings] = useState({
+    kakaoId: 'oosakaj',
+    lineId: '@845immxy',
+    instagramId: 'oosaka_j',
+    youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=Fvg2lwsd-_UGjgSx'
+  });
 
   const nextImage = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -46,20 +52,23 @@ export default function PropertyDetail() {
   };
 
   useEffect(() => {
-    const fetchProperty = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        if (id) {
-          const data = await firebaseService.getPropertyById(id);
-          setProperty(data);
-        }
+        const [propData, settingsData] = await Promise.all([
+          id ? firebaseService.getPropertyById(id) : null,
+          firebaseService.getSettings()
+        ]);
+        
+        if (propData) setProperty(propData);
+        if (settingsData) setSettings(prev => ({ ...prev, ...settingsData }));
       } catch (error) {
-        console.error("Error fetching property:", error);
+        console.error("Error fetching detail data:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchProperty();
+    fetchData();
     window.scrollTo(0, 0);
   }, [id]);
 
@@ -262,7 +271,7 @@ export default function PropertyDetail() {
                     <p className="text-center text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-4">지금 바로 상담하기</p>
                     
                     <a 
-                      href="https://pf.kakao.com/_TSvgxb" 
+                      href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="w-full py-5 bg-[#FEE500] text-[#3C1E1E] font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
@@ -271,7 +280,7 @@ export default function PropertyDetail() {
                     </a>
                     
                     <a 
-                      href="https://line.me/R/ti/p/@845immxy" 
+                      href={`https://line.me/R/ti/p/${settings.lineId.startsWith('@') ? settings.lineId : '@' + settings.lineId}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="w-full py-5 bg-[#06C755] text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"

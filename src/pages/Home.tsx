@@ -210,7 +210,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
 
           <div className="flex items-center gap-4">
             <a 
-              href="https://pf.kakao.com/_TSvgxb" 
+              href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="hidden md:flex blue-glow-btn px-8 py-3 items-center justify-center text-white text-sm shadow-[0_0_20px_rgba(37,99,235,0.4)] animate-pulse-slow hover:animate-none"
@@ -242,7 +242,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="text-electric-blue">관리자전용</Link>
             </div>
             <a 
-              href="https://pf.kakao.com/_TSvgxb" 
+              href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="blue-glow-btn w-full max-w-xs py-4 text-sm flex items-center justify-center font-bold text-white shadow-xl"
@@ -435,7 +435,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 <motion.a
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  href="https://pf.kakao.com/_TSvgxb" 
+                  href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
@@ -848,7 +848,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 1, duration: 0.8 }}
-          href="https://pf.kakao.com/_TSvgxb" 
+          href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
           target="_blank" 
           rel="noopener noreferrer"
           className="w-12 h-12 md:w-16 md:h-16 bg-[#FEE500] rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(254,229,0,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
@@ -863,7 +863,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 1.1, duration: 0.8 }}
-          href="https://line.me/R/ti/p/@845immxy" 
+          href={`https://line.me/R/ti/p/${settings.lineId.startsWith('@') ? settings.lineId : '@' + settings.lineId}`} 
           target="_blank" 
           rel="noopener noreferrer"
           className="w-12 h-12 md:w-16 md:h-16 bg-[#06C755] rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(6,199,85,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
@@ -878,7 +878,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.8 }}
-          href="https://www.instagram.com/oosaka_j/" 
+          href={`https://www.instagram.com/${settings.instagramId.replace('@', '')}/`} 
           target="_blank" 
           rel="noopener noreferrer"
           className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-tr from-[#f9ce67] via-[#f07030] to-[#833ab4] rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(131,58,180,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
@@ -893,7 +893,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 1.3, duration: 0.8 }}
-          href="https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=fyvJj_s_8MHE-l7W" 
+          href={settings.youtubeUrl} 
           target="_blank" 
           rel="noopener noreferrer"
           className="w-12 h-12 md:w-16 md:h-16 bg-red-600 rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(220,38,38,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
