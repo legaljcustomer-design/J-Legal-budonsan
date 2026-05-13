@@ -1,6 +1,6 @@
-import { Property } from './types';
+import { Property } from '../types';
 
-export const SAMPLE_PROPERTIES: Property[] = [
+export const PROPERTIES: Property[] = [
   {
     id: 'sample-1',
     title: '우메다 시티타워 자이 럭셔리 펜트하우스',

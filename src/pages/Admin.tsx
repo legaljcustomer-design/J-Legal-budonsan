@@ -14,11 +14,10 @@ import {
   MapPin,
   Upload
 } from 'lucide-react';
-import { auth, signInWithGoogle, db } from '../lib/firebase';
+import { auth, signInWithGoogle } from '../lib/firebase';
 import { firebaseService } from '../services/firebaseService';
 import { Property } from '../types';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { doc, setDoc } from 'firebase/firestore';
 import { compressImage } from '../lib/imageUtils';
 import { AnimatePresence } from 'motion/react';
 
@@ -243,18 +242,20 @@ export default function Admin() {
     setLoginError(null);
     setClaiming(true);
     try {
-      await setDoc(doc(db, 'admins', user.uid), {
-        email: user.email,
-        role: 'super'
-      });
-      setIsAdminLocally(true);
-    } catch (error: any) {
-       setLoginError('권한 승인에 실패했습니다. (Firestore 보안 규칙을 확인해 주세요)');
+      // await setDoc(doc(db, 'admins', user.uid), {
+      //   email: user.email,
+      //   role: 'super'
+      // });
+      console.warn("Direct admin claim is disabled in static mode.");
+      setIsAdminLocally(false);
+    } catch (error) {
        console.error(error);
+       setLoginError('권한 승인에 실패했습니다. (정적 모드에서는 사용 불가)');
     } finally {
       setClaiming(false);
     }
   };
+
 
   const handleLogout = () => auth.signOut();
 

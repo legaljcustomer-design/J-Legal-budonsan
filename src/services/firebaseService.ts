@@ -1,231 +1,87 @@
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  setDoc,
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp,
-  getDoc
-} from 'firebase/firestore';
-import { db, auth, OperationType, handleFirestoreError } from '../lib/firebase';
 import { Property } from '../types';
-
-const PROPERTIES_COLLECTION = 'properties';
-const ADMINS_COLLECTION = 'admins';
+import { PROPERTIES } from '../data/properties';
+import { REVIEWS } from '../data/reviews';
+import { OSAKA_INFOS } from '../data/osakaInfo';
+import { SITE_SETTINGS } from '../data/siteConfig';
 
 export const firebaseService = {
-  // Check if current user is admin
-  async checkAdminStatus(uid: string): Promise<boolean> {
-    try {
-      const docRef = doc(db, ADMINS_COLLECTION, uid);
-      const docSnap = await getDoc(docRef);
-      return docSnap.exists();
-    } catch (error) {
-      console.error("Error checking admin status", error);
-      return false;
-    }
+  // Check if current user is admin (Always false in static mode, or mock check)
+  async checkAdminStatus(_uid: string): Promise<boolean> {
+    return false;
   },
 
   // Public: Get all properties
   async getProperties(type?: string): Promise<Property[]> {
-    const path = PROPERTIES_COLLECTION;
-    try {
-      let q = query(collection(db, path), orderBy('createdAt', 'desc'));
-      if (type && type !== 'all') {
-        q = query(collection(db, path), where('type', '==', type), orderBy('createdAt', 'desc'));
-      }
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
-    } catch (error) {
-      handleFirestoreError(error, OperationType.LIST, path);
-      return [];
+    if (type && type !== 'all') {
+      return PROPERTIES.filter(p => p.type === type);
     }
+    return [...PROPERTIES].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   },
 
-  // Admin: Add property
-  async addProperty(data: Omit<Property, 'id' | 'createdAt' | 'updatedAt' | 'ownerId'>): Promise<string> {
-    const path = PROPERTIES_COLLECTION;
-    if (!auth.currentUser) throw new Error("Auth required");
-    
-    try {
-      const docRef = await addDoc(collection(db, path), {
-        ...data,
-        ownerId: auth.currentUser.uid,
-        createdAt: serverTimestamp(),
-      });
-      return docRef.id;
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, path);
-      return "";
-    }
+  // Admin: Add property (Mock - does nothing)
+  async addProperty(_data: any): Promise<string> {
+    console.warn("Write operations are disabled in static mode.");
+    return "";
   },
 
-  // Admin: Update property
-  async updateProperty(id: string, data: Partial<Property>): Promise<void> {
-    const path = `${PROPERTIES_COLLECTION}/${id}`;
-    try {
-      const docRef = doc(db, PROPERTIES_COLLECTION, id);
-      await updateDoc(docRef, {
-        ...data,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, path);
-    }
+  // Admin: Update property (Mock - does nothing)
+  async updateProperty(_id: string, _data: Partial<Property>): Promise<void> {
+    console.warn("Write operations are disabled in static mode.");
   },
 
-  // Admin: Delete property
-  async deleteProperty(id: string): Promise<void> {
-    const path = `${PROPERTIES_COLLECTION}/${id}`;
-    try {
-      await deleteDoc(doc(db, PROPERTIES_COLLECTION, id));
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, path);
-    }
+  // Admin: Delete property (Mock - does nothing)
+  async deleteProperty(_id: string): Promise<void> {
+    console.warn("Write operations are disabled in static mode.");
   },
 
   // Public: Get single property
   async getPropertyById(id: string): Promise<Property | null> {
-    const path = `${PROPERTIES_COLLECTION}/${id}`;
-    try {
-      const docRef = doc(db, PROPERTIES_COLLECTION, id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as Property;
-      }
-      return null;
-    } catch (error) {
-      handleFirestoreError(error, OperationType.GET, path);
-      return null;
-    }
+    return PROPERTIES.find(p => p.id === id) || null;
   },
 
   // Site Settings
   async getSettings(): Promise<any> {
-    const path = 'settings/general';
-    try {
-      const docRef = doc(db, 'settings', 'general');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        return docSnap.data();
-      }
-      return null;
-    } catch (error) {
-       handleFirestoreError(error, OperationType.GET, path);
-       return null;
-    }
+    return SITE_SETTINGS;
   },
 
-  async updateSettings(data: any): Promise<void> {
-    if (!auth.currentUser) throw new Error("Auth required");
-    try {
-      const docRef = doc(db, 'settings', 'general');
-      await setDoc(docRef, data, { merge: true });
-    } catch (error) {
-       handleFirestoreError(error, OperationType.UPDATE, 'settings/general');
-    }
+  async updateSettings(_data: any): Promise<void> {
+    console.warn("Write operations are disabled in static mode.");
   },
 
   // Reviews
   async getReviews(): Promise<any[]> {
-    const path = 'reviews';
-    try {
-      const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-       handleFirestoreError(error, OperationType.LIST, path);
-       return [];
-    }
+    return [...REVIEWS].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   },
 
-  async addReview(data: any): Promise<string> {
-    if (!auth.currentUser) throw new Error("Auth required");
-    try {
-      const docRef = await addDoc(collection(db, 'reviews'), {
-        ...data,
-        createdAt: serverTimestamp()
-      });
-      return docRef.id;
-    } catch (error) {
-       handleFirestoreError(error, OperationType.CREATE, 'reviews');
-       return "";
-    }
+  async addReview(_data: any): Promise<string> {
+    console.warn("Write operations are disabled in static mode.");
+    return "";
   },
 
-  async deleteReview(id: string): Promise<void> {
-    if (!auth.currentUser) throw new Error("Auth required");
-    try {
-      await deleteDoc(doc(db, 'reviews', id));
-    } catch (error) {
-       handleFirestoreError(error, OperationType.DELETE, `reviews/${id}`);
-    }
+  async deleteReview(_id: string): Promise<void> {
+    console.warn("Write operations are disabled in static mode.");
   },
 
-  async updateReview(id: string, data: any): Promise<void> {
-    if (!auth.currentUser) throw new Error("Auth required");
-    try {
-      const docRef = doc(db, 'reviews', id);
-      await updateDoc(docRef, {
-        ...data,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-       handleFirestoreError(error, OperationType.UPDATE, `reviews/${id}`);
-    }
+  async updateReview(_id: string, _data: any): Promise<void> {
+    console.warn("Write operations are disabled in static mode.");
   },
 
   // Osaka Info
   async getOsakaInfos(): Promise<any[]> {
-    const path = 'osakaInfo';
-    try {
-      const q = query(collection(db, 'osakaInfo'), orderBy('createdAt', 'desc'));
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-       handleFirestoreError(error, OperationType.LIST, path);
-       return [];
-    }
+    return [...OSAKA_INFOS].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   },
 
-  async addOsakaInfo(data: any): Promise<string> {
-    if (!auth.currentUser) throw new Error("Auth required");
-    try {
-      const docRef = await addDoc(collection(db, 'osakaInfo'), {
-        ...data,
-        createdAt: serverTimestamp()
-      });
-      return docRef.id;
-    } catch (error) {
-       handleFirestoreError(error, OperationType.CREATE, 'osakaInfo');
-       return "";
-    }
+  async addOsakaInfo(_data: any): Promise<string> {
+    console.warn("Write operations are disabled in static mode.");
+    return "";
   },
 
-  async updateOsakaInfo(id: string, data: any): Promise<void> {
-    if (!auth.currentUser) throw new Error("Auth required");
-    try {
-      const docRef = doc(db, 'osakaInfo', id);
-      await updateDoc(docRef, {
-        ...data,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-       handleFirestoreError(error, OperationType.UPDATE, `osakaInfo/${id}`);
-    }
+  async updateOsakaInfo(_id: string, _data: any): Promise<void> {
+    console.warn("Write operations are disabled in static mode.");
   },
 
-  async deleteOsakaInfo(id: string): Promise<void> {
-    if (!auth.currentUser) throw new Error("Auth required");
-    try {
-      await deleteDoc(doc(db, 'osakaInfo', id));
-    } catch (error) {
-       handleFirestoreError(error, OperationType.DELETE, `osakaInfo/${id}`);
-    }
+  async deleteOsakaInfo(_id: string): Promise<void> {
+    console.warn("Write operations are disabled in static mode.");
   }
 };
+

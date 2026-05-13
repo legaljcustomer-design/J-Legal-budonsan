@@ -21,8 +21,6 @@ import {
 } from 'lucide-react';
 import { Property } from '../types';
 import { firebaseService } from '../services/firebaseService';
-import { auth } from '../lib/firebase';
-import { SAMPLE_PROPERTIES } from '../constants';
 import { AnimatePresence } from 'motion/react';
 
 export default function PropertyDetail() {
@@ -50,17 +48,14 @@ export default function PropertyDetail() {
   useEffect(() => {
     const fetchProperty = async () => {
       setLoading(true);
-      // First check samples
-      const sample = SAMPLE_PROPERTIES.find(p => p.id === id);
-      if (sample) {
-        setProperty(sample);
-        setLoading(false);
-      } else {
-        // Then check firebase if id is provided
+      try {
         if (id) {
           const data = await firebaseService.getPropertyById(id);
           setProperty(data);
         }
+      } catch (error) {
+        console.error("Error fetching property:", error);
+      } finally {
         setLoading(false);
       }
     };
@@ -69,17 +64,10 @@ export default function PropertyDetail() {
   }, [id]);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) {
-        firebaseService.checkAdminStatus(user.uid).then(status => {
-          setIsAdmin(status);
-        });
-      } else {
-        setIsAdmin(false);
-      }
-    });
-    return () => unsubscribe();
+    // Admin check logic removed in static mode
+    setIsAdmin(false);
   }, []);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from './lib/firebase';
-import { firebaseService } from './services/firebaseService';
 
 // Components (We'll create these)
 import Home from './pages/Home';
@@ -12,23 +9,7 @@ import NambaGuide from './pages/NambaGuide';
 import PropertyDetail from './pages/PropertyDetail';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        const adminStatus = await firebaseService.checkAdminStatus(user.uid);
-        setIsAdmin(adminStatus);
-      } else {
-        setIsAdmin(false);
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   if (loading) {
     return (
@@ -41,17 +22,16 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home isAdmin={isAdmin} />} />
+        <Route path="/" element={<Home isAdmin={false} />} />
         <Route path="/recruitment" element={<Recruitment />} />
         <Route path="/namba-guide" element={<NambaGuide />} />
         <Route path="/property/:id" element={<PropertyDetail />} />
-        <Route 
-          path="/admin" 
-          element={<Admin />} 
-        />
+        {/* Admin route disabled in static mode */}
+        <Route path="/admin" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
 }
+
 
