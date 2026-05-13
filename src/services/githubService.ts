@@ -87,6 +87,90 @@ export class GithubService {
       siteConfig,
     };
   }
+
+  /**
+   * 여러 파일을 하나의 커밋으로 묶어 저장 (Stage 2 핵심 기능)
+   */
+  async commitMultipleFiles(
+    files: { path: string; content: string }[],
+    message: string,
+    branch: string = 'main'
+  ): Promise<boolean> {
+    try {
+      const headers = {
+        'Authorization': `token ${this.token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      };
+
+      // 1. 현재 브랜치의 최신 커밋 SHA 가져오기
+      const refResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/refs/heads/${branch}`, { headers });
+      if (!refResponse.ok) throw new Error('Failed to get branch ref');
+      const refData = await refResponse.json();
+      const lastCommitSha = refData.object.sha;
+
+      // 2. 최신 커밋의 Tree SHA 가져오기
+      const commitResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/commits/${lastCommitSha}`, { headers });
+      if (!commitResponse.ok) throw new Error('Failed to get last commit');
+      const commitData = await commitResponse.json();
+      const baseTreeSha = commitData.tree.sha;
+
+      // 3. 새로운 Tree 생성 
+      // (기존 tree를 베이스로 하여 변경된 파일들만 덮어쓰기)
+      const treeItems = files.map(file => ({
+        path: file.path,
+        mode: '100644', // 일반 파일
+        type: 'blob',
+        content: file.content
+      }));
+
+      const newTreeResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/trees`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          base_tree: baseTreeSha,
+          tree: treeItems
+        })
+      });
+      if (!newTreeResponse.ok) throw new Error('Failed to create new tree');
+      const newTreeData = await newTreeResponse.json();
+      const newTreeSha = newTreeData.sha;
+
+      // 4. 새로운 Commit 생성
+      const newCommitResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/commits`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          message,
+          tree: newTreeSha,
+          parents: [lastCommitSha]
+        })
+      });
+      if (!newCommitResponse.ok) throw new Error('Failed to create new commit');
+      const newCommitData = await newCommitResponse.json();
+      const newCommitSha = newCommitData.sha;
+
+      // 5. Ref 업데이트 (브랜치 포인터를 새 커밋으로 이동)
+      const updateRefResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/refs/heads/${branch}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          sha: newCommitSha,
+          force: false // 비강제 업데이트 (충돌 시 실패하도록 함)
+        })
+      });
+
+      if (!updateRefResponse.ok) {
+        const err = await updateRefResponse.json();
+        throw new Error(`Failed to update ref: ${err.message}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in multi-file commit:', error);
+      throw error;
+    }
+  }
 }
 
 export const createGithubService = (token: string, owner: string, repo: string) => {

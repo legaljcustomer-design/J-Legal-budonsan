@@ -14,7 +14,18 @@ import {
   Info,
   Settings,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  Trash2,
+  Edit3,
+  X,
+  Save,
+  CloudUpload,
+  ArrowLeft,
+  Youtube,
+  Link as LinkIcon,
+  Search,
+  Check
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createGithubService, GithubService } from '../services/githubService';
@@ -25,19 +36,29 @@ interface StorageData {
   repo: string;
 }
 
+type TabType = 'overview' | 'properties' | 'reviews' | 'osakaInfo' | 'siteConfig';
+
 export default function Admin() {
   const [authData, setAuthData] = useState<StorageData | null>(null);
   const [inputData, setInputData] = useState<StorageData>({
     token: '',
     owner: '',
-    repo: 'legalj-osaka' // Default fallback or common name
+    repo: 'legalj-osaka'
   });
   const [loading, setLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [ghService, setGhService] = useState<GithubService | null>(null);
-  const [gitHubData, setGitHubData] = useState<any>(null);
-  const [activeView, setActiveView] = useState<'overview' | 'raw'>('overview');
+  
+  // Data States
+  const [originalData, setOriginalData] = useState<any>(null);
+  const [pendingData, setPendingData] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  
+  // Editor States
+  const [editingItem, setEditingItem] = useState<{ type: string; item: any; index: number } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<{ success?: boolean; message?: string } | null>(null);
 
   // Load from sessionStorage on mount
   useEffect(() => {
@@ -63,7 +84,8 @@ export default function Admin() {
         
         // Fetch data
         const ghRaw = await service.getAllConfigData();
-        setGitHubData(ghRaw);
+        setOriginalData(ghRaw);
+        setPendingData(JSON.parse(JSON.stringify(ghRaw))); // Deep clone for editing
       } else {
         throw new Error('유효하지 않은 토큰이거나 저장소 권한이 없습니다.');
       }
@@ -90,7 +112,437 @@ export default function Admin() {
     sessionStorage.removeItem('admin_gh_auth');
     setAuthData(null);
     setGhService(null);
-    setGitHubData(null);
+    setOriginalData(null);
+    setPendingData(null);
+  };
+
+  // CRUD Helpers
+  const hasChanges = () => {
+    return JSON.stringify(originalData) !== JSON.stringify(pendingData);
+  };
+
+  const saveToGitHub = async () => {
+    if (!ghService || !pendingData) return;
+    setIsSaving(true);
+    setSaveStatus(null);
+    
+    try {
+      const filesToUpdate = [];
+      
+      if (JSON.stringify(originalData.properties) !== JSON.stringify(pendingData.properties)) {
+        filesToUpdate.push({ path: 'src/data/properties.json', content: JSON.stringify(pendingData.properties, null, 2) });
+      }
+      if (JSON.stringify(originalData.reviews) !== JSON.stringify(pendingData.reviews)) {
+        filesToUpdate.push({ path: 'src/data/reviews.json', content: JSON.stringify(pendingData.reviews, null, 2) });
+      }
+      if (JSON.stringify(originalData.osakaInfo) !== JSON.stringify(pendingData.osakaInfo)) {
+        filesToUpdate.push({ path: 'src/data/osakaInfo.json', content: JSON.stringify(pendingData.osakaInfo, null, 2) });
+      }
+      if (JSON.stringify(originalData.siteConfig) !== JSON.stringify(pendingData.siteConfig)) {
+        filesToUpdate.push({ path: 'src/data/siteConfig.json', content: JSON.stringify(pendingData.siteConfig, null, 2) });
+      }
+
+      if (filesToUpdate.length === 0) {
+         setSaveStatus({ success: true, message: '변경사항이 없습니다.' });
+         setIsSaving(false);
+         return;
+      }
+
+      await ghService.commitMultipleFiles(filesToUpdate, 'chore: update site content via admin CMS');
+      
+      setOriginalData(JSON.parse(JSON.stringify(pendingData)));
+      setSaveStatus({ success: true, message: 'GitHub 반영 완료! 배포가 곧 시작됩니다.' });
+    } catch (err: any) {
+      console.error(err);
+      setSaveStatus({ success: false, message: `저장 실패: ${err.message}` });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // --- Sub-components (Editors) ---
+
+  const PropertyEditor = () => {
+    const list = pendingData.properties || [];
+    
+    const handleDelete = (index: number) => {
+      if (window.confirm('이 매물을 정말 삭제하시겠습니까?')) {
+        const newList = [...list];
+        newList.splice(index, 1);
+        setPendingData({ ...pendingData, properties: newList });
+      }
+    };
+
+    const handleEdit = (item: any, index: number) => {
+      setEditingItem({ type: 'property', item: { ...item }, index });
+    };
+
+    const handleAdd = () => {
+      const newItem = {
+        id: `prop-${Date.now()}`,
+        title: '',
+        price: '¥0',
+        location: '',
+        type: 'OneRoom',
+        description: '',
+        images: [],
+        features: [],
+        construction: '',
+        completionYear: '',
+        nearestStation: '',
+        floorPlan: '',
+        area: '',
+        isFeatured: false,
+        createdAt: Date.now(),
+        ownerId: 'system'
+      };
+      setEditingItem({ type: 'property', item: newItem, index: -1 });
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold tracking-tight">매물 데이터 관리</h2>
+          <button onClick={handleAdd} className="flex items-center gap-2 bg-electric-blue px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-electric-blue/20 hover:scale-[1.02] transition-all">
+            <Plus size={16} /> 매물 추가
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {list.map((prop: any, idx: number) => (
+            <div key={prop.id} className="bg-zinc-900 border border-white/5 p-6 rounded-2xl group hover:border-electric-blue/30 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <span className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${prop.isFeatured ? 'bg-amber-500/20 text-amber-500' : 'bg-zinc-800 text-zinc-500'}`}>
+                    {prop.isFeatured ? 'featured' : 'standard'}
+                  </span>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEdit(prop, idx)} className="p-2 bg-white/5 rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-all"><Edit3 size={14} /></button>
+                    <button onClick={() => handleDelete(idx)} className="p-2 bg-white/5 rounded-lg text-zinc-500 hover:text-red-500 hover:bg-red-500/10 transition-all"><Trash2 size={14} /></button>
+                  </div>
+                </div>
+                <h3 className="font-bold text-sm mb-1 line-clamp-1">{prop.title}</h3>
+                <p className="text-electric-blue text-xs font-bold mb-3">{prop.price}</p>
+                <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
+                  <span className="bg-zinc-800 px-2 py-0.5 rounded italic">{prop.type}</span>
+                  <span>{prop.location}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const ReviewEditor = () => {
+    const list = pendingData.reviews || [];
+    
+    const handleDelete = (index: number) => {
+      if (window.confirm('후기를 삭제하시겠습니까?')) {
+        const newList = [...list];
+        newList.splice(index, 1);
+        setPendingData({ ...pendingData, reviews: newList });
+      }
+    };
+
+    const handleEdit = (item: any, index: number) => {
+      setEditingItem({ type: 'review', item: { ...item }, index });
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold tracking-tight">고객 후기 관리</h2>
+          <button onClick={() => setEditingItem({ type: 'review', item: { id: `rev-${Date.now()}`, title: '', content: '', author: '', image: '', createdAt: Date.now() }, index: -1 })} className="flex items-center gap-2 bg-zinc-800 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-700 transition-all">
+            <Plus size={16} /> 후기 추가
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {list.map((rev: any, idx: number) => (
+            <div key={rev.id} className="bg-zinc-900 border border-white/5 p-6 rounded-2xl flex items-center justify-between group">
+              <div className="flex items-center gap-4">
+                 <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0 overflow-hidden border border-white/10">
+                   {rev.image && <img src={rev.image} alt="" className="w-full h-full object-cover" />}
+                 </div>
+                 <div>
+                   <h3 className="font-bold text-sm">{rev.title}</h3>
+                   <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">{rev.author}</p>
+                 </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => handleEdit(rev, idx)} className="p-2 text-zinc-500 hover:text-white transition-all"><Edit3 size={16} /></button>
+                <button onClick={() => handleDelete(idx)} className="p-2 text-zinc-500 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const ConfigEditor = () => {
+    const config = pendingData.siteConfig;
+    if (!config) return null;
+
+    const handleChange = (key: string, value: any) => {
+      setPendingData({
+        ...pendingData,
+        siteConfig: { ...config, [key]: value }
+      });
+    };
+
+    return (
+      <div className="max-w-2xl space-y-10">
+        <h2 className="text-2xl font-bold tracking-tight mb-8">사이트 기본 설정</h2>
+        
+        <div className="space-y-8">
+           <section>
+             <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-4 border-b border-white/5 pb-2">Hero Section</h3>
+             <div className="space-y-4">
+               <div>
+                 <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Main Title</label>
+                 <input 
+                   className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                   value={config.heroTitle}
+                   onChange={e => handleChange('heroTitle', e.target.value)}
+                 />
+               </div>
+               <div>
+                 <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Subtitle</label>
+                 <input 
+                   className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                   value={config.heroSubtitle}
+                   onChange={e => handleChange('heroSubtitle', e.target.value)}
+                 />
+               </div>
+             </div>
+           </section>
+
+           <section>
+             <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-4 border-b border-white/5 pb-2">Contact & SNS</h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Kakao ID</label>
+                  <input 
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                    value={config.kakaoId}
+                    onChange={e => handleChange('kakaoId', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">LINE ID</label>
+                  <input 
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                    value={config.lineId}
+                    onChange={e => handleChange('lineId', e.target.value)}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">YouTube URL</label>
+                  <input 
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                    value={config.youtubeUrl}
+                    onChange={e => handleChange('youtubeUrl', e.target.value)}
+                  />
+                </div>
+             </div>
+           </section>
+        </div>
+      </div>
+    );
+  };
+
+  const OsakaInfoEditor = () => {
+    const list = pendingData.osakaInfo || [];
+    
+    const handleDelete = (index: number) => {
+      if (window.confirm('정보글을 삭제하시겠습니까?')) {
+        const newList = [...list];
+        newList.splice(index, 1);
+        setPendingData({ ...pendingData, osakaInfo: newList });
+      }
+    };
+
+    const handleEdit = (item: any, index: number) => {
+      setEditingItem({ type: 'osakaInfo', item: { ...item }, index });
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold tracking-tight">오사카 지역 정보 관리</h2>
+          <button onClick={() => setEditingItem({ type: 'osakaInfo', item: { id: `info-${Date.now()}`, title: '', description: '', img: '', createdAt: Date.now() }, index: -1 })} className="flex items-center gap-2 bg-zinc-800 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-700 transition-all">
+            <Plus size={16} /> 정보글 추가
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {list.map((info: any, idx: number) => (
+            <div key={info.id} className="bg-zinc-900 border border-white/5 p-6 rounded-2xl flex gap-6 items-start">
+               <div className="w-24 h-24 bg-zinc-800 rounded-xl overflow-hidden flex-shrink-0">
+                 {info.img && <img src={info.img} alt="" className="w-full h-full object-cover" />}
+               </div>
+               <div className="flex-grow">
+                 <h3 className="font-bold text-sm mb-1">{info.title}</h3>
+                 <p className="text-zinc-500 text-xs line-clamp-2 mb-4">{info.description}</p>
+                 <div className="flex gap-2">
+                    <button onClick={() => handleEdit(info, idx)} className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-all underline outline-offset-4">수정</button>
+                    <button onClick={() => handleDelete(idx)} className="text-[10px] font-bold uppercase tracking-widest text-red-500 hover:text-red-400 transition-all underline outline-offset-4">삭제</button>
+                 </div>
+               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // --- Modal Forms ---
+
+  const ModalForm = () => {
+    if (!editingItem) return null;
+
+    const { type, item, index } = editingItem;
+    
+    const handleFormChange = (key: string, value: any) => {
+      setEditingItem({ ...editingItem, item: { ...item, [key]: value } });
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      const updatedPending = { ...pendingData };
+      const key = type === 'property' ? 'properties' : type === 'review' ? 'reviews' : 'osakaInfo';
+      const list = [...updatedPending[key]];
+
+      if (index === -1) {
+        list.unshift(item);
+      } else {
+        list[index] = item;
+      }
+
+      updatedPending[key] = list;
+      setPendingData(updatedPending);
+      setEditingItem(null);
+    };
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-zinc-900 border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+        >
+          <div className="p-8 border-b border-white/5 flex justify-between items-center bg-zinc-950/50">
+             <h3 className="text-xl font-bold uppercase tracking-tight">{index === -1 ? '신규 등록' : '내용 수정'} - {type}</h3>
+             <button onClick={() => setEditingItem(null)} className="p-2 hover:bg-white/5 rounded-lg transition-colors"><X size={20} /></button>
+          </div>
+          
+          <form id="modal-form" onSubmit={handleSubmit} className="p-8 overflow-y-auto flex-grow grid grid-cols-1 md:grid-cols-2 gap-8 custom-scrollbar">
+            {type === 'property' && (
+              <>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">매물 제목</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가격</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.price} onChange={e => handleFormChange('price', e.target.value)} placeholder="예: ¥188,000" required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">위치 (구/동)</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.location} onChange={e => handleFormChange('location', e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">타입</label>
+                  <select className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.type} onChange={e => handleFormChange('type', e.target.value)}>
+                    <option value="OneRoom">OneRoom</option>
+                    <option value="Family">Family</option>
+                    <option value="TwoRoom">TwoRoom</option>
+                    <option value="Investment">Investment</option>
+                    <option value="Office">Office</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가까운 역</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.nearestStation} onChange={e => handleFormChange('nearestStation', e.target.value)} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">상세 설명</label>
+                  <textarea rows={4} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm leading-relaxed" value={item.description} onChange={e => handleFormChange('description', e.target.value)} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" className="hidden" checked={item.isFeatured} onChange={e => handleFormChange('isFeatured', e.target.checked)} />
+                    <div className={`w-5 h-5 rounded border ${item.isFeatured ? 'bg-amber-500 border-amber-500' : 'border-white/20'} flex items-center justify-center transition-all`}>
+                      {item.isFeatured && <Check size={14} className="text-white" />}
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-amber-500 transition-colors">추천 매물로 설정 (featured)</span>
+                  </label>
+                </div>
+                <div className="md:col-span-2 p-6 bg-zinc-950 rounded-2xl border border-white/5">
+                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-4 flex items-center gap-2"><CloudUpload size={14} /> 미디어 및 링크 (Stage 3 업로드 예정)</p>
+                   <div className="space-y-4">
+                     <div>
+                       <label className="block text-[9px] uppercase font-bold text-zinc-600 mb-1">이미지 URL (엔터로 구분)</label>
+                       <textarea rows={3} className="w-full bg-white/5 border border-white/5 rounded-lg px-4 py-2 text-[11px] font-mono" value={item.images?.join('\n')} onChange={e => handleFormChange('images', e.target.value.split('\n'))} />
+                     </div>
+                     <div>
+                       <label className="block text-[9px] uppercase font-bold text-zinc-600 mb-1">유튜브 링크</label>
+                       <input className="w-full bg-white/5 border border-white/5 rounded-lg px-4 py-2 text-[11px]" value={item.youtubeUrl || ''} onChange={e => handleFormChange('youtubeUrl', e.target.value)} />
+                     </div>
+                   </div>
+                </div>
+              </>
+            )}
+
+            {type === 'review' && (
+              <>
+                 <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">리뷰 제목</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">작성자</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.author} onChange={e => handleFormChange('author', e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">이미지 URL</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm font-mono text-[11px]" value={item.image} onChange={e => handleFormChange('image', e.target.value)} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">후기 내용</label>
+                  <textarea rows={4} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm leading-relaxed" value={item.content} onChange={e => handleFormChange('content', e.target.value)} required />
+                </div>
+              </>
+            )}
+
+            {type === 'osakaInfo' && (
+              <>
+                 <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">글 제목</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">대표 이미지 URL</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm font-mono text-[11px]" value={item.img} onChange={e => handleFormChange('img', e.target.value)} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">설명 (요약)</label>
+                  <textarea rows={4} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 text-sm leading-relaxed" value={item.description} onChange={e => handleFormChange('description', e.target.value)} required />
+                </div>
+              </>
+            )}
+          </form>
+
+          <div className="p-8 border-t border-white/5 bg-zinc-950/50 flex justify-end gap-4">
+             <button onClick={() => setEditingItem(null)} className="px-8 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-all">취소</button>
+             <button form="modal-form" type="submit" className="px-10 py-3 bg-white text-black text-xs font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all">저장하기</button>
+          </div>
+        </motion.div>
+      </div>
+    );
   };
 
   if (isVerifying) {
@@ -174,179 +626,136 @@ export default function Admin() {
     );
   }
 
-  // Dashboard Screen (Stage 1: Read Only)
+  // Dashboard Editor Screen
   return (
-    <div className="min-h-screen bg-luxury-black text-white p-6 md:p-12">
-      <div className="max-w-7xl mx-auto">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 bg-electric-blue rounded-lg flex items-center justify-center font-black">J</div>
-              <h1 className="text-2xl font-bold tracking-tight uppercase">Admin CMS <span className="text-zinc-600">Stage 1</span></h1>
-            </div>
-            <div className="flex items-center gap-3 text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
-              <span className="flex items-center gap-1"><Github size={12} /> {authData.owner}/{authData.repo}</span>
-              <span className="text-zinc-800">|</span>
-              <span className="text-emerald-500 flex items-center gap-1"><CheckCircle2 size={12} /> Authenticated</span>
+    <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row">
+      <AnimatePresence>
+        {editingItem && <ModalForm />}
+      </AnimatePresence>
+
+      {/* Persistence Notification/Top Bar for Mobile */}
+      {hasChanges() && (
+        <div className="absolute top-0 inset-x-0 bg-amber-500 text-black py-2 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] z-50 animate-pulse">
+           저장되지 않은 변경사항이 있습니다. 사이트에 반영하기 버튼을 눌러주세요.
+        </div>
+      )}
+
+      {/* Sidebar Navigation */}
+      <aside className="w-full md:w-80 bg-zinc-900 border-r border-white/5 p-8 flex flex-col justify-between h-auto md:h-screen md:sticky top-0 pt-16 md:pt-8">
+        <div>
+          <div className="flex items-center gap-3 mb-12">
+            <div className="w-10 h-10 bg-electric-blue rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-electric-blue/20">J</div>
+            <div className="flex flex-col">
+               <h1 className="text-lg font-black tracking-tighter leading-none mb-1">OSA-J CMS</h1>
+               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Stage 2 Editor</span>
             </div>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors bg-white/5 px-6 py-3 rounded-full border border-white/10"
+
+          <nav className="space-y-1">
+             {[
+               { id: 'overview', icon: Eye, label: 'Overview' },
+               { id: 'properties', icon: Building2, label: 'Properties' },
+               { id: 'reviews', icon: MessageSquare, label: 'Reviews' },
+               { id: 'osakaInfo', icon: Info, label: 'Osaka Info' },
+               { id: 'siteConfig', icon: Settings, label: 'Site Settings' },
+             ].map((tab) => (
+                <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabType)}
+                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white text-zinc-900 shadow-xl' : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'}`}
+                >
+                  <tab.icon size={18} />
+                  {tab.label}
+                  {activeTab === tab.id && <motion.div layoutId="tab-active" className="ml-auto"><ChevronRight size={14} /></motion.div>}
+                </button>
+             ))}
+          </nav>
+        </div>
+
+        <div className="mt-12 space-y-4">
+           <div className="p-5 bg-zinc-950 rounded-2xl border border-white/5 flex items-center gap-4">
+              <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-white/5"><Github size={14} className="text-zinc-500" /></div>
+              <div className="overflow-hidden">
+                 <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest truncate">{authData.owner}/{authData.repo}</p>
+                 <p className="text-[10px] font-black text-emerald-500 uppercase">Live Main Branch</p>
+              </div>
+           </div>
+           <button onClick={handleLogout} className="w-full py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-red-500 transition-colors flex items-center justify-center gap-2">
+             <LogOut size={14} /> 시스템 로그아웃
+           </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-grow min-h-screen bg-zinc-950 p-8 md:p-16 relative">
+        {/* Global Save Action Floating Bar */}
+        {hasChanges() && (
+          <motion.div 
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="fixed bottom-10 inset-x-0 md:left-auto md:right-10 flex flex-col items-end gap-3 z-40 p-6 pointer-events-none md:p-0"
           >
-            <LogOut size={14} /> 로그아웃
-          </button>
-        </header>
+             {saveStatus && (
+               <motion.div 
+                initial={{ x: 20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 20, opacity: 0 }}
+                className={`px-6 py-4 rounded-2xl border flex items-center gap-3 text-xs font-bold pointer-events-auto shadow-2xl ${saveStatus.success ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}
+               >
+                 {saveStatus.success ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                 {saveStatus.message}
+                 <button onClick={() => setSaveStatus(null)} className="ml-2 hover:opacity-50"><X size={14} /></button>
+               </motion.div>
+             )}
+             <button 
+               onClick={saveToGitHub}
+               disabled={isSaving}
+               className="pointer-events-auto blue-glow-btn flex items-center gap-3 px-10 py-5 text-sm shadow-2xl scale-110 md:scale-100"
+             >
+               {isSaving ? <Loader2 className="animate-spin" size={18} /> : <CloudUpload size={18} />}
+               {isSaving ? '저장 중...' : '사이트에 반영하기'}
+             </button>
+          </motion.div>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Dashboard Info */}
-          <div className="lg:col-span-2 space-y-8">
-            <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-10">
-              <div className="flex items-center justify-between mb-10">
-                <h2 className="text-3xl font-bold tracking-tight">가져온 데이터 개요</h2>
-                <div className="flex bg-zinc-950 p-1 rounded-xl">
-                  <button 
-                    onClick={() => setActiveView('overview')}
-                    className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${activeView === 'overview' ? 'bg-electric-blue text-white shadow-lg' : 'text-zinc-600 hover:text-zinc-400'}`}
-                  >
-                    요약 보기
-                  </button>
-                  <button 
-                    onClick={() => setActiveView('raw')}
-                    className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all ${activeView === 'raw' ? 'bg-electric-blue text-white shadow-lg' : 'text-zinc-600 hover:text-zinc-400'}`}
-                  >
-                    RAW JSON
-                  </button>
-                </div>
-              </div>
-
-              {activeView === 'overview' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Stats Cards */}
-                  <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
-                    <div className="flex items-center gap-3 mb-4 text-electric-blue">
-                      <Building2 size={20} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">매물 데이터</span>
-                    </div>
-                    <div className="text-3xl font-bold mb-4">{gitHubData?.properties?.length || 0} <span className="text-sm font-normal text-zinc-600">Items</span></div>
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">src/data/properties.json</div>
+        <div className="max-w-5xl mx-auto">
+          {activeTab === 'overview' && (
+             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <header className="mb-16">
+                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6">
+                    <Database className="text-electric-blue" size={24} />
                   </div>
-
-                  <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
-                    <div className="flex items-center gap-3 mb-4 text-zinc-400">
-                      <MessageSquare size={20} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">고객 후기</span>
-                    </div>
-                    <div className="text-3xl font-bold mb-4">{gitHubData?.reviews?.length || 0} <span className="text-sm font-normal text-zinc-600">Reviews</span></div>
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">src/data/reviews.json</div>
-                  </div>
-
-                  <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
-                    <div className="flex items-center gap-3 mb-4 text-zinc-400">
-                      <Info size={20} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">오사카 정보</span>
-                    </div>
-                    <div className="text-3xl font-bold mb-4">{gitHubData?.osakaInfo?.length || 0} <span className="text-sm font-normal text-zinc-600">Articles</span></div>
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">src/data/osakaInfo.json</div>
-                  </div>
-
-                  <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
-                    <div className="flex items-center gap-3 mb-4 text-zinc-400">
-                      <Settings size={20} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">사이트 설정</span>
-                    </div>
-                    <div className="text-sm font-bold text-emerald-500 mb-4 flex items-center gap-2">
-                        <CheckCircle2 size={14} /> OK
-                    </div>
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">src/data/siteConfig.json</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-zinc-950 rounded-2xl p-6 overflow-hidden border border-white/5">
-                   <pre className="text-[10px] text-zinc-500 font-mono overflow-auto max-h-[400px]">
-                     {JSON.stringify(gitHubData, null, 2)}
-                   </pre>
-                </div>
-              )}
-            </div>
-
-            <div className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-3xl">
-              <div className="flex gap-4">
-                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Database className="text-white" size={20} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold mb-2">1단계: 실시간 데이터 동기화 완료</h3>
-                  <p className="text-zinc-500 text-sm leading-relaxed mb-4">
-                    현재 GitHub 저장소의 `main` 브랜치에 있는 실제 JSON 데이터를 읽어오는 데 성공했습니다. 
-                    다음 단계(2단계)에서는 이 인터페이스를 통해 직접 데이터를 수정하고 저장하는 기능이 추가될 예정입니다.
+                  <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-4">DASHBOARD OVERVIEW</h1>
+                  <p className="text-zinc-500 text-lg font-light leading-relaxed max-w-2xl">
+                    현재 GitHub에 저장된 실시간 데이터를 관리하고 있습니다. 좌측 메뉴를 통해 각 섹션별 콘텐츠를 수정할 수 있으며, 모든 수정사항은 마지막에 한꺼번에 반영됩니다.
                   </p>
-                  <div className="flex gap-4">
-                     <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-bold uppercase tracking-widest">
-                       <CheckCircle2 size={12} /> JSON 전환 완료
-                     </div>
-                     <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-bold uppercase tracking-widest">
-                       <CheckCircle2 size={12} /> 토큰 보안 통실
-                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                </header>
 
-          {/* Side Info / Coming Soon */}
-          <div className="space-y-6">
-            <div className="bg-zinc-900 border border-white/5 p-8 rounded-3xl">
-              <h3 className="text-sm font-bold uppercase tracking-widest mb-6 border-b border-white/5 pb-4">시스템 정보</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-500">배포 방식</span>
-                  <span className="font-bold">Static (GitHub API)</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                   {[
+                     { label: 'Total Properties', value: pendingData?.properties?.length || 0, icon: Building2, color: 'text-zinc-100' },
+                     { label: 'Active Reviews', value: pendingData?.reviews?.length || 0, icon: MessageSquare, color: 'text-emerald-500' },
+                     { label: 'Area Articles', value: pendingData?.osakaInfo?.length || 0, icon: Info, color: 'text-electric-blue' },
+                     { label: 'Pending Changes', value: hasChanges() ? 'Yes' : 'No', icon: AlertCircle, color: hasChanges() ? 'text-amber-500' : 'text-zinc-800' },
+                   ].map((stat, i) => (
+                      <div key={i} className="bg-zinc-900 border border-white/5 p-8 rounded-3xl group hover:border-white/10 transition-all">
+                        <stat.icon className={`mb-6 ${stat.color}`} size={24} />
+                        <div className="text-3xl font-black mb-2">{stat.value}</div>
+                        <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">{stat.label}</div>
+                      </div>
+                   ))}
                 </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-500">인증 세션</span>
-                  <span className="font-bold">SessionMemory</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-500">GitHub Branch</span>
-                  <span className="font-bold">main</span>
-                </div>
-              </div>
-            </div>
+             </div>
+          )}
 
-            <div className="bg-electric-blue/5 border border-electric-blue/20 p-8 rounded-3xl relative overflow-hidden group">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-electric-blue opacity-[0.03] rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
-               <h3 className="text-sm font-bold uppercase tracking-widest mb-4">Phase 2: 편집 기능</h3>
-               <p className="text-zinc-500 text-xs leading-relaxed mb-6">
-                 각 항목 옆에 '수정' 버튼이 추가되며, 변경된 데이터는 임시 보관되었다가 한 번의 커밋으로 GitHub에 반영됩니다.
-               </p>
-               <div className="space-y-2 opacity-50">
-                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter">
-                     <span>매물 등록/수정/삭제</span>
-                     <ChevronRight size={12} />
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter">
-                     <span>사진 업로드 (압축 자동화)</span>
-                     <ChevronRight size={12} />
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter">
-                     <span>다중 파일 통합 커밋</span>
-                     <ChevronRight size={12} />
-                  </div>
-               </div>
-            </div>
-
-            <a 
-              href={`https://github.com/${authData.owner}/${authData.repo}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center py-4 border border-white/5 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all text-zinc-500"
-            >
-              <ExternalLink className="inline mr-2" size={12} /> GitHub 저장소 방문
-            </a>
+          <div className="animate-in fade-in duration-500">
+            {activeTab === 'properties' && <PropertyEditor />}
+            {activeTab === 'reviews' && <ReviewEditor />}
+            {activeTab === 'osakaInfo' && <OsakaInfoEditor />}
+            {activeTab === 'siteConfig' && <ConfigEditor />}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
