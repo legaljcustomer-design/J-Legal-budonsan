@@ -51,6 +51,27 @@ export default function ImageManager({
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync with prop changes while preserving local 'isNew' items
+  React.useEffect(() => {
+    setItems(prevItems => {
+      const newFiles = prevItems.filter(item => item.isNew);
+      const existingUrlsFromProp = images.map((url, i) => ({ 
+        id: `old-${i}-${url}`, 
+        url, 
+        isNew: false 
+      }));
+      
+      // If single mode, prop usually wins unless we just uploaded something
+      if (mode === 'single' && newFiles.length > 0) {
+        return newFiles;
+      }
+
+      // Filter multiple mode to avoid showing duplicate if already in newFiles via some other means
+      // (though usually urls won't overlap as new items use temporary blob/base64 info)
+      return [...existingUrlsFromProp, ...newFiles];
+    });
+  }, [images, mode]);
+
   const notifyChange = (newItems: ImageItem[], newPending: { path: string; base64: string }[], newDeleted: string[]) => {
     const finalUrls = newItems.map(item => item.url);
     onChange(finalUrls, newPending, newDeleted);
@@ -177,9 +198,11 @@ export default function ImageManager({
       {title && (
         <div className="flex items-center justify-between">
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{title}</label>
-          <span className="text-[8px] font-bold text-zinc-600 bg-white/5 px-2 py-0.5 rounded tracking-widest">
-            {items.length} / {maxImages} MAX
-          </span>
+          {mode === 'multiple' && (
+            <span className="text-[8px] font-bold text-zinc-600 bg-white/5 px-2 py-0.5 rounded tracking-widest">
+              {items.length} / {maxImages} MAX
+            </span>
+          )}
         </div>
       )}
 

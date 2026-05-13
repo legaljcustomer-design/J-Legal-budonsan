@@ -441,174 +441,7 @@ export default function Admin() {
     );
   };
 
-  // --- Modal Forms ---
-
-  const ModalForm = () => {
-    if (!editingItem) return null;
-
-    const { type, item, index } = editingItem;
-    
-    const handleFormChange = (key: string, value: any) => {
-      setEditingItem({ ...editingItem, item: { ...item, [key]: value } });
-    };
-
-    const handleImageChange = (newUrls: string[], newFiles: { path: string; base64: string }[], deletedPaths: string[], type: string) => {
-      const isReview = type === 'review';
-      const isInfo = type === 'osakaInfo';
-      
-      const updatedItem = { ...item };
-      if (isReview) updatedItem.image = newUrls[0] || '';
-      else if (isInfo) updatedItem.img = newUrls[0] || '';
-      else updatedItem.images = newUrls;
-
-      setEditingItem({ ...editingItem, item: updatedItem });
-      
-      // Update pending image files state
-      setPendingImageFiles(prev => {
-        // Filter out any existing pending files for this specific ID/item to avoid duplicates or stale files
-        const filtered = prev.filter(f => !f.path.includes(`/${item.id}/`));
-        return [...filtered, ...newFiles];
-      });
-
-      // Update deleted image paths state
-      setDeletedImagePaths(prev => {
-        const combined = new Set([...prev, ...deletedPaths]);
-        return Array.from(combined);
-      });
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      const updatedPending = { ...pendingData };
-      const key = type === 'property' ? 'properties' : type === 'review' ? 'reviews' : 'osakaInfo';
-      const list = [...updatedPending[key]];
-
-      if (index === -1) {
-        list.unshift(item);
-      } else {
-        list[index] = item;
-      }
-
-      updatedPending[key] = list;
-      setPendingData(updatedPending);
-      setEditingItem(null);
-    };
-
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-zinc-900 border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
-        >
-          <div className="p-8 border-b border-white/5 flex justify-between items-center bg-zinc-950/50">
-             <h3 className="text-xl font-bold uppercase tracking-tight">{index === -1 ? '신규 등록' : '내용 수정'} - {type}</h3>
-             <button onClick={() => setEditingItem(null)} className="p-2 hover:bg-white/5 rounded-lg transition-colors"><X size={20} /></button>
-          </div>
-          
-          <form id="modal-form" onSubmit={handleSubmit} className="p-8 overflow-y-auto flex-grow space-y-10 custom-scrollbar">
-            {type === 'property' && (
-              <div className="space-y-8">
-                 <ImageManager 
-                  title="매물 이미지 관리"
-                  folderPath={`properties/${item.id}`}
-                  images={item.images || []}
-                  mode="multiple"
-                  onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'property')}
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">매물 제목</label>
-                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가격</label>
-                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.price} onChange={e => handleFormChange('price', e.target.value)} placeholder="예: ¥188,000" required />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">위치 (구/동)</label>
-                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.location} onChange={e => handleFormChange('location', e.target.value)} required />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">타입</label>
-                    <select className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.type} onChange={e => handleFormChange('type', e.target.value)}>
-                      <option value="OneRoom">OneRoom</option>
-                      <option value="Family">Family</option>
-                      <option value="TwoRoom">TwoRoom</option>
-                      <option value="Investment">Investment</option>
-                      <option value="Office">Office</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가까운 역</label>
-                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.nearestStation} onChange={e => handleFormChange('nearestStation', e.target.value)} />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">상세 설명</label>
-                    <textarea rows={6} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.description} onChange={e => handleFormChange('description', e.target.value)} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {type === 'review' && (
-              <div className="space-y-8">
-                <ImageManager 
-                  title="후기 대표 이미지"
-                  folderPath={`reviews`}
-                  images={item.image ? [item.image] : []}
-                  mode="single"
-                  onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'review')}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <div className="md:col-span-2">
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">리뷰 제목</label>
-                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">작성자</label>
-                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.author} onChange={e => handleFormChange('author', e.target.value)} required />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">후기 내용</label>
-                    <textarea rows={6} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.content} onChange={e => handleFormChange('content', e.target.value)} required />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {type === 'osakaInfo' && (
-              <div className="space-y-8">
-                <ImageManager 
-                  title="정보글 대표 이미지"
-                  folderPath={`osaka-info`}
-                  images={item.img ? [item.img] : []}
-                  mode="single"
-                  onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'osakaInfo')}
-                />
-                <div className="space-y-8">
-                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">글 제목</label>
-                    <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">설명 (요약)</label>
-                    <textarea rows={4} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.description} onChange={e => handleFormChange('description', e.target.value)} required />
-                  </div>
-                </div>
-              </div>
-            )}
-          </form>
-
-          <div className="p-8 border-t border-white/5 bg-zinc-950/50 flex justify-end gap-4">
-             <button onClick={() => setEditingItem(null)} className="px-8 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-all">취소</button>
-             <button form="modal-form" type="submit" className="px-10 py-3 bg-white text-black text-xs font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all">저장하기</button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  };
+  // --- Global Helpers ---
 
   if (isVerifying) {
     return (
@@ -695,7 +528,16 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row">
       <AnimatePresence>
-        {editingItem && <ModalForm />}
+        {editingItem && (
+          <ModalForm 
+            editingItem={editingItem} 
+            setEditingItem={setEditingItem}
+            pendingData={pendingData}
+            setPendingData={setPendingData}
+            setPendingImageFiles={setPendingImageFiles}
+            setDeletedImagePaths={setDeletedImagePaths}
+          />
+        )}
       </AnimatePresence>
 
       {/* Persistence Notification/Top Bar for Mobile */}
@@ -836,3 +678,189 @@ export default function Admin() {
     </div>
   );
 }
+
+// --- Standalone Modal Form Component ---
+
+interface ModalFormProps {
+  editingItem: { type: string; item: any; index: number } | null;
+  setEditingItem: (val: { type: string; item: any; index: number } | null) => void;
+  pendingData: any;
+  setPendingData: (val: any) => void;
+  setPendingImageFiles: React.Dispatch<React.SetStateAction<{ path: string; base64: string }[]>>;
+  setDeletedImagePaths: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+const ModalForm = ({ 
+  editingItem, 
+  setEditingItem, 
+  pendingData, 
+  setPendingData, 
+  setPendingImageFiles, 
+  setDeletedImagePaths 
+}: ModalFormProps) => {
+  if (!editingItem) return null;
+
+  const { type, item, index } = editingItem;
+  
+  const handleFormChange = (key: string, value: any) => {
+    setEditingItem({ ...editingItem, item: { ...item, [key]: value } });
+  };
+
+  const handleImageChange = (newUrls: string[], newFiles: { path: string; base64: string }[], deletedPaths: string[], type: string) => {
+    const isReview = type === 'review';
+    const isInfo = type === 'osakaInfo';
+    
+    const updatedItem = { ...item };
+    if (isReview) updatedItem.image = newUrls[0] || '';
+    else if (isInfo) updatedItem.img = newUrls[0] || '';
+    else updatedItem.images = newUrls;
+
+    setEditingItem({ ...editingItem, item: updatedItem });
+    
+    // Update pending image files state
+    setPendingImageFiles(prev => {
+      // Filter out any existing pending files for this specific ID/item to avoid duplicates or stale files
+      const folderRef = isReview ? 'reviews' : isInfo ? 'osaka-info' : `properties/${item.id}`;
+      const filtered = prev.filter(f => !f.path.includes(folderRef));
+      return [...filtered, ...newFiles];
+    });
+
+    // Update deleted image paths state
+    setDeletedImagePaths(prev => {
+      const combined = new Set([...prev, ...deletedPaths]);
+      return Array.from(combined);
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updatedPending = { ...pendingData };
+    const key = type === 'property' ? 'properties' : type === 'review' ? 'reviews' : 'osakaInfo';
+    const list = [...updatedPending[key]];
+
+    if (index === -1) {
+      list.unshift(item);
+    } else {
+      list[index] = item;
+    }
+
+    updatedPending[key] = list;
+    setPendingData(updatedPending);
+    setEditingItem(null);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-zinc-900 border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+      >
+        <div className="p-8 border-b border-white/5 flex justify-between items-center bg-zinc-950/50">
+           <h3 className="text-xl font-bold uppercase tracking-tight">{index === -1 ? '신규 등록' : '내용 수정'} - {type}</h3>
+           <button onClick={() => setEditingItem(null)} className="p-2 hover:bg-white/5 rounded-lg transition-colors"><X size={20} /></button>
+        </div>
+        
+        <form id="modal-form" onSubmit={handleSubmit} className="p-8 overflow-y-auto flex-grow space-y-10 custom-scrollbar">
+          {type === 'property' && (
+            <div className="space-y-8">
+               <ImageManager 
+                title="매물 이미지 관리"
+                folderPath={`properties/${item.id}`}
+                images={item.images || []}
+                mode="multiple"
+                onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'property')}
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">매물 제목</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가격</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.price} onChange={e => handleFormChange('price', e.target.value)} placeholder="예: ¥188,000" required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">위치 (구/동)</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.location} onChange={e => handleFormChange('location', e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">타입</label>
+                  <select className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.type} onChange={e => handleFormChange('type', e.target.value)}>
+                    <option value="OneRoom">OneRoom</option>
+                    <option value="Family">Family</option>
+                    <option value="TwoRoom">TwoRoom</option>
+                    <option value="Investment">Investment</option>
+                    <option value="Office">Office</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가까운 역</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.nearestStation} onChange={e => handleFormChange('nearestStation', e.target.value)} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">상세 설명</label>
+                  <textarea rows={6} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.description} onChange={e => handleFormChange('description', e.target.value)} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {type === 'review' && (
+            <div className="space-y-8">
+              <ImageManager 
+                title="후기 대표 이미지"
+                folderPath={`reviews`}
+                images={item.image ? [item.image] : []}
+                mode="single"
+                onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'review')}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">리뷰 제목</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">작성자</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.author} onChange={e => handleFormChange('author', e.target.value)} required />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">후기 내용</label>
+                  <textarea rows={6} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.content} onChange={e => handleFormChange('content', e.target.value)} required />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {type === 'osakaInfo' && (
+            <div className="space-y-8">
+              <ImageManager 
+                title="정보글 대표 이미지"
+                folderPath={`osaka-info`}
+                images={item.img ? [item.img] : []}
+                mode="single"
+                onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'osakaInfo')}
+              />
+              <div className="space-y-8">
+                 <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">글 제목</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">설명 (요약)</label>
+                  <textarea rows={4} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.description} onChange={e => handleFormChange('description', e.target.value)} required />
+                </div>
+              </div>
+            </div>
+          )}
+        </form>
+
+        <div className="p-8 border-t border-white/5 bg-zinc-950/50 flex justify-end gap-4">
+           <button onClick={() => setEditingItem(null)} className="px-8 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-all">취소</button>
+           <button form="modal-form" type="submit" className="px-10 py-3 bg-white text-black text-xs font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all">저장하기</button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
