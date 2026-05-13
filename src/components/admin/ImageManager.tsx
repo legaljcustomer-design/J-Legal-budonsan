@@ -41,8 +41,13 @@ export default function ImageManager({
   mode = 'multiple',
   title
 }: ImageManagerProps) {
+  // Using stable IDs for existing images (the URL itself)
   const [items, setItems] = useState<ImageItem[]>(
-    images.map((url, i) => ({ id: `old-${i}-${url}`, url, isNew: false }))
+    images.map((url) => ({ 
+      id: url, 
+      url, 
+      isNew: false 
+    }))
   );
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,21 +59,31 @@ export default function ImageManager({
   // Sync with prop changes while preserving local 'isNew' items
   React.useEffect(() => {
     setItems(prevItems => {
-      const newFiles = prevItems.filter(item => item.isNew);
-      const existingUrlsFromProp = images.map((url, i) => ({ 
-        id: `old-${i}-${url}`, 
-        url, 
-        isNew: false 
-      }));
+      // 1. New items are ones we just uploaded but haven't been 'confirmed' by the parent yet.
+      // 2. However, once the parent updates its 'images' prop with the new URL, 
+      //    the item is now technically an 'existing' item from the prop's perspective.
       
-      // If single mode, prop usually wins unless we just uploaded something
-      if (mode === 'single' && newFiles.length > 0) {
-        return newFiles;
+      const propUrls = new Set(images);
+      
+      // Items from props are always the source of truth for 'existing' state
+      const existingItemsFromProps = images.map(url => ({
+        id: url, // Stable ID
+        url,
+        isNew: false
+      }));
+
+      // Find local 'new' items that are NOT yet in the propUrls.
+      // If they ARE in propUrls, it means the parent has accepted them, so we can drop the local 'isNew' version.
+      const pendingNewItems = prevItems.filter(item => item.isNew && !propUrls.has(item.url));
+
+      if (mode === 'single') {
+        // In single mode, if we have a pending new item, show it. Otherwise show prop.
+        return pendingNewItems.length > 0 ? pendingNewItems : existingItemsFromProps;
       }
 
-      // Filter multiple mode to avoid showing duplicate if already in newFiles via some other means
-      // (though usually urls won't overlap as new items use temporary blob/base64 info)
-      return [...existingUrlsFromProp, ...newFiles];
+      // In multiple mode, prop items come first (maintaining order from parent)
+      // and we append pending new items that haven't been synced yet.
+      return [...existingItemsFromProps, ...pendingNewItems];
     });
   }, [images, mode]);
 
@@ -258,18 +273,21 @@ export default function ImageManager({
                    <GripVertical size={20} />
                 </div>
                 
-                <div className="w-16 h-16 rounded-xl bg-zinc-800 overflow-hidden flex-shrink-0 border border-white/5">
+                <div className="w-16 h-16 rounded-xl bg-zinc-800 overflow-hidden flex-shrink-0 border border-white/5 relative">
                    <img 
                     src={item.isNew ? `data:image/webp;base64,${item.base64}` : item.url} 
                     alt="" 
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://placehold.co/400x400/222/555?text=Load+Error';
+                    }}
                    />
                 </div>
 
                 <div className="flex-grow min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="text-[10px] font-bold text-zinc-200 line-clamp-1 truncate">
-                      {item.isNew ? item.originalName : `Existing Image ${idx + 1}`}
+                      {item.isNew ? (item.originalName || 'New Image') : (item.url.split('/').pop() || 'Existing Image')}
                     </span>
                     {idx === 0 && (
                       <span className="text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-electric-blue text-white rounded">Cover</span>
@@ -299,6 +317,9 @@ export default function ImageManager({
                  src={item.isNew ? `data:image/webp;base64,${item.base64}` : item.url} 
                  alt="" 
                  className="w-full h-full object-cover opacity-80"
+                 onError={(e) => {
+                   (e.target as HTMLImageElement).src = 'https://placehold.co/400x400/222/555?text=Load+Error';
+                 }}
                />
                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
                   <div className="flex items-center justify-between w-full">
