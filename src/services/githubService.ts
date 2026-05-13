@@ -89,6 +89,26 @@ export class GithubService {
   }
 
   /**
+   * 트리에서 특정 경로가 존재하는지 확인하기 위한 재귀적 트리 가져오기
+   */
+  async getRecursiveTree(treeSha: string): Promise<Set<string>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/trees/${treeSha}?recursive=1`, {
+        headers: {
+          'Authorization': `token ${this.token}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      });
+      if (!response.ok) return new Set();
+      const data = await response.json();
+      return new Set<string>(data.tree.map((item: any) => item.path));
+    } catch (error) {
+      console.error('Error fetching recursive tree:', error);
+      return new Set();
+    }
+  }
+
+  /**
    * 여러 파일(텍스트, 이미지)을 하나의 커밋으로 묶어 저장 및 삭제 (Stage 3 확장)
    */
   async commitMultipleFiles(
@@ -115,16 +135,41 @@ export class GithubService {
       const commitData = await commitResponse.json();
       const baseTreeSha = commitData.tree.sha;
 
-      // 3. 바이너리 파일 처리 (이미지 등을 Blob으로 생성)
-      const treeItems = await Promise.all(files.map(async (file) => {
+      // 2.1 원격 트리에 존재하는 파일 목록 확인 (삭제 안전성 확보)
+      const existingPaths = await this.getRecursiveTree(baseTreeSha);
+
+      // 3. 입력 파일 목록 정규화 및 중복 제거
+      // - 같은 path가 여러 번 들어오면 가장 마지막(최신) 상태 유지
+      // - delete와 add가 동시에 있으면 add가 최종 상태면 add 유지
+      const normalizedFilesMap = new Map<string, typeof files[0]>();
+      
+      files.forEach(file => {
+        // 경로 정규화: 앞 슬래시 제거, 공백 제거
+        let cleanPath = file.path.trim().replace(/^\/+/, '');
+        
+        // 업로드 이미지 경로인데 public/ 이 없는 경우 보정 (방어적 코드)
+        if (cleanPath.startsWith('assets/uploads/') && !cleanPath.startsWith('public/')) {
+          cleanPath = `public/${cleanPath}`;
+        }
+        
+        normalizedFilesMap.set(cleanPath, { ...file, path: cleanPath });
+      });
+
+      const processedFiles = Array.from(normalizedFilesMap.values());
+
+      // 4. 바이너리 파일 처리 (이미지 등을 Blob으로 생성)
+      const treeItems = await Promise.all(processedFiles.map(async (file) => {
         if (file.delete) {
-          // 삭제 요청: sha를 null로 설정하여 트리에서 제거
-          return {
-            path: file.path,
-            mode: '100644',
-            type: 'blob',
-            sha: null
-          };
+          // 삭제 요청: 원격에 실제로 존재할 때만 sha: null 트리 엔트리 생성
+          if (existingPaths.has(file.path)) {
+            return {
+              path: file.path,
+              mode: '100644',
+              type: 'blob',
+              sha: null
+            };
+          }
+          return null; // 존재하지 않는 파일은 트리 엔트리에서 제외
         }
 
         if (file.base64) {
@@ -147,7 +192,7 @@ export class GithubService {
           };
         }
 
-        // 일반 텍스트 데이터 (JSON)
+        // 일반 텍스트 데이터 (JSON 등)
         return {
           path: file.path,
           mode: '100644',
@@ -156,23 +201,36 @@ export class GithubService {
         };
       }));
 
-      // 4. 새로운 Tree 생성
+      // null로 필터링된 엔트리(존재하지 않는 삭제 대상) 제거
+      const validTreeItems = treeItems.filter(item => item !== null);
+
+      if (validTreeItems.length === 0) {
+        return true; // 할 일 없음
+      }
+
+      // 5. 새로운 Tree 생성
       const newTreeResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/trees`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
           base_tree: baseTreeSha,
-          tree: treeItems
+          tree: validTreeItems
         })
       });
+
       if (!newTreeResponse.ok) {
          const err = await newTreeResponse.json();
-         throw new Error(`Failed to create tree: ${err.message}`);
+         let msg = err.message || 'Unknown error';
+         // GITRPC::BADOBJECTSTATE 오류 시 상세 설명 추가
+         if (msg.includes('GITRPC::BADOBJECTSTATE') || msg.includes('tree.path')) {
+           msg = 'GitHub 반영 중 이미지 파일 목록을 정리하는 단계에서 오류가 발생했습니다. 같은 이미지를 삭제와 추가로 동시에 처리했거나, 존재하지 않는 파일 삭제 요청이 포함되었을 수 있습니다.';
+         }
+         throw new Error(`Failed to create tree: ${msg}`);
       }
       const newTreeData = await newTreeResponse.json();
       const newTreeSha = newTreeData.sha;
 
-      // 5. 새로운 Commit 생성
+      // 6. 새로운 Commit 생성
       const newCommitResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/commits`, {
         method: 'POST',
         headers,
@@ -186,7 +244,7 @@ export class GithubService {
       const newCommitData = await newCommitResponse.json();
       const newCommitSha = newCommitData.sha;
 
-      // 6. Ref 업데이트
+      // 7. Ref 업데이트
       const updateRefResponse = await fetch(`${this.baseUrl}/repos/${this.owner}/${this.repo}/git/refs/heads/${branch}`, {
         method: 'PATCH',
         headers,
