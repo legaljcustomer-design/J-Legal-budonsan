@@ -57,6 +57,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     heroSubtitle: '난바, 우메다 등 주요 거점의 신축 맨션부터 수익형 빌딩까지, 오사카 거주 한국인 및 투자자를 위한 맞춤형 럭셔리 컨설팅을 제공합니다.',
     consultationBaseCount: 102,
     kakaoId: 'oosakaj',
+    kakaoUrl: 'https://pf.kakao.com/_TSvgxb',
     lineId: '@845immxy',
     instagramId: 'oosaka_j',
     instagramUrl: '',
@@ -211,7 +212,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
 
           <div className="flex items-center gap-4">
             <a 
-              href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
+              href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="hidden md:flex blue-glow-btn px-8 py-3 items-center justify-center text-white text-sm shadow-[0_0_20px_rgba(37,99,235,0.4)] animate-pulse-slow hover:animate-none"
@@ -243,7 +244,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="text-electric-blue">관리자전용</Link>
             </div>
             <a 
-              href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
+              href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="blue-glow-btn w-full max-w-xs py-4 text-sm flex items-center justify-center font-bold text-white shadow-xl"
@@ -316,8 +317,8 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   onClick={() => setActiveCategory(cat.id)}
                   className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all border ${
                     activeCategory === cat.id 
-                      ? 'bg-electric-blue text-white border-electric-blue shadow-lg shadow-blue-500/20' 
-                      : 'bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 shadow-sm'
+                    ? 'bg-electric-blue text-white border-electric-blue shadow-lg shadow-blue-500/20' 
+                    : 'bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 shadow-sm'
                   }`}
                 >
                   <cat.icon size={14} />
@@ -425,7 +426,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 <motion.a
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
+                  href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
@@ -534,21 +535,21 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   desc: "주소지 등록부터 건강보험 가입까지, 정착의 첫걸음을 도와드립니다.",
                   tag: "생활 정보",
                   img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2694&auto=format&fit=crop",
-                  instagramUrl: settings.youtubeUrl
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
                 },
                 {
                   title: "수도/가스/전기 신청 방법",
                   desc: "이사 후 가장 먼저 해야 할 라이프라인 신청 절차를 정리했습니다.",
                   tag: "인프라",
                   img: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2670&auto=format&fit=crop",
-                  instagramUrl: settings.youtubeUrl
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
                 },
                 {
                   title: "오사카 지하철 노선 완전 정복",
                   desc: "미도스지선, 다니마치선 등 주요 노선 이용 팁과 교통카드 정보.",
                   tag: "교통",
                   img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=2670&auto=format&fit=crop",
-                  instagramUrl: settings.youtubeUrl
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
                 }
               ]), ...(osakaInfos.length > 0 ? osakaInfos : [
                 {
@@ -556,21 +557,21 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   desc: "주소지 등록부터 건강보험 가입까지, 정착의 첫걸음을 도와드립니다.",
                   tag: "생활 정보",
                   img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2694&auto=format&fit=crop",
-                  instagramUrl: settings.youtubeUrl
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
                 },
                 {
                   title: "수도/가스/전기 신청 방법",
                   desc: "이사 후 가장 먼저 해야 할 라이프라인 신청 절차를 정리했습니다.",
                   tag: "인프라",
                   img: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2670&auto=format&fit=crop",
-                  instagramUrl: settings.youtubeUrl
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
                 },
                 {
                   title: "오사카 지하철 노선 완전 정복",
                   desc: "미도스지선, 다니마치선 등 주요 노선 이용 팁과 교통카드 정보.",
                   tag: "교통",
                   img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=2670&auto=format&fit=crop",
-                  instagramUrl: settings.youtubeUrl
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
                 }
               ])].map((info, idx) => (
                 <div
@@ -742,7 +743,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 </div>
                 <div className="flex gap-3">
                   <a 
-                    href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
+                    href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-12 h-12 bg-[#FEE500] rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl border-2 border-white/20"
@@ -758,7 +759,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                     <MessageSquare className="w-6 h-6 text-emerald-500" />
                   </a>
                   <a 
-                    href={settings.instagramUrl?.trim() || `https://www.instagram.com/${settings.instagramId.replace('@', '')}/`} 
+                    href={settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
@@ -779,7 +780,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           </div>
         </div>
       </section>
-        
+
       {/* Footer */}
       <footer className="bg-zinc-50 py-20 px-10 border-t border-zinc-200">
         <div className="max-w-7xl mx-auto">
@@ -838,7 +839,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 1, duration: 0.8 }}
-          href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
+          href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
           target="_blank" 
           rel="noopener noreferrer"
           className="w-12 h-12 md:w-16 md:h-16 bg-[#FEE500] rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(254,229,0,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
@@ -868,7 +869,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.8 }}
-          href={settings.instagramUrl?.trim() || `https://www.instagram.com/${settings.instagramId.replace('@', '')}/`} 
+          href={settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`} 
           target="_blank" 
           rel="noopener noreferrer"
           className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-tr from-[#f9ce67] via-[#f07030] to-[#833ab4] rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(131,58,180,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
