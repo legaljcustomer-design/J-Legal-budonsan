@@ -393,6 +393,15 @@ export default function Admin() {
                   />
                 </div>
                 <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Instagram URL</label>
+                  <input 
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                    value={config.instagramUrl || ''}
+                    onChange={e => handleChange('instagramUrl', e.target.value)}
+                    placeholder="https://www.instagram.com/example/"
+                  />
+                </div>
+                <div className="md:col-span-2">
                   <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">YouTube URL</label>
                   <input 
                     className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
