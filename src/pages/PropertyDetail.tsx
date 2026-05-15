@@ -77,7 +77,6 @@ export default function PropertyDetail() {
     setIsAdmin(false);
   }, []);
 
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isZoomed) {
@@ -296,14 +295,14 @@ export default function PropertyDetail() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             
             <div className="flex flex-col h-full">
-              {property.mansionFeatures && (
+              {property.description && (
                 <div className="bg-white p-8 md:p-10 rounded-3xl border border-zinc-200 shadow-xl h-full">
                   <h2 className="text-xl font-bold mb-6 border-b border-zinc-100 pb-4 flex items-center gap-2">
                     <Building2 size={20} className="text-blue-600" />
-                    맨션 특징
+                    상세 설명
                   </h2>
-                  <p className="text-zinc-700 leading-relaxed whitespace-pre-wrap font-bold text-sm">
-                    {property.mansionFeatures}
+                  <p className="text-zinc-700 leading-relaxed whitespace-pre-line font-medium text-sm">
+                    {property.description}
                   </p>
                 </div>
               )}
