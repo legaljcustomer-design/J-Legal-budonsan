@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { 
   CloudUpload, 
@@ -17,8 +16,12 @@ import { compressImage, formatBytes, ProcessedImage } from '../../services/image
 
 interface ImageManagerProps {
   images: string[];
-  onChange: (newImages: string[], newFiles: { path: string; base64: string }[], deletedPaths: string[]) => void;
-  folderPath: string; // e.g., "properties/prop-1"
+  onChange: (
+    newImages: string[],
+    newFiles: { path: string; base64: string }[],
+    deletedPaths: string[]
+  ) => void;
+  folderPath: string;
   maxImages?: number;
   mode?: 'single' | 'multiple';
   title?: string;
@@ -41,7 +44,6 @@ export default function ImageManager({
   mode = 'multiple',
   title
 }: ImageManagerProps) {
-  // Using stable IDs for existing images (the URL itself)
   const [items, setItems] = useState<ImageItem[]>(
     images.map((url) => ({ 
       id: url, 
@@ -49,6 +51,7 @@ export default function ImageManager({
       isNew: false 
     }))
   );
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletedFiles, setDeletedFiles] = useState<string[]>([]);
@@ -56,38 +59,53 @@ export default function ImageManager({
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync with prop changes while preserving local 'isNew' items
+  // props.images가 갱신되어도,
+  // 로컬에서 방금 추가한 신규 이미지의 isNew/base64 상태를 보존한다.
   React.useEffect(() => {
     setItems(prevItems => {
-      // 1. New items are ones we just uploaded but haven't been 'confirmed' by the parent yet.
-      // 2. However, once the parent updates its 'images' prop with the new URL, 
-      //    the item is now technically an 'existing' item from the prop's perspective.
-      
       const propUrls = new Set(images);
-      
-      // Items from props are always the source of truth for 'existing' state
-      const existingItemsFromProps = images.map(url => ({
-        id: url, // Stable ID
-        url,
-        isNew: false
-      }));
 
-      // Find local 'new' items that are NOT yet in the propUrls.
-      // If they ARE in propUrls, it means the parent has accepted them, so we can drop the local 'isNew' version.
-      const pendingNewItems = prevItems.filter(item => item.isNew && !propUrls.has(item.url));
+      // 부모 props에 있는 URL을 기준으로 순서를 맞추되,
+      // 같은 URL의 기존 로컬 항목이 있으면 그대로 재사용한다.
+      // 이렇게 해야 신규 이미지의 isNew/base64가 사라지지 않는다.
+      const syncedItems = images.map(url => {
+        const existing = prevItems.find(item => item.url === url);
+
+        if (existing) {
+          return existing;
+        }
+
+        return {
+          id: url,
+          url,
+          isNew: false
+        };
+      });
+
+      // 아직 부모 props.images에 반영되지 않은 신규 업로드 항목은 유지
+      const unconfirmedNewItems = prevItems.filter(
+        item => item.isNew && !propUrls.has(item.url)
+      );
 
       if (mode === 'single') {
-        // In single mode, if we have a pending new item, show it. Otherwise show prop.
-        return pendingNewItems.length > 0 ? pendingNewItems : existingItemsFromProps;
+        if (syncedItems.length > 0) {
+          return [syncedItems[0]];
+        }
+
+        return unconfirmedNewItems.length > 0
+          ? [unconfirmedNewItems[0]]
+          : [];
       }
 
-      // In multiple mode, prop items come first (maintaining order from parent)
-      // and we append pending new items that haven't been synced yet.
-      return [...existingItemsFromProps, ...pendingNewItems];
+      return [...syncedItems, ...unconfirmedNewItems];
     });
   }, [images, mode]);
 
-  const notifyChange = (newItems: ImageItem[], newPending: { path: string; base64: string }[], newDeleted: string[]) => {
+  const notifyChange = (
+    newItems: ImageItem[],
+    newPending: { path: string; base64: string }[],
+    newDeleted: string[]
+  ) => {
     const finalUrls = newItems.map(item => item.url);
     onChange(finalUrls, newPending, newDeleted);
   };
@@ -97,13 +115,14 @@ export default function ImageManager({
     if (files.length === 0) return;
 
     if (mode === 'single' && files.length > 0) {
-      // Direct replace for single mode
       processFiles([files[0]]);
     } else {
       processFiles(files);
     }
     
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const processFiles = async (files: File[]) => {
@@ -136,7 +155,10 @@ export default function ImageManager({
         const webpPath = `public/assets/uploads/${folderPath}/${fileName}`;
         const appPath = `/assets/uploads/${folderPath}/${fileName}`;
 
-        newPending.push({ path: webpPath, base64: processed.base64 });
+        newPending.push({
+          path: webpPath,
+          base64: processed.base64
+        });
         
         newItems.push({
           id: `new-${timestamp}-${index}`,
@@ -162,29 +184,25 @@ export default function ImageManager({
     const itemToDelete = items.find(item => item.id === id);
     if (!itemToDelete) return;
 
-    // If it's an existing file in our uploads folder, mark for deletion
+    let updatedDeleted = deletedFiles;
+    let updatedPending = pendingFiles;
+
+    // 이미 GitHub에 존재하는 업로드 이미지라면 삭제 대상에 추가
     if (!itemToDelete.isNew && itemToDelete.url.startsWith('/assets/uploads/')) {
       const gitPath = `public${itemToDelete.url}`;
-      setDeletedFiles(prev => [...prev, gitPath]);
+      updatedDeleted = Array.from(new Set([...deletedFiles, gitPath]));
+      setDeletedFiles(updatedDeleted);
     }
 
-    // If it's a pending file, remove from pendingFiles
+    // 아직 저장 전 신규 이미지라면 pendingFiles에서 제거
     if (itemToDelete.isNew) {
       const gitPath = `public${itemToDelete.url}`;
-      setPendingFiles(prev => prev.filter(p => p.path !== gitPath));
+      updatedPending = pendingFiles.filter(p => p.path !== gitPath);
+      setPendingFiles(updatedPending);
     }
 
     const newItems = items.filter(item => item.id !== id);
     setItems(newItems);
-    
-    // We need to re-notify with the updated states
-    const updatedDeleted = (!itemToDelete.isNew && itemToDelete.url.startsWith('/assets/uploads/')) 
-      ? [...deletedFiles, `public${itemToDelete.url}`] 
-      : deletedFiles;
-      
-    const updatedPending = itemToDelete.isNew 
-      ? pendingFiles.filter(p => p.path !== `public${itemToDelete.url}`) 
-      : pendingFiles;
 
     notifyChange(newItems, updatedPending, updatedDeleted);
   };
@@ -196,6 +214,7 @@ export default function ImageManager({
 
   const moveUp = (idx: number) => {
     if (idx === 0) return;
+
     const newItems = [...items];
     [newItems[idx - 1], newItems[idx]] = [newItems[idx], newItems[idx - 1]];
     handleReorder(newItems);
@@ -203,6 +222,7 @@ export default function ImageManager({
 
   const moveDown = (idx: number) => {
     if (idx === items.length - 1) return;
+
     const newItems = [...items];
     [newItems[idx + 1], newItems[idx]] = [newItems[idx], newItems[idx + 1]];
     handleReorder(newItems);
@@ -212,7 +232,10 @@ export default function ImageManager({
     <div className="space-y-4">
       {title && (
         <div className="flex items-center justify-between">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{title}</label>
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+            {title}
+          </label>
+
           {mode === 'multiple' && (
             <span className="text-[8px] font-bold text-zinc-600 bg-white/5 px-2 py-0.5 rounded tracking-widest">
               {items.length} / {maxImages} MAX
@@ -228,13 +251,16 @@ export default function ImageManager({
         </div>
       )}
 
-      {/* Upload Area */}
-      { (mode === 'multiple' || items.length === 0) && (
+      {(mode === 'multiple' || items.length === 0) && (
         <div 
           onClick={() => fileInputRef.current?.click()}
           className={`
             relative border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer
-            ${isProcessing ? 'border-zinc-800 bg-zinc-900/20 pointer-events-none' : 'border-white/5 hover:border-electric-blue/30 hover:bg-electric-blue/5'}
+            ${
+              isProcessing
+                ? 'border-zinc-800 bg-zinc-900/20 pointer-events-none'
+                : 'border-white/5 hover:border-electric-blue/30 hover:bg-electric-blue/5'
+            }
           `}
         >
           <input 
@@ -245,24 +271,32 @@ export default function ImageManager({
             multiple={mode === 'multiple'}
             accept="image/*"
           />
+
           {isProcessing ? (
             <Loader2 className="text-electric-blue animate-spin" size={32} />
           ) : (
             <CloudUpload className="text-zinc-600" size={32} />
           )}
+
           <div className="text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
               {isProcessing ? '이미지 압축 중...' : '이미지 추가하기'}
             </p>
-            <p className="text-[10px] text-zinc-600 mt-1">WebP 자동 변환 (최대 10MB)</p>
+            <p className="text-[10px] text-zinc-600 mt-1">
+              WebP 자동 변환 (최대 10MB)
+            </p>
           </div>
         </div>
       )}
 
-      {/* Preview Area */}
       <div className="space-y-2">
         {mode === 'multiple' ? (
-          <Reorder.Group axis="y" values={items} onReorder={handleReorder} className="space-y-2">
+          <Reorder.Group
+            axis="y"
+            values={items}
+            onReorder={handleReorder}
+            className="space-y-2"
+          >
             {items.map((item, idx) => (
               <Reorder.Item 
                 key={item.id} 
@@ -270,79 +304,126 @@ export default function ImageManager({
                 className="bg-zinc-900/50 border border-white/5 rounded-2xl p-3 flex items-center gap-4 group"
               >
                 <div className="cursor-grab active:cursor-grabbing text-zinc-700 hover:text-zinc-400">
-                   <GripVertical size={20} />
+                  <GripVertical size={20} />
                 </div>
                 
                 <div className="w-16 h-16 rounded-xl bg-zinc-800 overflow-hidden flex-shrink-0 border border-white/5 relative">
-                   <img 
-                    src={item.isNew ? `data:image/webp;base64,${item.base64}` : item.url} 
+                  <img 
+                    src={
+                      item.isNew
+                        ? `data:image/webp;base64,${item.base64}`
+                        : item.url
+                    } 
                     alt="" 
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://placehold.co/400x400/222/555?text=Load+Error';
+                      (e.target as HTMLImageElement).src =
+                        'https://placehold.co/400x400/222/555?text=Load+Error';
                     }}
-                   />
+                  />
                 </div>
 
                 <div className="flex-grow min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="text-[10px] font-bold text-zinc-200 line-clamp-1 truncate">
-                      {item.isNew ? (item.originalName || 'New Image') : (item.url.split('/').pop() || 'Existing Image')}
+                      {
+                        item.isNew
+                          ? item.originalName || 'New Image'
+                          : item.url.split('/').pop() || 'Existing Image'
+                      }
                     </span>
+
                     {idx === 0 && (
-                      <span className="text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-electric-blue text-white rounded">Cover</span>
+                      <span className="text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-electric-blue text-white rounded">
+                        Cover
+                      </span>
                     )}
+
                     {item.isNew && (
-                       <span className="text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-emerald-500/20 text-emerald-500 rounded">New</span>
+                      <span className="text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-emerald-500/20 text-emerald-500 rounded">
+                        New
+                      </span>
                     )}
                   </div>
+
                   <div className="flex items-center gap-2 text-[9px] text-zinc-600 font-mono">
-                     {item.size ? formatBytes(item.size) : '---'}
+                    {item.size ? formatBytes(item.size) : '---'}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1">
-                   <button onClick={() => moveUp(idx)} className="p-2 text-zinc-700 hover:text-white transition-all"><ArrowUp size={14} /></button>
-                   <button onClick={() => moveDown(idx)} className="p-2 text-zinc-700 hover:text-white transition-all"><ArrowDown size={14} /></button>
-                   <button onClick={() => handleDelete(item.id)} className="p-2 text-zinc-700 hover:text-red-500 transition-all"><X size={16} /></button>
+                  <button
+                    onClick={() => moveUp(idx)}
+                    className="p-2 text-zinc-700 hover:text-white transition-all"
+                  >
+                    <ArrowUp size={14} />
+                  </button>
+
+                  <button
+                    onClick={() => moveDown(idx)}
+                    className="p-2 text-zinc-700 hover:text-white transition-all"
+                  >
+                    <ArrowDown size={14} />
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="p-2 text-zinc-700 hover:text-red-500 transition-all"
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
               </Reorder.Item>
             ))}
           </Reorder.Group>
         ) : (
-          /* Single Mode View */
           items.map((item) => (
-            <div key={item.id} className="relative group rounded-3xl overflow-hidden border border-white/5 bg-zinc-900 aspect-video">
-               <img 
-                 src={item.isNew ? `data:image/webp;base64,${item.base64}` : item.url} 
-                 alt="" 
-                 className="w-full h-full object-cover opacity-80"
-                 onError={(e) => {
-                   (e.target as HTMLImageElement).src = 'https://placehold.co/400x400/222/555?text=Load+Error';
-                 }}
-               />
-               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                  <div className="flex items-center justify-between w-full">
-                     <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-white">표시 이미지</span>
-                        <span className="text-[9px] text-zinc-400">{item.isNew ? '새 이미지' : '기존 파일'}</span>
-                     </div>
-                     <div className="flex gap-2">
-                        <button 
-                          onClick={() => fileInputRef.current?.click()}
-                          className="bg-white/10 hover:bg-white/20 p-3 rounded-xl transition-all"
-                        >
-                           <CloudUpload size={18} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(item.id)}
-                          className="bg-red-500/20 hover:bg-red-500/30 p-3 rounded-xl text-red-500 transition-all"
-                        >
-                           <X size={18} />
-                        </button>
-                     </div>
+            <div
+              key={item.id}
+              className="relative group rounded-3xl overflow-hidden border border-white/5 bg-zinc-900 aspect-video"
+            >
+              <img 
+                src={
+                  item.isNew
+                    ? `data:image/webp;base64,${item.base64}`
+                    : item.url
+                } 
+                alt="" 
+                className="w-full h-full object-cover opacity-80"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    'https://placehold.co/400x400/222/555?text=Load+Error';
+                }}
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white">
+                      표시 이미지
+                    </span>
+                    <span className="text-[9px] text-zinc-400">
+                      {item.isNew ? '새 이미지' : '기존 파일'}
+                    </span>
                   </div>
-               </div>
+
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-white/10 hover:bg-white/20 p-3 rounded-xl transition-all"
+                    >
+                      <CloudUpload size={18} />
+                    </button>
+
+                    <button 
+                      onClick={() => handleDelete(item.id)}
+                      className="bg-red-500/20 hover:bg-red-500/30 p-3 rounded-xl text-red-500 transition-all"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           ))
         )}
