@@ -25,11 +25,20 @@ import {
   Youtube,
   Link as LinkIcon,
   Search,
-  Check
+  Check,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createGithubService, GithubService } from '../services/githubService';
 import ImageManager from '../components/admin/ImageManager';
+
+const normalizeImageSrc = (src: string | undefined) => {
+  if (!src) return '';
+  if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/') || src.startsWith('data:')) {
+    return src;
+  }
+  return `/${src}`;
+};
 
 interface StorageData {
   token: string;
@@ -306,15 +315,16 @@ export default function Admin() {
           {list.map((rev: any, idx: number) => (
             <div key={rev.id} className="bg-zinc-900 border border-white/5 p-6 rounded-2xl flex items-center justify-between group">
               <div className="flex items-center gap-4">
-                 <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0 overflow-hidden border border-white/10">
+                 <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0 overflow-hidden border border-white/10 relative flex items-center justify-center">
+                   <ImageIcon className="text-zinc-700 absolute" size={16} />
                    {rev.image && (
                      <img 
                        src={normalizeImageSrc(rev.image)} 
                        alt="" 
-                       className="w-full h-full object-cover" 
+                       className="w-full h-full object-cover relative z-10" 
                        referrerPolicy="no-referrer"
                        onError={(e) => {
-                         (e.target as HTMLImageElement).style.display = 'none';
+                         (e.target as HTMLImageElement).style.opacity = '0';
                        }}
                      />
                    )}
@@ -376,8 +386,17 @@ export default function Admin() {
            <section>
              <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-4 border-b border-white/5 pb-2">Contact & SNS</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Kakao URL (Direct Link)</label>
+                  <input 
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                    value={config.kakaoUrl || ''}
+                    onChange={e => handleChange('kakaoUrl', e.target.value)}
+                    placeholder="https://pf.kakao.com/_TSvgxb"
+                  />
+                </div>
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Kakao ID</label>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Kakao ID (Fallback)</label>
                   <input 
                     className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
                     value={config.kakaoId}
@@ -392,8 +411,17 @@ export default function Admin() {
                     onChange={e => handleChange('lineId', e.target.value)}
                   />
                 </div>
+                 <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Instagram ID (Fallback)</label>
+                  <input 
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                    value={config.instagramId || ''}
+                    onChange={e => handleChange('instagramId', e.target.value)}
+                    placeholder="oosaka_j"
+                  />
+                </div>
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Instagram URL</label>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Instagram URL (Direct Link)</label>
                   <input 
                     className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
                     value={config.instagramUrl || ''}
@@ -443,15 +471,16 @@ export default function Admin() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {list.map((info: any, idx: number) => (
             <div key={info.id} className="bg-zinc-900 border border-white/5 p-6 rounded-2xl flex gap-6 items-start">
-               <div className="w-24 h-24 bg-zinc-800 rounded-xl overflow-hidden flex-shrink-0">
+               <div className="w-24 h-24 bg-zinc-800 rounded-xl overflow-hidden flex-shrink-0 relative flex items-center justify-center">
+                 <ImageIcon className="text-zinc-700 absolute" size={32} />
                  {info.img && (
                    <img 
                      src={normalizeImageSrc(info.img)} 
                      alt="" 
-                     className="w-full h-full object-cover" 
+                     className="w-full h-full object-cover relative z-10" 
                      referrerPolicy="no-referrer"
                      onError={(e) => {
-                       (e.target as HTMLImageElement).style.display = 'none';
+                       (e.target as HTMLImageElement).style.opacity = '0';
                      }}
                    />
                  )}
@@ -473,19 +502,6 @@ export default function Admin() {
 
   // --- Global Helpers ---
   
-  const normalizeImageSrc = (src: string | undefined) => {
-    if (!src) return '';
-    if (
-      src.startsWith('http://') ||
-      src.startsWith('https://') ||
-      src.startsWith('/') ||
-      src.startsWith('data:')
-    ) {
-      return src;
-    }
-    return `/${src}`;
-  };
-
   if (isVerifying) {
     return (
       <div className="min-h-screen bg-luxury-black flex items-center justify-center">
@@ -654,7 +670,7 @@ export default function Admin() {
               >
                 {saveStatus.success ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                 <div className="flex-grow">
-                  <p className="leading-tight">{saveStatus.message}</p>
+                   <p className="leading-tight">{saveStatus.message}</p>
                 </div>
                 <button onClick={() => setSaveStatus(null)} className="p-1 hover:bg-white/5 rounded-md transition-all"><X size={14} /></button>
               </motion.div>
@@ -749,12 +765,7 @@ const ModalForm = ({
     setEditingItem({ ...editingItem, item: { ...item, [key]: value } });
   };
 
-  const handleImageChange = (
-    newUrls: string[],
-    newFiles: { path: string; base64: string }[],
-    deletedPaths: string[],
-    type: string
-  ) => {
+  const handleImageChange = (newUrls: string[], newFiles: { path: string; base64: string }[], deletedPaths: string[], type: string) => {
     const isReview = type === 'review';
     const isInfo = type === 'osakaInfo';
     
@@ -815,7 +826,7 @@ const ModalForm = ({
                <ImageManager 
                 title="매물 이미지 관리"
                 folderPath={`properties/${item.id}`}
-                images={item.images || []}
+                images={(item.images || []).map(normalizeImageSrc)}
                 mode="multiple"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'property')}
               />
@@ -849,10 +860,10 @@ const ModalForm = ({
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">유튜브 쇼츠 URL</label>
-                  <input
-                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all"
-                    value={item.youtubeUrl || ''}
-                    onChange={e => handleFormChange('youtubeUrl', e.target.value)}
+                  <input 
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" 
+                    value={item.youtubeUrl || ''} 
+                    onChange={e => handleFormChange('youtubeUrl', e.target.value)} 
                     placeholder="예: https://www.youtube.com/shorts/VIDEO_ID 또는 https://www.youtube.com/watch?v=VIDEO_ID"
                   />
                 </div>
@@ -869,7 +880,7 @@ const ModalForm = ({
               <ImageManager 
                 title="후기 대표 이미지"
                 folderPath={`reviews`}
-                images={item.image ? [item.image] : []}
+                images={item.image ? [normalizeImageSrc(item.image)] : []}
                 mode="single"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'review')}
               />
@@ -895,7 +906,7 @@ const ModalForm = ({
               <ImageManager 
                 title="정보글 대표 이미지"
                 folderPath={`osaka-info`}
-                images={item.img ? [item.img] : []}
+                images={item.img ? [normalizeImageSrc(item.img)] : []}
                 mode="single"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'osakaInfo')}
               />
