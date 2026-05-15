@@ -342,7 +342,7 @@ export default function PropertyDetail() {
                        </h3>
                      </div>
                      
-                     <div className="w-full aspect-[9/16] max-w-[280px] rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/5">
+                     <div className="w-full aspect-[9/16] max-w-[360px] md:max-w-[420px] rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/5">
                        <iframe
                          width="100%"
                          height="100%"
