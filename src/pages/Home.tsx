@@ -59,6 +59,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     kakaoId: 'oosakaj',
     lineId: '@845immxy',
     instagramId: 'oosaka_j',
+    instagramUrl: '',
     youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=Fvg2lwsd-_UGjgSx'
   });
 
@@ -757,7 +758,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                     <MessageSquare className="w-6 h-6 text-emerald-500" />
                   </a>
                   <a 
-                    href={`https://www.instagram.com/${settings.instagramId}/`} 
+                    href={settings.instagramUrl?.trim() || `https://www.instagram.com/${settings.instagramId.replace('@', '')}/`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
@@ -867,7 +868,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.8 }}
-          href={`https://www.instagram.com/${settings.instagramId.replace('@', '')}/`} 
+          href={settings.instagramUrl?.trim() || `https://www.instagram.com/${settings.instagramId.replace('@', '')}/`} 
           target="_blank" 
           rel="noopener noreferrer"
           className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-tr from-[#f9ce67] via-[#f07030] to-[#833ab4] rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(131,58,180,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
