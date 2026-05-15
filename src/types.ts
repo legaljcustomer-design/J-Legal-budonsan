@@ -28,8 +28,10 @@ export interface SiteSettings {
   heroSubtitle: string;
   contactNumber: string;
   kakaoId: string;
+  kakaoUrl?: string;
   lineId?: string;
   instagramId?: string;
+  instagramUrl?: string;
   youtubeUrl?: string;
   footerText?: string;
 }
