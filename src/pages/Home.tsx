@@ -97,7 +97,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     };
 
     updateCount();
-    const interval = setInterval(updateCount, 60000); // Check every minute
+    const interval = setInterval(updateCount, 60000);
     return () => clearInterval(interval);
   }, [settings.consultationBaseCount]);
 
@@ -196,15 +196,15 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </a>
           </div>
           
-            <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-500">
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-500">
             <a href="#hero" className="text-zinc-900 border-b-2 border-electric-blue pb-1 transition-all font-bold">홈</a>
             <a href="#properties" className="hover:text-electric-blue transition-colors">매물검색</a>
             <a href="#guide" className="hover:text-electric-blue transition-colors">고객후기</a>
             <a href="#about" className="hover:text-electric-blue transition-colors">회사소개</a>
             <Link to="/recruitment" className="hover:text-electric-blue transition-colors">채용 정보</Link>
             <Link to="/admin" className="hover:text-electric-blue transition-colors flex items-center gap-1.5 group/admin">
-               <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 group-hover/admin:bg-electric-blue transition-colors mb-[1px]" />
-               관리자전용
+              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 group-hover/admin:bg-electric-blue transition-colors mb-[1px]" />
+              관리자전용
             </Link>
           </div>
 
@@ -255,7 +255,6 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
 
       {/* Hero Section */}
       <section id="hero" className="relative h-[80vh] min-h-[700px] flex flex-col items-center justify-center text-center overflow-hidden">
-        {/* Background Image with Parallax */}
         <motion.div 
           className="absolute inset-0 z-0 bg-zinc-950"
           animate={{ x: mousePosition.x, y: mousePosition.y }}
@@ -270,10 +269,10 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
         </motion.div>
 
         <motion.div
-           initial={{ opacity: 0, y: 40 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-           className="relative z-20 px-10"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-20 px-10"
         >
           <div className="mt-10 mb-8 backdrop-blur-md bg-blue-600/30 border border-blue-400/30 text-white py-4 px-10 text-xl md:text-2xl font-bold tracking-tight inline-block mx-auto rounded-full shadow-[0_0_30px_rgba(37,99,235,0.3)]">
             현재 오사카J부동산에서 <span className="text-yellow-300 underline underline-offset-8 decoration-yellow-400/50 decoration-2">{consultationCount}명</span>이 상담 받고 계세요 ❤️
@@ -316,8 +315,8 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   onClick={() => setActiveCategory(cat.id)}
                   className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all border ${
                     activeCategory === cat.id 
-                    ? 'bg-electric-blue text-white border-electric-blue shadow-lg shadow-blue-500/20' 
-                    : 'bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 shadow-sm'
+                      ? 'bg-electric-blue text-white border-electric-blue shadow-lg shadow-blue-500/20' 
+                      : 'bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 shadow-sm'
                   }`}
                 >
                   <cat.icon size={14} />
@@ -328,12 +327,11 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           </div>
 
           {loading ? (
-             <div className="flex justify-center py-24">
-                <Loader2 className="animate-spin text-electric-blue" size={40} />
-             </div>
+            <div className="flex justify-center py-24">
+              <Loader2 className="animate-spin text-electric-blue" size={40} />
+            </div>
           ) : (
             <div className="relative group/slider">
-              {/* Navigation Buttons */}
               {properties.length > getVisibleItems() && (
                 <>
                   <button 
@@ -396,18 +394,10 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                               </h3>
                             </div>
 
-                            <div className="flex flex-col mb-1 pt-3 border-t border-zinc-100">
+                            <div className="flex flex-col mb-6 pt-3 border-t border-zinc-100">
                               <span className="text-2xl font-black tracking-tighter text-zinc-900 whitespace-pre-wrap leading-tight">
                                 {prop.price.replace(/상담\s*문의/g, '').trim()}
                               </span>
-                            </div>
-                            
-                            <div className="flex gap-1.5 mb-2 flex-wrap">
-                              {prop.features.slice(0, 3).map((f, i) => (
-                                  <span key={i} className="px-1.5 py-0.5 bg-slate-50 rounded text-[9px] text-zinc-400 font-bold border border-zinc-50 uppercase tracking-tighter">
-                                      {f}
-                                  </span>
-                              ))}
                             </div>
                             
                             <div className="mt-auto">
@@ -430,7 +420,6 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 </motion.div>
               </div>
 
-              {/* View More Button */}
               <div className="mt-16 flex justify-center">
                 <motion.a
                   whileHover={{ scale: 1.05 }}
@@ -503,12 +492,12 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
 
           <div className="mt-20 flex justify-center">
             <motion.a
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                href="https://www.google.com/search?q=%E8%A1%8C%E6%94%BF%E6%9B%B8%E5%A3%ABLegal_+J+office&sca_esv=af156264804c4707&sxsrf=ANbL-n6PTulvYeQ1YmirvQ-AV53HXGehcg%3A1778469294606&source=hp&ei=rkkBaozKIvLl2roPuaHh4A8&iflsig=AFdpzrgAAAAAagFXvl2eaiNjN4cYlTHs8BEqS-87wUCg&ved=0ahUKEwiM2a-0orCUAxXyslYBHblQGPwQ4dUDCCA&uact=5&oq=%E8%A1%8C%E6%94%BF%E6%9B%B8%E5%A3%ABLegal_+J+office&gs_lp=Egdnd3Mtd2l6IhvooYzmlL_mm7jlo6tMZWdhbF8gSiBvZmZpY2UyBBAAGB4yBRAAGO8FSOMCUABYAHAAeACQAQCYAX-gAX-qAQMwLjG4AQPIAQD4AQL4AQGYAgGgAoMBmAMAkgcDMC4xoAeDAbIHAzAuMbgHgwHCBwMwLjHIBwKACAE&sclient=gws-wiz#lrd=0x6000e7000e280a5f:0x9dd4ad1e88341176,1,,,," 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              href="https://www.google.com/search?q=%E8%A1%8C%E6%94%BF%E6%9B%B8%E5%A3%ABLegal_+J+office&sca_esv=af156264804c4707&sxsrf=ANbL-n6PTulvYeQ1YmirvQ-AV53HXGehcg%3A1778469294606&source=hp&ei=rkkBaozKIvLl2roPuaHh4A8&iflsig=AFdpzrgAAAAAagFXvl2eaiNjN4cYlTHs8BEqS-87wUCg&ved=0ahUKEwiM2a-0orCUAxXyslYBHblQGPwQ4dUDCCA&uact=5&oq=%E8%A1%8C%E6%94%BF%E6%9B%B8%E5%A3%ABLegal_+J+office&gs_lp=Egdnd3Mtd2l6IhvooYzmlL_mm7jlo6tMZWdhbF8gSiBvZmZpY2UyBBAAGB4yBRAAGO8FSOMCUABYAHAAeACQAQCYAX-gAX-qAQMwLjG4AQPIAQD4AQL4AQGYAgGgAoMBmAMAkgcDMC4xoAeDAbIHAzAuMbgHgwHCBwMwLjHIBwKACAE&sclient=gws-wiz#lrd=0x6000e7000e280a5f:0x9dd4ad1e88341176,1,,,," 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
             >
               후기 더보기 <ChevronRight size={14} />
             </motion.a>
@@ -535,7 +524,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 ease: "linear", 
                 repeat: Infinity 
               }}
-              whileHover={{ animationPlayState: "paused" }} // Optional: pause on hover
+              whileHover={{ animationPlayState: "paused" }}
               className="flex gap-8 w-max"
             >
               {[...(osakaInfos.length > 0 ? osakaInfos : [
@@ -620,12 +609,12 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
 
           <div className="mt-16 flex justify-center">
             <motion.a
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                href={settings.youtubeUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              href={settings.youtubeUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
             >
               더 많은 정보 보기 <ExternalLink size={14} />
             </motion.a>
@@ -633,7 +622,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
         </div>
       </section>
 
-       {/* About Us Section */}
+      {/* About Us Section */}
       <section id="about" className="py-24 px-10 bg-slate-50">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16 items-center">
@@ -666,30 +655,30 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </div>
 
             <div className="lg:col-span-1 bg-white p-10 rounded-3xl border border-zinc-200 shadow-xl relative overflow-hidden h-full flex flex-col justify-center">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-electric-blue/5 rounded-full blur-[60px]" />
-               <div className="relative z-10">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-electric-blue flex items-center justify-center rounded-lg font-bold text-xl text-white shadow-lg shadow-blue-500/20">J</div>
-                    <span className="text-xl font-bold text-zinc-900">오사카 J 브랜드 철학</span>
-                  </div>
-                  <ul className="space-y-4 text-sm text-zinc-600">
-                    <li className="flex items-center gap-3">
-                      <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">신뢰 중심의 정직한 거래</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">한국어 완벽 대응 및 행정 지원</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">오사카 전 지역 데이터베이스 확보</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">행정서사 & 宅地建物取引士 자격증 보유</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">부동산 전문 전담팀 운영</span>
-                    </li>
-                  </ul>
-               </div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-electric-blue/5 rounded-full blur-[60px]" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-electric-blue flex items-center justify-center rounded-lg font-bold text-xl text-white shadow-lg shadow-blue-500/20">J</div>
+                  <span className="text-xl font-bold text-zinc-900">오사카 J 브랜드 철학</span>
+                </div>
+                <ul className="space-y-4 text-sm text-zinc-600">
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">신뢰 중심의 정직한 거래</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">한국어 완벽 대응 및 행정 지원</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">오사카 전 지역 데이터베이스 확보</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">행정서사 & 宅地建物取引士 자격증 보유</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">부동산 전문 전담팀 운영</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -751,45 +740,45 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   <p className="text-xs opacity-80">카카오톡 ID: {settings.kakaoId}</p>
                 </div>
                 <div className="flex gap-3">
-                    <a 
-                      href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-12 h-12 bg-[#FEE500] rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl border-2 border-white/20"
-                    >
-                       <MessageCircle className="w-6 h-6 text-[#3C1E1E]" />
-                    </a>
-                    <a 
-                      href={`https://line.me/R/ti/p/${settings.lineId}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
-                    >
-                       <MessageSquare className="w-6 h-6 text-emerald-500" />
-                    </a>
-                    <a 
-                      href={`https://www.instagram.com/${settings.instagramId}/`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
-                    >
-                       <Instagram className="w-6 h-6 text-pink-500" />
-                    </a>
-                    <a 
-                      href={settings.youtubeUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
-                    >
-                       <Youtube className="w-6 h-6 text-red-600" />
-                    </a>
+                  <a 
+                    href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 bg-[#FEE500] rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl border-2 border-white/20"
+                  >
+                    <MessageCircle className="w-6 h-6 text-[#3C1E1E]" />
+                  </a>
+                  <a 
+                    href={`https://line.me/R/ti/p/${settings.lineId}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
+                  >
+                    <MessageSquare className="w-6 h-6 text-emerald-500" />
+                  </a>
+                  <a 
+                    href={`https://www.instagram.com/${settings.instagramId}/`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
+                  >
+                    <Instagram className="w-6 h-6 text-pink-500" />
+                  </a>
+                  <a 
+                    href={settings.youtubeUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
+                  >
+                    <Youtube className="w-6 h-6 text-red-600" />
+                  </a>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
-
+        
       {/* Footer */}
       <footer className="bg-zinc-50 py-20 px-10 border-t border-zinc-200">
         <div className="max-w-7xl mx-auto">
