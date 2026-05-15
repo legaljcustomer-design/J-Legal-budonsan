@@ -306,7 +306,17 @@ export default function Admin() {
             <div key={rev.id} className="bg-zinc-900 border border-white/5 p-6 rounded-2xl flex items-center justify-between group">
               <div className="flex items-center gap-4">
                  <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0 overflow-hidden border border-white/10">
-                   {rev.image && <img src={rev.image} alt="" className="w-full h-full object-cover" />}
+                   {rev.image && (
+                     <img 
+                       src={normalizeImageSrc(rev.image)} 
+                       alt="" 
+                       className="w-full h-full object-cover" 
+                       referrerPolicy="no-referrer"
+                       onError={(e) => {
+                         (e.target as HTMLImageElement).style.display = 'none';
+                       }}
+                     />
+                   )}
                  </div>
                  <div>
                    <h3 className="font-bold text-sm">{rev.title}</h3>
@@ -424,7 +434,17 @@ export default function Admin() {
           {list.map((info: any, idx: number) => (
             <div key={info.id} className="bg-zinc-900 border border-white/5 p-6 rounded-2xl flex gap-6 items-start">
                <div className="w-24 h-24 bg-zinc-800 rounded-xl overflow-hidden flex-shrink-0">
-                 {info.img && <img src={info.img} alt="" className="w-full h-full object-cover" />}
+                 {info.img && (
+                   <img 
+                     src={normalizeImageSrc(info.img)} 
+                     alt="" 
+                     className="w-full h-full object-cover" 
+                     referrerPolicy="no-referrer"
+                     onError={(e) => {
+                       (e.target as HTMLImageElement).style.display = 'none';
+                     }}
+                   />
+                 )}
                </div>
                <div className="flex-grow">
                  <h3 className="font-bold text-sm mb-1">{info.title}</h3>
@@ -442,6 +462,19 @@ export default function Admin() {
   };
 
   // --- Global Helpers ---
+  
+  const normalizeImageSrc = (src: string | undefined) => {
+    if (!src) return '';
+    if (
+      src.startsWith('http://') ||
+      src.startsWith('https://') ||
+      src.startsWith('/') ||
+      src.startsWith('data:')
+    ) {
+      return src;
+    }
+    return `/${src}`;
+  };
 
   if (isVerifying) {
     return (
@@ -706,7 +739,12 @@ const ModalForm = ({
     setEditingItem({ ...editingItem, item: { ...item, [key]: value } });
   };
 
-  const handleImageChange = (newUrls: string[], newFiles: { path: string; base64: string }[], deletedPaths: string[], type: string) => {
+  const handleImageChange = (
+    newUrls: string[],
+    newFiles: { path: string; base64: string }[],
+    deletedPaths: string[],
+    type: string
+  ) => {
     const isReview = type === 'review';
     const isInfo = type === 'osakaInfo';
     
