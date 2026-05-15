@@ -232,6 +232,7 @@ export default function Admin() {
         construction: '',
         completionYear: '',
         nearestStation: '',
+        youtubeUrl: '',
         floorPlan: '',
         area: '',
         isFeatured: false,
@@ -836,6 +837,15 @@ const ModalForm = ({
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가까운 역</label>
                   <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.nearestStation} onChange={e => handleFormChange('nearestStation', e.target.value)} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">유튜브 쇼츠 URL</label>
+                  <input
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all"
+                    value={item.youtubeUrl || ''}
+                    onChange={e => handleFormChange('youtubeUrl', e.target.value)}
+                    placeholder="예: https://www.youtube.com/shorts/VIDEO_ID 또는 https://www.youtube.com/watch?v=VIDEO_ID"
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">상세 설명</label>
