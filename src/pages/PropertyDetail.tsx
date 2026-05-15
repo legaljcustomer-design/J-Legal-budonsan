@@ -32,8 +32,10 @@ export default function PropertyDetail() {
   const [isZoomed, setIsZoomed] = useState(false);
   const [settings, setSettings] = useState({
     kakaoId: 'oosakaj',
+    kakaoUrl: 'https://pf.kakao.com/_TSvgxb',
     lineId: '@845immxy',
     instagramId: 'oosaka_j',
+    instagramUrl: '',
     youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=Fvg2lwsd-_UGjgSx'
   });
 
@@ -137,7 +139,7 @@ export default function PropertyDetail() {
       <main className="pt-24 pb-20 px-6 md:px-10">
         <div className="max-w-7xl mx-auto">
           
-          {/* Property Top Info Bar (Simulating the user's reference) */}
+          {/* Property Top Info Bar */}
           <div className="mb-10 bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
                <div className="p-6 text-center group transition-colors hover:bg-orange-50/30">
@@ -152,7 +154,15 @@ export default function PropertyDetail() {
                </div>
                 <div className="p-6 text-center group transition-colors hover:bg-emerald-50/30">
                   <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3">物件種別 / 建築年数</p>
-                  <p className="text-[13px] font-bold text-zinc-900 mb-1">{property.type === 'OneRoom' ? '원룸/투룸' : property.type === 'Family' ? '타워맨션' : property.type === 'Office' ? '상가/사무실' : '수익형 부동산'}</p>
+                  <p className="text-[13px] font-bold text-zinc-900 mb-1">
+                    {property.type === 'OneRoom'
+                      ? '원룸/투룸'
+                      : property.type === 'Family'
+                        ? '타워맨션'
+                        : property.type === 'Office'
+                          ? '상가/사무실'
+                          : '수익형 부동산'}
+                  </p>
                   <p className="text-xs font-medium text-zinc-400">{property.completionYear || '-'}</p>
                 </div>
             </div>
@@ -163,7 +173,6 @@ export default function PropertyDetail() {
             {/* Left Card: Gallery */}
             <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-200 shadow-2xl flex flex-col h-full justify-between">
               <div className="flex flex-col gap-6 flex-1">
-                 {/* Main Image - Controlled Height for balance */}
                  <div className="relative aspect-square max-h-[550px] overflow-hidden rounded-2xl shadow-lg bg-zinc-200 group/main cursor-zoom-in">
                     <motion.div 
                       key={activeImageIndex}
@@ -182,7 +191,6 @@ export default function PropertyDetail() {
                          {activeImageIndex + 1} / {property.images.length}
                       </div>
 
-                      {/* Navigation Overlays */}
                       <div className="absolute inset-0 flex items-center justify-between px-6 opacity-0 group-hover/main:opacity-100 transition-opacity">
                          <button 
                           onClick={prevImage}
@@ -202,7 +210,6 @@ export default function PropertyDetail() {
                     </motion.div>
                  </div>
 
-                 {/* Thumbnails */}
                  <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                     {property.images.map((img, i) => (
                        <button 
@@ -222,16 +229,18 @@ export default function PropertyDetail() {
                     ))}
                  </div>
               </div>
-              <p className="mt-4 text-[10px] text-zinc-400 font-bold uppercase tracking-widest text-center">이미지를 클릭하여 전체 화면으로 보기</p>
+              <p className="mt-4 text-[10px] text-zinc-400 font-bold uppercase tracking-widest text-center">
+                이미지를 클릭하여 전체 화면으로 보기
+              </p>
             </div>
 
             {/* Right Card: Property Info & Contact */}
             <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-200 shadow-2xl relative overflow-hidden flex flex-col h-full">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full blur-[60px]" />
                 
-                <div className="relative z-10 flex flex-col h-full justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
+              <div className="relative z-10 flex flex-col h-full justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
                     <span className="px-3 py-1 bg-blue-600 text-[10px] font-bold text-white uppercase tracking-widest rounded-full">
                       {property.type}
                     </span>
@@ -267,10 +276,12 @@ export default function PropertyDetail() {
                   </div>
 
                   <div className="space-y-4">
-                    <p className="text-center text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-4">지금 바로 상담하기</p>
+                    <p className="text-center text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-4">
+                      지금 바로 상담하기
+                    </p>
                     
                     <a 
-                      href={`https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
+                      href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="w-full py-5 bg-[#FEE500] text-[#3C1E1E] font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
@@ -285,6 +296,15 @@ export default function PropertyDetail() {
                       className="w-full py-5 bg-[#06C755] text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
                       <MessageSquare size={24} /> 라인(LINE) 상담
+                    </a>
+
+                    <a 
+                      href={settings.instagramUrl || `https://www.instagram.com/${settings.instagramId.replace('@', '')}/`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full py-5 bg-gradient-to-tr from-[#f9ce67] via-[#f07030] to-[#833ab4] text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    >
+                      <Instagram size={24} /> 인스타그램 문의
                     </a>
                   </div>
                 </div>
@@ -309,7 +329,6 @@ export default function PropertyDetail() {
             </div>
 
             <div className="flex flex-col h-full">
-              {/* YouTube Video Section */}
               {property.youtubeUrl && (
                 <div className="bg-zinc-950 p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group h-full">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-[60px] -translate-y-12 translate-x-12" />
@@ -318,7 +337,9 @@ export default function PropertyDetail() {
                        <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/20">
                          <Youtube size={20} className="text-white" />
                        </div>
-                       <h3 className="font-bold text-lg text-white tracking-tight">유튜브 쇼츠 현장 매물 영상</h3>
+                       <h3 className="font-bold text-lg text-white tracking-tight">
+                         유튜브 쇼츠 현장 매물 영상
+                       </h3>
                      </div>
                      
                      <div className="w-full aspect-[9/16] max-w-[280px] rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/5">
@@ -335,8 +356,12 @@ export default function PropertyDetail() {
                      </div>
                      
                      <div className="mt-8 flex flex-col items-center">
-                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mb-2">Editor's Choice</p>
-                        <p className="text-xs text-zinc-400 font-medium italic">"현장의 감동을 영상으로 직접 확인해보세요"</p>
+                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mb-2">
+                          Editor&apos;s Choice
+                        </p>
+                        <p className="text-xs text-zinc-400 font-medium italic">
+                          "현장의 감동을 영상으로 직접 확인해보세요"
+                        </p>
                      </div>
                   </div>
                 </div>
@@ -375,7 +400,6 @@ export default function PropertyDetail() {
                 onClick={(e) => e.stopPropagation()}
               />
 
-              {/* Zoomed Navigation */}
               <button 
                 onClick={prevImage}
                 className="absolute left-4 md:left-10 w-16 h-16 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
@@ -392,7 +416,6 @@ export default function PropertyDetail() {
               </button>
             </div>
 
-            {/* Image Counter */}
             <div className="absolute bottom-10 text-white/50 text-xs font-bold tracking-widest uppercase">
               {activeImageIndex + 1} / {property.images.length}
             </div>
