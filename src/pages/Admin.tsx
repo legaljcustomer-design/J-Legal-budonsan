@@ -393,13 +393,13 @@ export default function Admin() {
              <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-4 border-b border-white/5 pb-2">Contact & SNS</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Kakao URL (Direct Link)</label>
-                  <input 
-                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
-                    value={config.kakaoUrl || ''}
-                    onChange={e => handleChange('kakaoUrl', e.target.value)}
-                    placeholder="https://pf.kakao.com/_TSvgxb"
-                  />
+                   <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Kakao URL (Direct Link)</label>
+                   <input 
+                     className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                     value={config.kakaoUrl || ''}
+                     onChange={e => handleChange('kakaoUrl', e.target.value)}
+                     placeholder="https://pf.kakao.com/_TSvgxb"
+                   />
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Kakao ID (Fallback)</label>
@@ -607,7 +607,7 @@ export default function Admin() {
 
       {/* Persistence Notification/Top Bar for Mobile */}
       {hasChanges() && (
-        <div className="absolute top-0 inset-x-0 bg-amber-500 text-black py-2 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] z-50 animate-pulse">
+        <div className="fixed top-0 inset-x-0 bg-amber-500 text-black py-2 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] z-50 animate-pulse">
            저장되지 않은 변경사항이 있습니다. 사이트에 반영하기 버튼을 눌러주세요.
         </div>
       )}
@@ -632,9 +632,9 @@ export default function Admin() {
                { id: 'siteConfig', icon: Settings, label: 'Site Settings' },
              ].map((tab) => (
                 <button 
-                   key={tab.id}
-                   onClick={() => setActiveTab(tab.id as TabType)}
-                   className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white text-zinc-900 shadow-xl' : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'}`}
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabType)}
+                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white text-zinc-900 shadow-xl' : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'}`}
                 >
                   <tab.icon size={18} />
                   {tab.label}
@@ -863,6 +863,18 @@ const ModalForm = ({
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가까운 역</label>
                   <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.nearestStation} onChange={e => handleFormChange('nearestStation', e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">간取り / 구조</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.floorPlan || ''} onChange={e => handleFormChange('floorPlan', e.target.value)} placeholder="예: 1K, 1LDK, 3LDK" />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">전용면적</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.area || ''} onChange={e => handleFormChange('area', e.target.value)} placeholder="예: 19.59㎡, 70.35㎡" />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">준공연도 / 건축정보</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.completionYear || ''} onChange={e => handleFormChange('completionYear', e.target.value)} placeholder="예: 2018년 3월, 2024년 신축, 築6年" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">유튜브 쇼츠 URL</label>
