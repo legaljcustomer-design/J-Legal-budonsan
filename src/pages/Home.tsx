@@ -51,6 +51,14 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [selectedReviewImage, setSelectedReviewImage] = useState<string | null>(null);
 
+  const normalizeImageSrc = (src: string | undefined) => {
+    if (!src) return '';
+    if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/') || src.startsWith('data:')) {
+      return src;
+    }
+    return `/${src}`;
+  };
+
   const [settings, setSettings] = useState({
     heroTitle: '오사카 최고의 매물을 찾으시나요?',
     heroSubtitle: '난바, 우메다 등 주요 거점의 신축 맨션부터 수익형 빌딩까지, 오사카 거주 한국인 및 투자자를 위한 맞춤형 럭셔리 컨설팅을 제공합니다.',
@@ -77,12 +85,6 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const getVisibleItems = () => {
-    if (windowWidth >= 1024) return 3;
-    if (windowWidth >= 768) return 2;
-    return 1;
-  };
-
   useEffect(() => {
     const updateCount = () => {
       const now = new Date();
@@ -98,7 +100,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     };
 
     updateCount();
-    const interval = setInterval(updateCount, 60000); // Check every minute
+    const interval = setInterval(updateCount, 60000);
     return () => clearInterval(interval);
   }, [settings.consultationBaseCount]);
 
@@ -293,13 +295,13 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar w-full md:w-auto">
               {CATEGORIES.map(cat => (
                 <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all border ${
-                    activeCategory === cat.id 
-                    ? 'bg-electric-blue text-white border-electric-blue shadow-lg shadow-blue-500/20' 
-                    : 'bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 shadow-sm'
-                  }`}
+                   key={cat.id}
+                   onClick={() => setActiveCategory(cat.id)}
+                   className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all border ${
+                     activeCategory === cat.id 
+                     ? 'bg-electric-blue text-white border-electric-blue shadow-lg shadow-blue-500/20' 
+                     : 'bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 shadow-sm'
+                   }`}
                 >
                   <cat.icon size={14} />
                   {cat.label}
@@ -327,7 +329,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                     >
                       <div className="relative h-52 overflow-hidden bg-zinc-800">
                         <img 
-                          src={prop.images[0] || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
+                          src={normalizeImageSrc(prop.images[0]) || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
                           alt={prop.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           referrerPolicy="no-referrer"
@@ -427,7 +429,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                     <div className="flex flex-col group cursor-pointer transition-all max-w-[280px] mx-auto">
                       <div className="aspect-[3/2] rounded-lg overflow-hidden mb-4 bg-zinc-100 shadow-lg border border-zinc-100 relative">
                         <img 
-                          src={review.image} 
+                          src={normalizeImageSrc(review.image)} 
                           alt={review.title} 
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                           referrerPolicy="no-referrer"
@@ -483,7 +485,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 ease: "linear", 
                 repeat: Infinity 
               }}
-              whileHover={{ animationPlayState: "paused" }} // Optional: pause on hover
+              whileHover={{ animationPlayState: "paused" }}
               className="flex gap-8 w-max"
             >
               {[...(osakaInfos.length > 0 ? osakaInfos : [
@@ -537,7 +539,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 >
                   <div className="relative h-64 bg-zinc-100 overflow-hidden flex items-center justify-center p-4">
                     <img 
-                      src={info.img} 
+                      src={normalizeImageSrc(info.img)} 
                       alt={info.title} 
                       className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover/card:scale-105"
                       referrerPolicy="no-referrer"
@@ -589,7 +591,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               <div className="tag-blue mb-4">About Us</div>
               <h2 className="text-4xl font-bold tracking-tighter mb-8 leading-tight text-zinc-900">
                 <a href="https://legalj.jp/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
-                  行政書士Legal_ J office
+                   行政書士Legal_ J office
                 </a><br />
                 & 오사카J부동산
               </h2>
@@ -877,7 +879,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 <X size={32} />
               </button>
               <img 
-                src={selectedReviewImage} 
+                src={normalizeImageSrc(selectedReviewImage || undefined)} 
                 alt="Full review" 
                 className="max-w-full max-h-[85vh] object-contain rounded-lg border border-white/10 shadow-2xl"
               />
