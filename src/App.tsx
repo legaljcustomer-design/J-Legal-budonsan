@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// Components (We'll create these)
+// Pages
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 import Recruitment from './pages/Recruitment';
 import NambaGuide from './pages/NambaGuide';
 import PropertyDetail from './pages/PropertyDetail';
+import Properties from './pages/Properties';
 
 export default function App() {
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,7 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home isAdmin={false} />} />
+        <Route path="/properties" element={<Properties />} />
         <Route path="/recruitment" element={<Recruitment />} />
         <Route path="/namba-guide" element={<NambaGuide />} />
         <Route path="/property/:id" element={<PropertyDetail />} />
@@ -32,5 +34,3 @@ export default function App() {
     </Router>
   );
 }
-
-
