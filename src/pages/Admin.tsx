@@ -393,13 +393,13 @@ export default function Admin() {
              <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-4 border-b border-white/5 pb-2">Contact & SNS</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                   <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Kakao URL (Direct Link)</label>
-                   <input 
-                     className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
-                     value={config.kakaoUrl || ''}
-                     onChange={e => handleChange('kakaoUrl', e.target.value)}
-                     placeholder="https://pf.kakao.com/_TSvgxb"
-                   />
+                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Kakao URL (Direct Link)</label>
+                  <input 
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                    value={config.kakaoUrl || ''}
+                    onChange={e => handleChange('kakaoUrl', e.target.value)}
+                    placeholder="https://pf.kakao.com/_TSvgxb"
+                  />
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Kakao ID (Fallback)</label>
@@ -469,7 +469,7 @@ export default function Admin() {
       <div className="space-y-6">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold tracking-tight">오사카 지역 정보 관리</h2>
-          <button onClick={() => setEditingItem({ type: 'osakaInfo', item: { id: `info-${Date.now()}`, title: '', description: '', img: '', createdAt: Date.now() }, index: -1 })} className="flex items-center gap-2 bg-zinc-800 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-700 transition-all">
+          <button onClick={() => setEditingItem({ type: 'osakaInfo', item: { id: `info-${Date.now()}`, title: '', description: '', img: '', instagramUrl: '', createdAt: Date.now() }, index: -1 })} className="flex items-center gap-2 bg-zinc-800 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-700 transition-all">
             <Plus size={16} /> 정보글 추가
           </button>
         </div>
@@ -607,7 +607,7 @@ export default function Admin() {
 
       {/* Persistence Notification/Top Bar for Mobile */}
       {hasChanges() && (
-        <div className="fixed top-0 inset-x-0 bg-amber-500 text-black py-2 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] z-50 animate-pulse">
+        <div className="absolute top-0 inset-x-0 bg-amber-500 text-black py-2 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] z-50 animate-pulse">
            저장되지 않은 변경사항이 있습니다. 사이트에 반영하기 버튼을 눌러주세요.
         </div>
       )}
@@ -912,7 +912,7 @@ const ModalForm = ({
                   <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.author} onChange={e => handleFormChange('author', e.target.value)} required />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">후기 내용</label>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">상세 후기 내용</label>
                   <textarea rows={6} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.content} onChange={e => handleFormChange('content', e.target.value)} required />
                 </div>
               </div>
@@ -920,7 +920,7 @@ const ModalForm = ({
           )}
 
           {type === 'osakaInfo' && (
-            <div className="space-y-8">
+            <div className="space-y-10">
               <ImageManager 
                 title="정보글 대표 이미지"
                 folderPath={`osaka-info`}
@@ -936,6 +936,15 @@ const ModalForm = ({
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">설명 (요약)</label>
                   <textarea rows={4} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.description} onChange={e => handleFormChange('description', e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">인스타그램 게시물 URL</label>
+                  <input 
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" 
+                    value={item.instagramUrl || ''} 
+                    onChange={e => handleFormChange('instagramUrl', e.target.value)} 
+                    placeholder="https://www.instagram.com/p/XXXXXXXXXXX/"
+                  />
                 </div>
               </div>
             </div>
