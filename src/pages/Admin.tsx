@@ -74,6 +74,23 @@ export default function Admin() {
   const [pendingImageFiles, setPendingImageFiles] = useState<{ path: string; base64: string }[]>([]);
   const [deletedImagePaths, setDeletedImagePaths] = useState<string[]>([]);
 
+  const getDisplaySrc = (src: string | undefined) => {
+    if (!src) return '';
+    if (src.startsWith('data:')) return src;
+    
+    // Check if this path is currently in our pending uploads
+    // The path in pendingImageFiles is 'public/assets/uploads/...'
+    // While the src in JSON is '/assets/uploads/...'
+    const cleanSrc = src.startsWith('/') ? src.slice(1) : src;
+    const pending = pendingImageFiles.find(f => f.path.endsWith(cleanSrc));
+    
+    if (pending) {
+      return `data:image/webp;base64,${pending.base64}`;
+    }
+    
+    return normalizeImageSrc(src);
+  };
+
   // Load from sessionStorage on mount
   useEffect(() => {
     const saved = sessionStorage.getItem('admin_gh_auth');
@@ -325,7 +342,7 @@ export default function Admin() {
                    <ImageIcon className="text-zinc-700 absolute" size={16} />
                    {rev.image && (
                      <img 
-                       src={normalizeImageSrc(rev.image)} 
+                       src={getDisplaySrc(rev.image)} 
                        alt="" 
                        className="w-full h-full object-cover relative z-10" 
                        referrerPolicy="no-referrer"
@@ -481,7 +498,7 @@ export default function Admin() {
                  <ImageIcon className="text-zinc-700 absolute" size={32} />
                  {info.img && (
                    <img 
-                     src={normalizeImageSrc(info.img)} 
+                     src={getDisplaySrc(info.img)} 
                      alt="" 
                      className="w-full h-full object-cover relative z-10" 
                      referrerPolicy="no-referrer"
@@ -601,6 +618,7 @@ export default function Admin() {
             setPendingData={setPendingData}
             setPendingImageFiles={setPendingImageFiles}
             setDeletedImagePaths={setDeletedImagePaths}
+            getDisplaySrc={getDisplaySrc}
           />
         )}
       </AnimatePresence>
@@ -676,7 +694,7 @@ export default function Admin() {
               >
                 {saveStatus.success ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                 <div className="flex-grow">
-                  <p className="leading-tight">{saveStatus.message}</p>
+                   <p className="leading-tight">{saveStatus.message}</p>
                 </div>
                 <button onClick={() => setSaveStatus(null)} className="p-1 hover:bg-white/5 rounded-md transition-all"><X size={14} /></button>
               </motion.div>
@@ -753,6 +771,7 @@ interface ModalFormProps {
   setPendingData: (val: any) => void;
   setPendingImageFiles: React.Dispatch<React.SetStateAction<{ path: string; base64: string }[]>>;
   setDeletedImagePaths: React.Dispatch<React.SetStateAction<string[]>>;
+  getDisplaySrc: (src: string | undefined) => string;
 }
 
 const ModalForm = ({ 
@@ -761,7 +780,8 @@ const ModalForm = ({
   pendingData, 
   setPendingData, 
   setPendingImageFiles, 
-  setDeletedImagePaths 
+  setDeletedImagePaths,
+  getDisplaySrc
 }: ModalFormProps) => {
   if (!editingItem) return null;
 
@@ -784,10 +804,19 @@ const ModalForm = ({
     
     // Update pending image files state
     setPendingImageFiles(prev => {
-      // Filter out any existing pending files for this specific ID/item to avoid duplicates or stale files
-      const folderRef = isReview ? 'reviews' : isInfo ? 'osaka-info' : `properties/${item.id}`;
-      const filtered = prev.filter(f => !f.path.includes(folderRef));
-      return [...filtered, ...newFiles];
+      // Create a map of paths to be added for easier handling
+      const newFilesMap = new Map(newFiles.map(f => [f.path, f]));
+      
+      // We only want to remove pending files that are part of THIS item's specific folder path
+      // but only if they are not in the newFiles list.
+      // Actually, a simpler way: Filter out ANY files that match the new files paths to avoid duplicates,
+      // and also filter out any files that were in the previous set but are now in deletedPaths.
+      const deletedSet = new Set(deletedPaths);
+      
+      return [
+        ...prev.filter(f => !newFilesMap.has(f.path) && !deletedSet.has(f.path)),
+        ...newFiles
+      ];
     });
 
     // Update deleted image paths state
@@ -832,7 +861,7 @@ const ModalForm = ({
                <ImageManager 
                 title="매물 이미지 관리"
                 folderPath={`properties/${item.id}`}
-                images={(item.images || []).map(normalizeImageSrc)}
+                images={(item.images || []).map(src => getDisplaySrc(src))}
                 mode="multiple"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'property')}
               />
@@ -898,7 +927,7 @@ const ModalForm = ({
               <ImageManager 
                 title="후기 대표 이미지"
                 folderPath={`reviews`}
-                images={item.image ? [normalizeImageSrc(item.image)] : []}
+                images={item.image ? [getDisplaySrc(item.image)] : []}
                 mode="single"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'review')}
               />
@@ -912,7 +941,7 @@ const ModalForm = ({
                   <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.author} onChange={e => handleFormChange('author', e.target.value)} required />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">상세 후기 내용</label>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">후기 내용</label>
                   <textarea rows={6} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.content} onChange={e => handleFormChange('content', e.target.value)} required />
                 </div>
               </div>
@@ -920,11 +949,11 @@ const ModalForm = ({
           )}
 
           {type === 'osakaInfo' && (
-            <div className="space-y-10">
+            <div className="space-y-8">
               <ImageManager 
                 title="정보글 대표 이미지"
                 folderPath={`osaka-info`}
-                images={item.img ? [normalizeImageSrc(item.img)] : []}
+                images={item.img ? [getDisplaySrc(item.img)] : []}
                 mode="single"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'osakaInfo')}
               />
