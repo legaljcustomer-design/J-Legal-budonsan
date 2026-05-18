@@ -276,7 +276,13 @@ export default function Admin() {
                 <h3 className="font-bold text-sm mb-1 line-clamp-1">{prop.title}</h3>
                 <p className="text-electric-blue text-xs font-bold mb-3">{prop.price}</p>
                 <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
-                  <span className="bg-zinc-800 px-2 py-0.5 rounded italic">{prop.type}</span>
+                  <span className="bg-zinc-800 px-2 py-0.5 rounded italic">
+                    {prop.type === 'OneRoom' ? '주거용 맨션' : 
+                     prop.type === 'TwoRoom' ? '주거용 맨션(투룸형)' : 
+                     prop.type === 'Family' ? '타워맨션' : 
+                     prop.type === 'Office' ? '상가/사무실' : 
+                     '수익형 부동산'}
+                  </span>
                   <span>{prop.location}</span>
                 </div>
               </div>
@@ -626,9 +632,9 @@ export default function Admin() {
                { id: 'siteConfig', icon: Settings, label: 'Site Settings' },
              ].map((tab) => (
                 <button 
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabType)}
-                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white text-zinc-900 shadow-xl' : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'}`}
+                   key={tab.id}
+                   onClick={() => setActiveTab(tab.id as TabType)}
+                   className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white text-zinc-900 shadow-xl' : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'}`}
                 >
                   <tab.icon size={18} />
                   {tab.label}
@@ -670,7 +676,7 @@ export default function Admin() {
               >
                 {saveStatus.success ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                 <div className="flex-grow">
-                   <p className="leading-tight">{saveStatus.message}</p>
+                  <p className="leading-tight">{saveStatus.message}</p>
                 </div>
                 <button onClick={() => setSaveStatus(null)} className="p-1 hover:bg-white/5 rounded-md transition-all"><X size={14} /></button>
               </motion.div>
@@ -847,11 +853,11 @@ const ModalForm = ({
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">타입</label>
                   <select className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.type} onChange={e => handleFormChange('type', e.target.value)}>
-                    <option value="OneRoom">OneRoom</option>
-                    <option value="Family">Family</option>
-                    <option value="TwoRoom">TwoRoom</option>
-                    <option value="Investment">Investment</option>
-                    <option value="Office">Office</option>
+                    <option value="OneRoom">주거용 맨션</option>
+                    <option value="TwoRoom">주거용 맨션(투룸형)</option>
+                    <option value="Family">타워맨션</option>
+                    <option value="Office">상가/사무실</option>
+                    <option value="Investment">수익형 부동산</option>
                   </select>
                 </div>
                 <div>
