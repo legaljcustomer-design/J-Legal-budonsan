@@ -1,5 +1,35 @@
 [
   {
+    "id": "prop-1779091148145",
+    "title": "사무실매물 / 오사카시 / 나가호리바시역 / 62.06㎡ ",
+    "price": "월135,000円 / 10,000円",
+    "location": "大阪市 中央区",
+    "type": "Office",
+    "description": "✅주요 특징\n나가호리바시역 도보 1분\n현재 상태 그대로 인도, 현황 우선\n프리렌트 상담 가능\n\n\n✅개요\n교통\t나가호리츠루미료쿠치선 나가호리바시역 도보 1분 / 미도스지선 신사이바시역\n구조\tRC조, 14층 건물\n준공\t1979년 5월\n건물 설비\t야간 오토락\n실내 설비\t화장실, 주방",
+    "images": [
+      "/assets/uploads/properties/prop-1779091148145/1779091203020_09.webp",
+      "/assets/uploads/properties/prop-1779091148145/1779091202859_08.webp",
+      "/assets/uploads/properties/prop-1779091148145/1779091201797_01.webp",
+      "/assets/uploads/properties/prop-1779091148145/1779091201943_02.webp",
+      "/assets/uploads/properties/prop-1779091148145/1779091202083_03.webp",
+      "/assets/uploads/properties/prop-1779091148145/1779091202240_04.webp",
+      "/assets/uploads/properties/prop-1779091148145/1779091202392_05.webp",
+      "/assets/uploads/properties/prop-1779091148145/1779091202545_06.webp",
+      "/assets/uploads/properties/prop-1779091148145/1779091202709_07.webp",
+      "/assets/uploads/properties/prop-1779091148145/1779091201651_00.webp"
+    ],
+    "features": [],
+    "construction": "",
+    "completionYear": "1979年1月(築48年)",
+    "nearestStation": "長堀鶴見緑地線 나가호리바시역 도보1분",
+    "youtubeUrl": "",
+    "floorPlan": "-/-",
+    "area": "62.06㎡",
+    "isFeatured": false,
+    "createdAt": 1779091148145,
+    "ownerId": "system"
+  },
+  {
     "id": "prop-1779073876920",
     "title": "3LDK / 오사카시 / 사쿠라가와역 / 70.35㎡",
     "price": "월270,000円 / 18,000円",
