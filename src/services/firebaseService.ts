@@ -15,8 +15,16 @@ export const firebaseService = {
   // Public: Get all properties
   async getProperties(type?: string): Promise<Property[]> {
     if (type && type !== 'all') {
-      return PROPERTIES.filter(p => p.type === type);
+      return PROPERTIES.filter(p => {
+        // "주거용 맨션" 필터(OneRoom) 선택 시 TwoRoom 타입 매물도 함께 포함하도록 처리
+        if (type === 'OneRoom') {
+          return p.type === 'OneRoom' || p.type === 'TwoRoom';
+        }
+        // 그 외 필터(Family, Office, Investment)는 기존 규격대로 유지
+        return p.type === type;
+      });
     }
+    // 'all' 이거나 타입이 지정되지 않은 경우 전체 매물을 최신순으로 정렬하여 반환
     return [...PROPERTIES].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   },
 
@@ -86,4 +94,3 @@ export const firebaseService = {
     console.warn("Write operations are disabled in static mode.");
   }
 };
-
