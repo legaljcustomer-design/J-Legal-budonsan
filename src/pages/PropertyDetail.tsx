@@ -353,14 +353,14 @@ export default function PropertyDetail() {
                      
                      <div className="w-full aspect-[9/16] max-w-[360px] md:max-w-[420px] rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/5">
                        <iframe
-                          width="100%"
-                          height="100%"
-                          src={`https://www.youtube.com/embed/${property.youtubeUrl.includes('shorts/') ? property.youtubeUrl.split('shorts/')[1].split('?')[0] : property.youtubeUrl.split('v=')[1]?.split('&')[0]}`}
-                          title="YouTube video player"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                          className="w-full h-full"
+                         width="100%"
+                         height="100%"
+                         src={`https://www.youtube.com/embed/${property.youtubeUrl.includes('shorts/') ? property.youtubeUrl.split('shorts/')[1].split('?')[0] : property.youtubeUrl.split('v=')[1]?.split('&')[0]}`}
+                         title="YouTube video player"
+                         frameBorder="0"
+                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                         allowFullScreen
+                         className="w-full h-full"
                        ></iframe>
                      </div>
                      
@@ -381,19 +381,21 @@ export default function PropertyDetail() {
                        <h3 className="font-bold text-lg text-zinc-900 tracking-tight">매물 위치 지도</h3>
                      </div>
                      
-                     <div className="w-full aspect-video md:aspect-[3/4] max-w-[420px] rounded-2xl overflow-hidden shadow-2xl bg-zinc-100 border border-zinc-200 flex-1 min-h-[300px]">
-                       <iframe
-                         width="100%"
-                         height="100%"
-                         src={`https://www.google.com/maps?q=${encodeURIComponent(property.mapAddress)}&output=embed`}
-                         title="Property Location Map"
-                         frameBorder="0"
-                         style={{ border: 0 }}
-                         allowFullScreen
-                         loading="lazy"
-                         referrerPolicy="no-referrer-when-downgrade"
-                         className="w-full h-full"
-                       ></iframe>
+                     <div className="w-full flex-1 flex items-center justify-center">
+                       <div className="w-full max-w-[420px] aspect-square rounded-2xl overflow-hidden shadow-2xl bg-zinc-100 border border-zinc-200">
+                         <iframe
+                           width="100%"
+                           height="100%"
+                           src={`https://www.google.com/maps?q=${encodeURIComponent(property.mapAddress)}&output=embed`}
+                           title="Property Location Map"
+                           frameBorder="0"
+                           style={{ border: 0 }}
+                           allowFullScreen
+                           loading="lazy"
+                           referrerPolicy="no-referrer-when-downgrade"
+                           className="w-full h-full"
+                         ></iframe>
+                       </div>
                      </div>
                      
                      <div className="mt-8 w-full">
