@@ -39,6 +39,17 @@ export default function PropertyDetail() {
     youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=Fvg2lwsd-_UGjgSx'
   });
 
+  // 이미지 경로 보정 헬퍼 함수
+  const normalizeImageSrc = (src: string | undefined) => {
+    if (!src) return '';
+    // 이미 완전한 URL이거나 절대 경로, 혹은 data URL인 경우 그대로 반환
+    if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/') || src.startsWith('data:')) {
+      return src;
+    }
+    // assets/uploads/... 형태로 저장된 경우 /assets/uploads/... 로 보정
+    return `/${src}`;
+  };
+
   const nextImage = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (property) {
@@ -75,7 +86,7 @@ export default function PropertyDetail() {
   }, [id]);
 
   useEffect(() => {
-    // Admin check logic removed in static mode
+    // 관리자 여부 체크 (필요 시 로직 추가)
     setIsAdmin(false);
   }, []);
 
@@ -155,13 +166,11 @@ export default function PropertyDetail() {
                 <div className="p-6 text-center group transition-colors hover:bg-emerald-50/30">
                   <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3">物件種別 / 建築年数</p>
                   <p className="text-[13px] font-bold text-zinc-900 mb-1">
-                    {property.type === 'OneRoom'
-                      ? '원룸/투룸'
-                      : property.type === 'Family'
-                        ? '타워맨션'
-                        : property.type === 'Office'
-                          ? '상가/사무실'
-                          : '수익형 부동산'}
+                    {property.type === 'OneRoom' ? '주거용 맨션' : 
+                     property.type === 'TwoRoom' ? '주거용 맨션(투룸형)' : 
+                     property.type === 'Family' ? '타워맨션' : 
+                     property.type === 'Office' ? '상가/사무실' : 
+                     '수익형 부동산'}
                   </p>
                   <p className="text-xs font-medium text-zinc-400">{property.completionYear || '-'}</p>
                 </div>
@@ -173,6 +182,7 @@ export default function PropertyDetail() {
             {/* Left Card: Gallery */}
             <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-200 shadow-2xl flex flex-col h-full justify-between">
               <div className="flex flex-col gap-6 flex-1">
+                 {/* Main Image */}
                  <div className="relative aspect-square max-h-[550px] overflow-hidden rounded-2xl shadow-lg bg-zinc-200 group/main cursor-zoom-in">
                     <motion.div 
                       key={activeImageIndex}
@@ -182,7 +192,7 @@ export default function PropertyDetail() {
                       onClick={() => setIsZoomed(true)}
                     >
                       <img 
-                        src={property.images[activeImageIndex] || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
+                        src={normalizeImageSrc(property.images[activeImageIndex]) || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
                         alt={property.title}
                         className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
@@ -191,6 +201,7 @@ export default function PropertyDetail() {
                          {activeImageIndex + 1} / {property.images.length}
                       </div>
 
+                      {/* Navigation Overlays */}
                       <div className="absolute inset-0 flex items-center justify-between px-6 opacity-0 group-hover/main:opacity-100 transition-opacity">
                          <button 
                           onClick={prevImage}
@@ -210,6 +221,7 @@ export default function PropertyDetail() {
                     </motion.div>
                  </div>
 
+                 {/* Thumbnails */}
                  <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                     {property.images.map((img, i) => (
                        <button 
@@ -220,7 +232,7 @@ export default function PropertyDetail() {
                         }`}
                        >
                           <img 
-                            src={img} 
+                            src={normalizeImageSrc(img)} 
                             alt={`${property.title} ${i + 1}`} 
                             className="w-full h-full object-cover" 
                             referrerPolicy="no-referrer"
@@ -229,20 +241,22 @@ export default function PropertyDetail() {
                     ))}
                  </div>
               </div>
-              <p className="mt-4 text-[10px] text-zinc-400 font-bold uppercase tracking-widest text-center">
-                이미지를 클릭하여 전체 화면으로 보기
-              </p>
+              <p className="mt-4 text-[10px] text-zinc-400 font-bold uppercase tracking-widest text-center">이미지를 클릭하여 전체 화면으로 보기</p>
             </div>
 
             {/* Right Card: Property Info & Contact */}
             <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-200 shadow-2xl relative overflow-hidden flex flex-col h-full">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full blur-[60px]" />
                 
-              <div className="relative z-10 flex flex-col h-full justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
                     <span className="px-3 py-1 bg-blue-600 text-[10px] font-bold text-white uppercase tracking-widest rounded-full">
-                      {property.type}
+                       {property.type === 'OneRoom' ? '주거용 맨션' : 
+                        property.type === 'TwoRoom' ? '주거용 맨션(투룸형)' : 
+                        property.type === 'Family' ? '타워맨션' : 
+                        property.type === 'Office' ? '상가/사무실' : 
+                        '수익형 부동산'}
                     </span>
                     <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
                       <MapPin size={12} /> {property.location}
@@ -276,9 +290,7 @@ export default function PropertyDetail() {
                   </div>
 
                   <div className="space-y-4">
-                    <p className="text-center text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-4">
-                      지금 바로 상담하기
-                    </p>
+                    <p className="text-center text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] mb-4">지금 바로 상담하기</p>
                     
                     <a 
                       href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
@@ -329,6 +341,7 @@ export default function PropertyDetail() {
             </div>
 
             <div className="flex flex-col h-full">
+              {/* YouTube Video Section */}
               {property.youtubeUrl && (
                 <div className="bg-zinc-950 p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group h-full">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-[60px] -translate-y-12 translate-x-12" />
@@ -337,9 +350,7 @@ export default function PropertyDetail() {
                        <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/20">
                          <Youtube size={20} className="text-white" />
                        </div>
-                       <h3 className="font-bold text-lg text-white tracking-tight">
-                         유튜브 쇼츠 현장 매물 영상
-                       </h3>
+                       <h3 className="font-bold text-lg text-white tracking-tight">유튜브 쇼츠 현장 매물 영상</h3>
                      </div>
                      
                      <div className="w-full aspect-[9/16] max-w-[360px] md:max-w-[420px] rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/5">
@@ -356,12 +367,8 @@ export default function PropertyDetail() {
                      </div>
                      
                      <div className="mt-8 flex flex-col items-center">
-                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mb-2">
-                          Editor&apos;s Choice
-                        </p>
-                        <p className="text-xs text-zinc-400 font-medium italic">
-                          "현장의 감동을 영상으로 직접 확인해보세요"
-                        </p>
+                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mb-2">Editor's Choice</p>
+                        <p className="text-xs text-zinc-400 font-medium italic">"현장의 감동을 영상으로 직접 확인해보세요"</p>
                      </div>
                   </div>
                 </div>
@@ -393,13 +400,14 @@ export default function PropertyDetail() {
                 key={activeImageIndex}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                src={property.images[activeImageIndex]} 
+                src={normalizeImageSrc(property.images[activeImageIndex])} 
                 alt={property.title}
                 className="max-w-full max-h-full object-contain select-none"
                 referrerPolicy="no-referrer"
                 onClick={(e) => e.stopPropagation()}
               />
 
+              {/* Zoomed Navigation */}
               <button 
                 onClick={prevImage}
                 className="absolute left-4 md:left-10 w-16 h-16 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
@@ -416,6 +424,7 @@ export default function PropertyDetail() {
               </button>
             </div>
 
+            {/* Image Counter */}
             <div className="absolute bottom-10 text-white/50 text-xs font-bold tracking-widest uppercase">
               {activeImageIndex + 1} / {property.images.length}
             </div>
