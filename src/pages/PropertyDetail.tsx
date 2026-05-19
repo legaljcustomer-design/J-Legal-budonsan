@@ -39,14 +39,11 @@ export default function PropertyDetail() {
     youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=Fvg2lwsd-_UGjgSx'
   });
 
-  // 이미지 경로 보정 헬퍼 함수
   const normalizeImageSrc = (src: string | undefined) => {
     if (!src) return '';
-    // 이미 완전한 URL이거나 절대 경로, 혹은 data URL인 경우 그대로 반환
     if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/') || src.startsWith('data:')) {
       return src;
     }
-    // assets/uploads/... 형태로 저장된 경우 /assets/uploads/... 로 보정
     return `/${src}`;
   };
 
@@ -86,9 +83,10 @@ export default function PropertyDetail() {
   }, [id]);
 
   useEffect(() => {
-    // 관리자 여부 체크 (필요 시 로직 추가)
+    // Admin check logic removed in static mode
     setIsAdmin(false);
   }, []);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -150,7 +148,7 @@ export default function PropertyDetail() {
       <main className="pt-24 pb-20 px-6 md:px-10">
         <div className="max-w-7xl mx-auto">
           
-          {/* Property Top Info Bar */}
+          {/* Property Top Info Bar (Simulating the user's reference) */}
           <div className="mb-10 bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
                <div className="p-6 text-center group transition-colors hover:bg-orange-50/30">
@@ -182,7 +180,7 @@ export default function PropertyDetail() {
             {/* Left Card: Gallery */}
             <div className="bg-white p-6 md:p-8 rounded-3xl border border-zinc-200 shadow-2xl flex flex-col h-full justify-between">
               <div className="flex flex-col gap-6 flex-1">
-                 {/* Main Image */}
+                 {/* Main Image - Controlled Height for balance */}
                  <div className="relative aspect-square max-h-[550px] overflow-hidden rounded-2xl shadow-lg bg-zinc-200 group/main cursor-zoom-in">
                     <motion.div 
                       key={activeImageIndex}
@@ -252,11 +250,11 @@ export default function PropertyDetail() {
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                     <span className="px-3 py-1 bg-blue-600 text-[10px] font-bold text-white uppercase tracking-widest rounded-full">
-                       {property.type === 'OneRoom' ? '주거용 맨션' : 
-                        property.type === 'TwoRoom' ? '주거용 맨션(투룸형)' : 
-                        property.type === 'Family' ? '타워맨션' : 
-                        property.type === 'Office' ? '상가/사무실' : 
-                        '수익형 부동산'}
+                      {property.type === 'OneRoom' ? '주거용 맨션' : 
+                       property.type === 'TwoRoom' ? '주거용 맨션(투룸형)' : 
+                       property.type === 'Family' ? '타워맨션' : 
+                       property.type === 'Office' ? '상가/사무실' : 
+                       '수익형 부동산'}
                     </span>
                     <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold uppercase tracking-wider">
                       <MapPin size={12} /> {property.location}
@@ -341,8 +339,8 @@ export default function PropertyDetail() {
             </div>
 
             <div className="flex flex-col h-full">
-              {/* YouTube Video Section */}
-              {property.youtubeUrl && (
+              {/* YouTube Video or Google Maps Section */}
+              {property.youtubeUrl ? (
                 <div className="bg-zinc-950 p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group h-full">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-[60px] -translate-y-12 translate-x-12" />
                   <div className="relative z-10 flex flex-col items-center h-full justify-center">
@@ -355,14 +353,14 @@ export default function PropertyDetail() {
                      
                      <div className="w-full aspect-[9/16] max-w-[360px] md:max-w-[420px] rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/5">
                        <iframe
-                         width="100%"
-                         height="100%"
-                         src={`https://www.youtube.com/embed/${property.youtubeUrl.includes('shorts/') ? property.youtubeUrl.split('shorts/')[1].split('?')[0] : property.youtubeUrl.split('v=')[1]?.split('&')[0]}`}
-                         title="YouTube video player"
-                         frameBorder="0"
-                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                         allowFullScreen
-                         className="w-full h-full"
+                          width="100%"
+                          height="100%"
+                          src={`https://www.youtube.com/embed/${property.youtubeUrl.includes('shorts/') ? property.youtubeUrl.split('shorts/')[1].split('?')[0] : property.youtubeUrl.split('v=')[1]?.split('&')[0]}`}
+                          title="YouTube video player"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          className="w-full h-full"
                        ></iframe>
                      </div>
                      
@@ -371,6 +369,51 @@ export default function PropertyDetail() {
                         <p className="text-xs text-zinc-400 font-medium italic">"현장의 감동을 영상으로 직접 확인해보세요"</p>
                      </div>
                   </div>
+                </div>
+              ) : property.mapAddress?.trim() ? (
+                <div className="bg-white p-8 rounded-3xl border border-zinc-200 shadow-xl relative overflow-hidden group h-full">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-[60px] -translate-y-12 translate-x-12" />
+                  <div className="relative z-10 flex flex-col items-center h-full">
+                     <div className="flex items-center gap-3 mb-8 w-full border-b border-zinc-100 pb-4">
+                       <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                         <MapPin size={20} className="text-white" />
+                       </div>
+                       <h3 className="font-bold text-lg text-zinc-900 tracking-tight">매물 위치 지도</h3>
+                     </div>
+                     
+                     <div className="w-full aspect-video md:aspect-[3/4] max-w-[420px] rounded-2xl overflow-hidden shadow-2xl bg-zinc-100 border border-zinc-200 flex-1 min-h-[300px]">
+                       <iframe
+                         width="100%"
+                         height="100%"
+                         src={`https://www.google.com/maps?q=${encodeURIComponent(property.mapAddress)}&output=embed`}
+                         title="Property Location Map"
+                         frameBorder="0"
+                         style={{ border: 0 }}
+                         allowFullScreen
+                         loading="lazy"
+                         referrerPolicy="no-referrer-when-downgrade"
+                         className="w-full h-full"
+                       ></iframe>
+                     </div>
+                     
+                     <div className="mt-8 w-full">
+                        <a 
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.mapAddress)}`}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="w-full py-4 bg-zinc-900 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg"
+                        >
+                          <ExternalLink size={16} /> Google Maps에서 크게 보기
+                        </a>
+                     </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-3xl flex items-center justify-center p-10 text-center">
+                   <div className="max-w-xs">
+                     <MapPin className="mx-auto text-zinc-300 mb-4" size={48} />
+                     <p className="text-zinc-400 text-sm font-medium">상세 위치는 담당자 상담을 통해 <br />안내해 드리고 있습니다.</p>
+                   </div>
                 </div>
               )}
             </div>
