@@ -27,7 +27,8 @@
     "area": "62.06㎡",
     "isFeatured": false,
     "createdAt": 1779091148145,
-    "ownerId": "system"
+    "ownerId": "system",
+    "mapAddress": "大阪府大阪市中央区東心斎橋１丁目３−５ グラントピア長堀橋 205"
   },
   {
     "id": "prop-1779073876920",
@@ -57,7 +58,8 @@
     "area": "70.35㎡",
     "isFeatured": false,
     "createdAt": 1779073876920,
-    "ownerId": "system"
+    "ownerId": "system",
+    "mapAddress": "大阪府大阪市浪速区稲荷２丁目7-1"
   },
   {
     "id": "sample-1",
