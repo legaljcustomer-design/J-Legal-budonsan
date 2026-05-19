@@ -28,7 +28,8 @@
     "isFeatured": false,
     "createdAt": 1779091148145,
     "ownerId": "system",
-    "mapAddress": "大阪府大阪市中央区東心斎橋１丁目３−５ グラントピア長堀橋 205"
+    "mapAddress": "大阪府大阪市中央区東心斎橋１丁目３−５",
+    "floorPlanImage": "/assets/uploads/properties/prop-1779091148145/floorplan/1779172230269_00.webp"
   },
   {
     "id": "prop-1779073876920",
@@ -59,7 +60,8 @@
     "isFeatured": false,
     "createdAt": 1779073876920,
     "ownerId": "system",
-    "mapAddress": "大阪府大阪市浪速区稲荷２丁目7-1"
+    "mapAddress": "大阪府大阪市浪速区稲荷２丁目7-1",
+    "floorPlanImage": "/assets/uploads/properties/prop-1779073876920/floorplan/1779172041983_00.webp"
   },
   {
     "id": "sample-1",
