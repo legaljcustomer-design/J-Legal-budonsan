@@ -148,7 +148,7 @@ export default function PropertyDetail() {
       <main className="pt-24 pb-20 px-6 md:px-10">
         <div className="max-w-7xl mx-auto">
           
-          {/* Property Top Info Bar (Simulating the user's reference) */}
+          {/* Property Top Info Bar */}
           <div className="mb-10 bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
                <div className="p-6 text-center group transition-colors hover:bg-orange-50/30">
@@ -378,11 +378,12 @@ export default function PropertyDetail() {
                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                          <MapPin size={20} className="text-white" />
                        </div>
-                       <h3 className="font-bold text-lg text-zinc-900 tracking-tight">매물 위치 지도</h3>
+                       <h3 className="font-bold text-lg text-zinc-900 tracking-tight">매물 위치 지도 & 구조</h3>
                      </div>
                      
-                     <div className="w-full flex-1 flex items-center justify-center">
-                       <div className="w-full max-w-[420px] aspect-square rounded-2xl overflow-hidden shadow-2xl bg-zinc-100 border border-zinc-200">
+                     <div className="w-full flex-1 flex flex-col items-center">
+                       {/* Google Maps Section */}
+                       <div className="w-full max-w-[420px] aspect-square rounded-2xl overflow-hidden shadow-2xl bg-zinc-100 border border-zinc-200 mb-8">
                          <iframe
                            width="100%"
                            height="100%"
@@ -396,6 +397,21 @@ export default function PropertyDetail() {
                            className="w-full h-full"
                          ></iframe>
                        </div>
+
+                       {/* Floor Plan Image Section */}
+                       {property.floorPlanImage && (
+                        <div className="w-full flex flex-col items-center pt-8 border-t border-zinc-100">
+                          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em] mb-4">매물 구조도 (間取り)</p>
+                          <div className="w-full max-w-[420px] rounded-2xl overflow-hidden shadow-lg bg-white border border-zinc-100">
+                            <img 
+                              src={normalizeImageSrc(property.floorPlanImage)} 
+                              alt="Floor Plan" 
+                              className="w-full h-auto object-contain"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                        </div>
+                       )}
                      </div>
                      
                      <div className="mt-8 w-full">
