@@ -11,6 +11,7 @@ export interface Property {
   completionYear: string;
   nearestStation?: string;
   floorPlan?: string;
+  floorPlanImage?: string;
   area?: string;
   googleMapUrl?: string;
   mapAddress?: string;
