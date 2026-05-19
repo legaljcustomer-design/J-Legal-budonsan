@@ -60,38 +60,31 @@ export default function Admin() {
   const [error, setError] = useState<string | null>(null);
   const [ghService, setGhService] = useState<GithubService | null>(null);
   
-  // Data States
   const [originalData, setOriginalData] = useState<any>(null);
   const [pendingData, setPendingData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   
-  // Editor States
   const [editingItem, setEditingItem] = useState<{ type: string; item: any; index: number } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ success?: boolean; message?: string } | null>(null);
 
-  // New Image States for Stage 3
-  const [pendingImageFiles, setPendingImageFiles] = useState<{ path: string; base64: string }[]>([]);
+  const [pendingImageFiles, setPendingImageFiles] = useState<{ path: string; base64: string; dataUrl?: string }[]>([]);
   const [deletedImagePaths, setDeletedImagePaths] = useState<string[]>([]);
 
   const getDisplaySrc = (src: string | undefined) => {
     if (!src) return '';
     if (src.startsWith('data:')) return src;
     
-    // Check if this path is currently in our pending uploads
-    // The path in pendingImageFiles is 'public/assets/uploads/...'
-    // While the src in JSON is '/assets/uploads/...'
     const cleanSrc = src.startsWith('/') ? src.slice(1) : src;
     const pending = pendingImageFiles.find(f => f.path.endsWith(cleanSrc));
     
-    if (pending) {
-      return `data:image/webp;base64,${pending.base64}`;
+    if (pending && pending.dataUrl) {
+      return pending.dataUrl;
     }
     
     return normalizeImageSrc(src);
   };
 
-  // Load from sessionStorage on mount
   useEffect(() => {
     const saved = sessionStorage.getItem('admin_gh_auth');
     if (saved) {
@@ -113,10 +106,9 @@ export default function Admin() {
         setGhService(service);
         sessionStorage.setItem('admin_gh_auth', JSON.stringify(data));
         
-        // Fetch data
         const ghRaw = await service.getAllConfigData();
         setOriginalData(ghRaw);
-        setPendingData(JSON.parse(JSON.stringify(ghRaw))); // Deep clone for editing
+        setPendingData(JSON.parse(JSON.stringify(ghRaw)));
       } else {
         throw new Error('유효하지 않은 토큰이거나 저장소 권한이 없습니다.');
       }
@@ -147,19 +139,17 @@ export default function Admin() {
     setPendingData(null);
   };
 
-  // CRUD Helpers
   const hasChanges = () => {
     const jsonChanged = JSON.stringify(originalData) !== JSON.stringify(pendingData);
     const imagesChanged = pendingImageFiles.length > 0 || deletedImagePaths.length > 0;
     return jsonChanged || imagesChanged;
   };
 
-  // Handle Save Status Timeout
   useEffect(() => {
     if (saveStatus) {
       const timer = setTimeout(() => {
         setSaveStatus(null);
-      }, 8000); // 8 seconds
+      }, 8000);
       return () => clearTimeout(timer);
     }
   }, [saveStatus]);
@@ -170,7 +160,6 @@ export default function Admin() {
     setSaveStatus(null);
     
     try {
-      // 1. JSON 파일 변경사항 수집
       const filesToUpdate: { path: string; content?: string; base64?: string; delete?: boolean }[] = [];
       
       if (JSON.stringify(originalData.properties) !== JSON.stringify(pendingData.properties)) {
@@ -186,12 +175,10 @@ export default function Admin() {
         filesToUpdate.push({ path: 'src/data/siteConfig.json', content: JSON.stringify(pendingData.siteConfig, null, 2) });
       }
 
-      // 2. 새로운 이미지 파일 추가
       pendingImageFiles.forEach(file => {
         filesToUpdate.push({ path: file.path, base64: file.base64 });
       });
 
-      // 3. 삭제 요청된 이미지 처리
       deletedImagePaths.forEach(path => {
         filesToUpdate.push({ path, delete: true });
       });
@@ -202,10 +189,8 @@ export default function Admin() {
          return;
       }
 
-      // 4. 단일 커밋 실행
       await ghService.commitMultipleFiles(filesToUpdate, 'chore: update site content and assets via admin CMS');
       
-      // 5. 성공 후 상태 동기화
       setOriginalData(JSON.parse(JSON.stringify(pendingData)));
       setPendingImageFiles([]);
       setDeletedImagePaths([]);
@@ -227,8 +212,6 @@ export default function Admin() {
       setIsSaving(false);
     }
   };
-
-  // --- Sub-components (Editors) ---
 
   const PropertyEditor = () => {
     const list = pendingData.properties || [];
@@ -259,6 +242,7 @@ export default function Admin() {
         completionYear: '',
         nearestStation: '',
         youtubeUrl: '',
+        mapAddress: '',
         floorPlan: '',
         area: '',
         isFeatured: false,
@@ -434,7 +418,7 @@ export default function Admin() {
                     onChange={e => handleChange('lineId', e.target.value)}
                   />
                 </div>
-                 <div className="md:col-span-2">
+                <div className="md:col-span-2">
                   <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Instagram ID (Fallback)</label>
                   <input 
                     className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
@@ -523,8 +507,6 @@ export default function Admin() {
     );
   };
 
-  // --- Global Helpers ---
-  
   if (isVerifying) {
     return (
       <div className="min-h-screen bg-luxury-black flex items-center justify-center">
@@ -536,7 +518,6 @@ export default function Admin() {
     );
   }
 
-  // Token Input Screen
   if (!authData) {
     return (
       <div className="min-h-screen bg-luxury-black flex items-center justify-center p-6">
@@ -606,7 +587,6 @@ export default function Admin() {
     );
   }
 
-  // Dashboard Editor Screen
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row">
       <AnimatePresence>
@@ -623,14 +603,12 @@ export default function Admin() {
         )}
       </AnimatePresence>
 
-      {/* Persistence Notification/Top Bar for Mobile */}
       {hasChanges() && (
         <div className="absolute top-0 inset-x-0 bg-amber-500 text-black py-2 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] z-50 animate-pulse">
            저장되지 않은 변경사항이 있습니다. 사이트에 반영하기 버튼을 눌러주세요.
         </div>
       )}
 
-      {/* Sidebar Navigation */}
       <aside className="w-full md:w-80 bg-zinc-900 border-r border-white/5 p-8 flex flex-col justify-between h-auto md:h-screen md:sticky top-0 pt-16 md:pt-8">
         <div>
           <div className="flex items-center gap-3 mb-12">
@@ -676,9 +654,7 @@ export default function Admin() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-grow min-h-screen bg-zinc-950 p-8 md:p-16 relative">
-        {/* Global Save Action Floating Bar & Notifications */}
         <div className="fixed bottom-10 inset-x-0 md:left-auto md:right-10 flex flex-col items-end gap-3 z-40 p-6 pointer-events-none md:p-0">
           <AnimatePresence>
             {saveStatus && (
@@ -694,7 +670,7 @@ export default function Admin() {
               >
                 {saveStatus.success ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                 <div className="flex-grow">
-                   <p className="leading-tight">{saveStatus.message}</p>
+                  <p className="leading-tight">{saveStatus.message}</p>
                 </div>
                 <button onClick={() => setSaveStatus(null)} className="p-1 hover:bg-white/5 rounded-md transition-all"><X size={14} /></button>
               </motion.div>
@@ -762,14 +738,12 @@ export default function Admin() {
   );
 }
 
-// --- Standalone Modal Form Component ---
-
 interface ModalFormProps {
   editingItem: { type: string; item: any; index: number } | null;
   setEditingItem: (val: { type: string; item: any; index: number } | null) => void;
   pendingData: any;
   setPendingData: (val: any) => void;
-  setPendingImageFiles: React.Dispatch<React.SetStateAction<{ path: string; base64: string }[]>>;
+  setPendingImageFiles: React.Dispatch<React.SetStateAction<{ path: string; base64: string; dataUrl?: string }[]>>;
   setDeletedImagePaths: React.Dispatch<React.SetStateAction<string[]>>;
   getDisplaySrc: (src: string | undefined) => string;
 }
@@ -791,7 +765,7 @@ const ModalForm = ({
     setEditingItem({ ...editingItem, item: { ...item, [key]: value } });
   };
 
-  const handleImageChange = (newUrls: string[], newFiles: { path: string; base64: string }[], deletedPaths: string[], type: string) => {
+  const handleImageChange = (newUrls: string[], newFiles: { path: string; base64: string; dataUrl?: string }[], deletedPaths: string[], type: string) => {
     const isReview = type === 'review';
     const isInfo = type === 'osakaInfo';
     
@@ -802,15 +776,8 @@ const ModalForm = ({
 
     setEditingItem({ ...editingItem, item: updatedItem });
     
-    // Update pending image files state
     setPendingImageFiles(prev => {
-      // Create a map of paths to be added for easier handling
       const newFilesMap = new Map(newFiles.map(f => [f.path, f]));
-      
-      // We only want to remove pending files that are part of THIS item's specific folder path
-      // but only if they are not in the newFiles list.
-      // Actually, a simpler way: Filter out ANY files that match the new files paths to avoid duplicates,
-      // and also filter out any files that were in the previous set but are now in deletedPaths.
       const deletedSet = new Set(deletedPaths);
       
       return [
@@ -819,7 +786,6 @@ const ModalForm = ({
       ];
     });
 
-    // Update deleted image paths state
     setDeletedImagePaths(prev => {
       const combined = new Set([...prev, ...deletedPaths]);
       return Array.from(combined);
@@ -912,6 +878,15 @@ const ModalForm = ({
                     value={item.youtubeUrl || ''} 
                     onChange={e => handleFormChange('youtubeUrl', e.target.value)} 
                     placeholder="예: https://www.youtube.com/shorts/VIDEO_ID 또는 https://www.youtube.com/watch?v=VIDEO_ID"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">Google Maps 표시 주소</label>
+                  <input 
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" 
+                    value={item.mapAddress || ''} 
+                    onChange={e => handleFormChange('mapAddress', e.target.value)} 
+                    placeholder="예: 大阪府大阪市浪速区桜川1丁目... (주소를 입력하면 상세페이지에 지도가 표시됩니다)"
                   />
                 </div>
                 <div className="md:col-span-2">
