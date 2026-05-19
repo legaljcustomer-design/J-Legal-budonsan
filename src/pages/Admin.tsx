@@ -60,14 +60,17 @@ export default function Admin() {
   const [error, setError] = useState<string | null>(null);
   const [ghService, setGhService] = useState<GithubService | null>(null);
   
+  // Data States
   const [originalData, setOriginalData] = useState<any>(null);
   const [pendingData, setPendingData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   
+  // Editor States
   const [editingItem, setEditingItem] = useState<{ type: string; item: any; index: number } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ success?: boolean; message?: string } | null>(null);
 
+  // New Image States for Stage 3
   const [pendingImageFiles, setPendingImageFiles] = useState<{ path: string; base64: string; dataUrl?: string }[]>([]);
   const [deletedImagePaths, setDeletedImagePaths] = useState<string[]>([]);
 
@@ -75,6 +78,7 @@ export default function Admin() {
     if (!src) return '';
     if (src.startsWith('data:')) return src;
     
+    // Check if this path is currently in our pending uploads
     const cleanSrc = src.startsWith('/') ? src.slice(1) : src;
     const pending = pendingImageFiles.find(f => f.path.endsWith(cleanSrc));
     
@@ -85,6 +89,7 @@ export default function Admin() {
     return normalizeImageSrc(src);
   };
 
+  // Load from sessionStorage on mount
   useEffect(() => {
     const saved = sessionStorage.getItem('admin_gh_auth');
     if (saved) {
@@ -106,9 +111,10 @@ export default function Admin() {
         setGhService(service);
         sessionStorage.setItem('admin_gh_auth', JSON.stringify(data));
         
+        // Fetch data
         const ghRaw = await service.getAllConfigData();
         setOriginalData(ghRaw);
-        setPendingData(JSON.parse(JSON.stringify(ghRaw)));
+        setPendingData(JSON.parse(JSON.stringify(ghRaw))); // Deep clone for editing
       } else {
         throw new Error('유효하지 않은 토큰이거나 저장소 권한이 없습니다.');
       }
@@ -139,17 +145,19 @@ export default function Admin() {
     setPendingData(null);
   };
 
+  // CRUD Helpers
   const hasChanges = () => {
     const jsonChanged = JSON.stringify(originalData) !== JSON.stringify(pendingData);
     const imagesChanged = pendingImageFiles.length > 0 || deletedImagePaths.length > 0;
     return jsonChanged || imagesChanged;
   };
 
+  // Handle Save Status Timeout
   useEffect(() => {
     if (saveStatus) {
       const timer = setTimeout(() => {
         setSaveStatus(null);
-      }, 8000);
+      }, 8000); // 8 seconds
       return () => clearTimeout(timer);
     }
   }, [saveStatus]);
@@ -160,6 +168,7 @@ export default function Admin() {
     setSaveStatus(null);
     
     try {
+      // 1. JSON 파일 변경사항 수집
       const filesToUpdate: { path: string; content?: string; base64?: string; delete?: boolean }[] = [];
       
       if (JSON.stringify(originalData.properties) !== JSON.stringify(pendingData.properties)) {
@@ -175,10 +184,12 @@ export default function Admin() {
         filesToUpdate.push({ path: 'src/data/siteConfig.json', content: JSON.stringify(pendingData.siteConfig, null, 2) });
       }
 
+      // 2. 새로운 이미지 파일 추가
       pendingImageFiles.forEach(file => {
         filesToUpdate.push({ path: file.path, base64: file.base64 });
       });
 
+      // 3. 삭제 요청된 이미지 처리
       deletedImagePaths.forEach(path => {
         filesToUpdate.push({ path, delete: true });
       });
@@ -189,8 +200,10 @@ export default function Admin() {
          return;
       }
 
+      // 4. 단일 커밋 실행
       await ghService.commitMultipleFiles(filesToUpdate, 'chore: update site content and assets via admin CMS');
       
+      // 5. 성공 후 상태 동기화
       setOriginalData(JSON.parse(JSON.stringify(pendingData)));
       setPendingImageFiles([]);
       setDeletedImagePaths([]);
@@ -212,6 +225,8 @@ export default function Admin() {
       setIsSaving(false);
     }
   };
+
+  // --- Sub-components (Editors) ---
 
   const PropertyEditor = () => {
     const list = pendingData.properties || [];
@@ -244,6 +259,7 @@ export default function Admin() {
         youtubeUrl: '',
         mapAddress: '',
         floorPlan: '',
+        floorPlanImage: '',
         area: '',
         isFeatured: false,
         createdAt: Date.now(),
@@ -418,7 +434,7 @@ export default function Admin() {
                     onChange={e => handleChange('lineId', e.target.value)}
                   />
                 </div>
-                <div className="md:col-span-2">
+                 <div className="md:col-span-2">
                   <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Instagram ID (Fallback)</label>
                   <input 
                     className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
@@ -507,6 +523,8 @@ export default function Admin() {
     );
   };
 
+  // --- Global Helpers ---
+  
   if (isVerifying) {
     return (
       <div className="min-h-screen bg-luxury-black flex items-center justify-center">
@@ -518,6 +536,7 @@ export default function Admin() {
     );
   }
 
+  // Token Input Screen
   if (!authData) {
     return (
       <div className="min-h-screen bg-luxury-black flex items-center justify-center p-6">
@@ -587,6 +606,7 @@ export default function Admin() {
     );
   }
 
+  // Dashboard Editor Screen
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row">
       <AnimatePresence>
@@ -603,12 +623,14 @@ export default function Admin() {
         )}
       </AnimatePresence>
 
+      {/* Persistence Notification/Top Bar for Mobile */}
       {hasChanges() && (
         <div className="absolute top-0 inset-x-0 bg-amber-500 text-black py-2 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] z-50 animate-pulse">
            저장되지 않은 변경사항이 있습니다. 사이트에 반영하기 버튼을 눌러주세요.
         </div>
       )}
 
+      {/* Sidebar Navigation */}
       <aside className="w-full md:w-80 bg-zinc-900 border-r border-white/5 p-8 flex flex-col justify-between h-auto md:h-screen md:sticky top-0 pt-16 md:pt-8">
         <div>
           <div className="flex items-center gap-3 mb-12">
@@ -654,7 +676,9 @@ export default function Admin() {
         </div>
       </aside>
 
+      {/* Main Content Area */}
       <main className="flex-grow min-h-screen bg-zinc-950 p-8 md:p-16 relative">
+        {/* Global Save Action Floating Bar & Notifications */}
         <div className="fixed bottom-10 inset-x-0 md:left-auto md:right-10 flex flex-col items-end gap-3 z-40 p-6 pointer-events-none md:p-0">
           <AnimatePresence>
             {saveStatus && (
@@ -738,6 +762,8 @@ export default function Admin() {
   );
 }
 
+// --- Standalone Modal Form Component ---
+
 interface ModalFormProps {
   editingItem: { type: string; item: any; index: number } | null;
   setEditingItem: (val: { type: string; item: any; index: number } | null) => void;
@@ -768,24 +794,31 @@ const ModalForm = ({
   const handleImageChange = (newUrls: string[], newFiles: { path: string; base64: string; dataUrl?: string }[], deletedPaths: string[], type: string) => {
     const isReview = type === 'review';
     const isInfo = type === 'osakaInfo';
+    const isFloorPlan = type === 'floorPlan';
     
     const updatedItem = { ...item };
     if (isReview) updatedItem.image = newUrls[0] || '';
     else if (isInfo) updatedItem.img = newUrls[0] || '';
+    else if (isFloorPlan) updatedItem.floorPlanImage = newUrls[0] || '';
     else updatedItem.images = newUrls;
 
     setEditingItem({ ...editingItem, item: updatedItem });
     
+    // Update pending image files state
     setPendingImageFiles(prev => {
+      // Create a map of paths to be added for easier handling
       const newFilesMap = new Map(newFiles.map(f => [f.path, f]));
       const deletedSet = new Set(deletedPaths);
       
+      // Filter out ANY files that match the new files paths to avoid duplicates,
+      // and also filter out any files that were in the previous set but are now in deletedPaths.
       return [
         ...prev.filter(f => !newFilesMap.has(f.path) && !deletedSet.has(f.path)),
         ...newFiles
       ];
     });
 
+    // Update deleted image paths state
     setDeletedImagePaths(prev => {
       const combined = new Set([...prev, ...deletedPaths]);
       return Array.from(combined);
@@ -830,6 +863,14 @@ const ModalForm = ({
                 images={(item.images || []).map(src => getDisplaySrc(src))}
                 mode="multiple"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'property')}
+              />
+
+              <ImageManager 
+                title="마도리(구조도) 이미지 관리"
+                folderPath={`properties/${item.id}/floorplan`}
+                images={item.floorPlanImage ? [getDisplaySrc(item.floorPlanImage)] : []}
+                mode="single"
+                onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'floorPlan')}
               />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
