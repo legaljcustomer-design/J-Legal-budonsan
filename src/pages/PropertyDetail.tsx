@@ -148,7 +148,7 @@ export default function PropertyDetail() {
       <main className="pt-24 pb-20 px-6 md:px-10">
         <div className="max-w-7xl mx-auto">
           
-          {/* Property Top Info Bar */}
+          {/* Property Top Info Bar (Simulating the user's reference) */}
           <div className="mb-10 bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
                <div className="p-6 text-center group transition-colors hover:bg-orange-50/30">
@@ -381,51 +381,52 @@ export default function PropertyDetail() {
                        <h3 className="font-bold text-lg text-zinc-900 tracking-tight">매물 위치 지도 & 구조</h3>
                      </div>
                      
-                     <div className="w-full flex-1 flex flex-col items-center">
-                       {/* Google Maps Section */}
-                       <div className="w-full max-w-[420px] aspect-square rounded-2xl overflow-hidden shadow-2xl bg-zinc-100 border border-zinc-200 mb-8">
-                         <iframe
-                           width="100%"
-                           height="100%"
-                           src={`https://www.google.com/maps?q=${encodeURIComponent(property.mapAddress)}&output=embed`}
-                           title="Property Location Map"
-                           frameBorder="0"
-                           style={{ border: 0 }}
-                           allowFullScreen
-                           loading="lazy"
-                           referrerPolicy="no-referrer-when-downgrade"
-                           className="w-full h-full"
-                         ></iframe>
-                       </div>
-
-                       {/* Floor Plan Image Section */}
-                       {property.floorPlanImage && (
-                        <div className="w-full flex flex-col items-center pt-8 border-t border-zinc-100">
-                          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em] mb-4">매물 구조도 (間取り)</p>
-                          <div className="w-full max-w-[420px] rounded-2xl overflow-hidden shadow-lg bg-white border border-zinc-100">
-                            <img 
-                              src={normalizeImageSrc(property.floorPlanImage)} 
-                              alt="Floor Plan" 
-                              className="w-full h-auto object-contain"
-                              referrerPolicy="no-referrer"
-                            />
-                          </div>
+                      <div className="w-full flex-1 flex flex-col items-center">
+                        {/* Google Maps Section */}
+                        <div className="w-full max-w-[420px] aspect-square rounded-2xl overflow-hidden shadow-2xl bg-zinc-100 border border-zinc-200 mb-6">
+                          <iframe
+                            width="100%"
+                            height="100%"
+                            src={`https://www.google.com/maps?q=${encodeURIComponent(property.mapAddress)}&output=embed`}
+                            title="Property Location Map"
+                            frameBorder="0"
+                            style={{ border: 0 }}
+                            allowFullScreen
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            className="w-full h-full"
+                          ></iframe>
                         </div>
-                       )}
-                     </div>
-                     
-                     <div className="mt-8 w-full">
-                        <a 
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.mapAddress)}`}
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="w-full py-4 bg-zinc-900 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg"
-                        >
-                          <ExternalLink size={16} /> Google Maps에서 크게 보기
-                        </a>
-                     </div>
-                  </div>
-                </div>
+
+                        {/* View Large Map Button */}
+                        <div className="mb-8 w-full max-w-[420px]">
+                           <a 
+                             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.mapAddress)}`}
+                             target="_blank" 
+                             rel="noopener noreferrer"
+                             className="w-full py-4 bg-zinc-900 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg"
+                           >
+                             <ExternalLink size={16} /> Google Maps에서 크게 보기
+                           </a>
+                        </div>
+
+                        {/* Floor Plan Image Section */}
+                        {property.floorPlanImage && (
+                         <div className="w-full flex flex-col items-center pt-8 border-t border-zinc-100">
+                           <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em] mb-4">매물 구조도 (間取り)</p>
+                           <div className="w-full max-w-[420px] rounded-2xl overflow-hidden shadow-lg bg-white border border-zinc-100">
+                             <img 
+                               src={normalizeImageSrc(property.floorPlanImage)} 
+                               alt="Floor Plan" 
+                               className="w-full h-auto object-contain"
+                               referrerPolicy="no-referrer"
+                             />
+                           </div>
+                         </div>
+                        )}
+                      </div>
+                   </div>
+                 </div>
               ) : (
                 <div className="h-full bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-3xl flex items-center justify-center p-10 text-center">
                    <div className="max-w-xs">
