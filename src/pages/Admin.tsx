@@ -78,12 +78,19 @@ export default function Admin() {
     if (!src) return '';
     if (src.startsWith('data:')) return src;
     
-    // Check if this path is currently in our pending uploads
+    // 아직 GitHub에 반영되지 않은 업로드 대기 이미지인지 확인
     const cleanSrc = src.startsWith('/') ? src.slice(1) : src;
     const pending = pendingImageFiles.find(f => f.path.endsWith(cleanSrc));
     
-    if (pending && pending.dataUrl) {
+    // dataUrl이 있으면 우선 사용
+    if (pending?.dataUrl) {
       return pending.dataUrl;
+    }
+
+    // 현재 ImageManager는 base64를 넘기므로,
+    // 저장 전 미리보기에서는 base64를 data URL로 변환해 표시
+    if (pending?.base64) {
+      return `data:image/webp;base64,${pending.base64}`;
     }
     
     return normalizeImageSrc(src);
