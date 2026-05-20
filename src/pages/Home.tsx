@@ -62,6 +62,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   const [settings, setSettings] = useState({
     heroTitle: '오사카 최고의 매물을 찾으시나요?',
     heroSubtitle: '난바, 우메다 등 주요 거점의 신축 맨션부터 수익형 빌딩까지, 오사카 거주 한국인 및 투자자를 위한 맞춤형 럭셔리 컨설팅을 제공합니다.',
+    heroImage: '',
     consultationBaseCount: 102,
     kakaoId: 'oosakaj',
     kakaoUrl: 'https://pf.kakao.com/_TSvgxb',
@@ -246,7 +247,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/80 z-10" />
           <img 
-            src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2670&auto=format&fit=crop" 
+            src={(settings.heroImage && settings.heroImage.trim()) ? normalizeImageSrc(settings.heroImage.trim()) : "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2670&auto=format&fit=crop"} 
             alt="Osaka Umeda Business District" 
             className="w-[115%] h-[115%] object-cover -translate-x-[7%] -translate-y-[7%] opacity-70 scale-110"
           />
