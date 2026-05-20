@@ -34,6 +34,21 @@ const CATEGORIES = [
   { id: 'Investment', label: '수익형 부동산', icon: TrendingUp },
 ];
 
+type PrefectureFilter = 'all' | 'osaka' | 'kyoto' | 'hyogo';
+
+const PREFECTURE_OPTIONS: { id: PrefectureFilter; label: string; english: string }[] = [
+  { id: 'all', label: '전체', english: 'ALL' },
+  { id: 'osaka', label: '오사카', english: 'OSAKA' },
+  { id: 'kyoto', label: '교토', english: 'KYOTO' },
+  { id: 'hyogo', label: '효고', english: 'HYOGO' },
+];
+
+const PREFECTURE_LABELS: Record<'osaka' | 'kyoto' | 'hyogo', string> = {
+  osaka: '오사카',
+  kyoto: '교토',
+  hyogo: '효고',
+};
+
 interface Review {
   id: string;
   image: string;
@@ -65,6 +80,11 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   const [osakaInfos, setOsakaInfos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [selectedPrefecture, setSelectedPrefecture] = useState<PrefectureFilter>('all');
+  const [stationQuery, setStationQuery] = useState('');
+  const [lineQuery, setLineQuery] = useState('');
+  const [keywordQuery, setKeywordQuery] = useState('');
+
   const settings = {
     ...DEFAULT_SETTINGS,
     ...siteConfig
@@ -91,6 +111,13 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
       return src;
     }
     return `/${src}`;
+  };
+
+  const normalizeSearchText = (value: unknown) => {
+    return String(value ?? '')
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .trim();
   };
 
   useEffect(() => {
@@ -172,6 +199,76 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     settings.heroImage && settings.heroImage.trim()
       ? normalizeImageSrc(settings.heroImage.trim())
       : 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2670&auto=format&fit=crop';
+
+  const hasSearchFilters =
+    selectedPrefecture !== 'all' ||
+    stationQuery.trim().length > 0 ||
+    lineQuery.trim().length > 0 ||
+    keywordQuery.trim().length > 0;
+
+  const clearSearchFilters = () => {
+    setSelectedPrefecture('all');
+    setStationQuery('');
+    setLineQuery('');
+    setKeywordQuery('');
+  };
+
+  const filteredProperties = properties.filter((prop) => {
+    const prefectureMatch =
+      selectedPrefecture === 'all' ||
+      prop.prefecture === selectedPrefecture;
+
+    const stationNeedle = normalizeSearchText(stationQuery);
+    const stationHaystack = normalizeSearchText([
+      prop.nearestStation,
+      prop.location,
+      prop.title,
+    ].filter(Boolean).join(' '));
+
+    const stationMatch =
+      !stationNeedle ||
+      stationHaystack.includes(stationNeedle);
+
+    const lineNeedle = normalizeSearchText(lineQuery);
+    const lineHaystack = normalizeSearchText([
+      prop.nearestLine,
+      prop.title,
+      prop.description,
+    ].filter(Boolean).join(' '));
+
+    const lineMatch =
+      !lineNeedle ||
+      lineHaystack.includes(lineNeedle);
+
+    const keywordNeedle = normalizeSearchText(keywordQuery);
+    const prefectureLabel =
+      prop.prefecture && prop.prefecture !== undefined
+        ? PREFECTURE_LABELS[prop.prefecture]
+        : '';
+
+    const keywordHaystack = normalizeSearchText([
+      prop.title,
+      prop.price,
+      prop.location,
+      prop.description,
+      prop.nearestStation,
+      prop.nearestLine,
+      prop.floorPlan,
+      prop.area,
+      prop.mapAddress,
+      prop.construction,
+      prop.completionYear,
+      Array.isArray(prop.features) ? prop.features.join(' ') : '',
+      prefectureLabel,
+      prop.type,
+    ].filter(Boolean).join(' '));
+
+    const keywordMatch =
+      !keywordNeedle ||
+      keywordHaystack.includes(keywordNeedle);
+
+    return prefectureMatch && stationMatch && lineMatch && keywordMatch;
+  });
 
   return (
     <div className="min-h-screen bg-luxury-black text-zinc-900 font-sans overflow-x-hidden">
@@ -333,8 +430,241 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
         </motion.div>
       </section>
 
+      {/* Property Search Hub */}
+      <section id="property-search" className="bg-slate-50 px-6 md:px-10 pt-14 pb-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-[36px] border border-zinc-200 shadow-[0_24px_80px_rgba(15,23,42,0.08)] overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.08fr_0.92fr]">
+              <div className="p-6 md:p-10">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-600 text-[11px] font-black tracking-[0.2em] uppercase mb-5">
+                  Smart Property Search
+                </div>
+
+                <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-zinc-900 leading-tight mb-4">
+                  원하는 지역과 조건으로<br className="hidden md:block" />
+                  매물을 빠르게 찾아보세요
+                </h2>
+
+                <p className="text-sm md:text-base text-zinc-500 leading-relaxed mb-8">
+                  오사카·교토·효고 지역을 고르고, 역명과 노선명, 키워드까지 조합해
+                  필요한 매물만 바로 아래에서 확인할 수 있습니다.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 mb-3">
+                      지역으로 찾기
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {PREFECTURE_OPTIONS.map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => setSelectedPrefecture(option.id)}
+                          className={`rounded-2xl border px-4 py-4 text-left transition-all ${
+                            selectedPrefecture === option.id
+                              ? 'bg-electric-blue border-electric-blue text-white shadow-lg shadow-blue-500/20'
+                              : 'bg-white border-zinc-200 text-zinc-700 hover:border-blue-300 hover:bg-blue-50'
+                          }`}
+                        >
+                          <span className="block text-sm font-black">{option.label}</span>
+                          <span className={`block text-[10px] tracking-[0.2em] font-bold mt-1 ${
+                            selectedPrefecture === option.id ? 'text-blue-100' : 'text-zinc-400'
+                          }`}>
+                            {option.english}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 mb-3">
+                        역명으로 찾기
+                      </label>
+                      <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4 focus-within:border-blue-400 focus-within:bg-white transition-all">
+                        <MapPin size={18} className="text-blue-600 shrink-0" />
+                        <input
+                          value={stationQuery}
+                          onChange={(e) => setStationQuery(e.target.value)}
+                          placeholder="예: 난바역, 우메다역"
+                          className="w-full bg-transparent outline-none text-sm text-zinc-900 placeholder:text-zinc-400"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 mb-3">
+                        노선으로 찾기
+                      </label>
+                      <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4 focus-within:border-blue-400 focus-within:bg-white transition-all">
+                        <ChevronRight size={18} className="text-blue-600 shrink-0" />
+                        <input
+                          value={lineQuery}
+                          onChange={(e) => setLineQuery(e.target.value)}
+                          placeholder="예: 미도스지선, JR 오사카환상선"
+                          className="w-full bg-transparent outline-none text-sm text-zinc-900 placeholder:text-zinc-400"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative min-h-[360px] lg:min-h-full bg-[#f7f1e7] border-t lg:border-t-0 lg:border-l border-zinc-100 overflow-hidden">
+                <svg viewBox="0 0 640 420" className="absolute inset-0 w-full h-full">
+                  <rect width="640" height="420" fill="#f7f1e7" />
+                  <path
+                    d="M0 50C85 24 155 32 228 65C279 88 316 83 376 54C432 26 538 27 640 68V0H0Z"
+                    fill="#dbeafe"
+                    opacity="0.75"
+                  />
+                  <path
+                    d="M58 300C116 272 154 275 207 312C257 347 331 353 387 322C447 289 514 292 582 332C604 345 622 356 640 370V420H0V348C17 335 35 315 58 300Z"
+                    fill="#dbeafe"
+                    opacity="0.8"
+                  />
+
+                  <path
+                    d="M92 132L174 90L284 111L302 176L250 241L155 252L82 200Z"
+                    fill={selectedPrefecture === 'hyogo' ? '#bfdbfe' : '#dff3c4'}
+                    stroke="#ffffff"
+                    strokeWidth="6"
+                    className="cursor-pointer transition-all"
+                    onClick={() => setSelectedPrefecture('hyogo')}
+                  />
+                  <path
+                    d="M286 88L414 58L530 124L496 218L377 226L318 172Z"
+                    fill={selectedPrefecture === 'kyoto' ? '#bfdbfe' : '#d7efad'}
+                    stroke="#ffffff"
+                    strokeWidth="6"
+                    className="cursor-pointer transition-all"
+                    onClick={() => setSelectedPrefecture('kyoto')}
+                  />
+                  <path
+                    d="M284 205L382 194L455 260L412 348L302 326L252 257Z"
+                    fill={selectedPrefecture === 'osaka' ? '#bfdbfe' : '#cce89d'}
+                    stroke="#ffffff"
+                    strokeWidth="6"
+                    className="cursor-pointer transition-all"
+                    onClick={() => setSelectedPrefecture('osaka')}
+                  />
+
+                  <path
+                    d="M458 240L575 214L620 276L576 338L476 320Z"
+                    fill="#ece8dc"
+                    stroke="#ffffff"
+                    strokeWidth="6"
+                  />
+                  <path
+                    d="M52 100L110 78L124 126L72 150Z"
+                    fill="#ece8dc"
+                    stroke="#ffffff"
+                    strokeWidth="6"
+                  />
+                </svg>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPrefecture('hyogo')}
+                  className={`absolute left-[28%] top-[46%] -translate-x-1/2 -translate-y-1/2 rounded-full w-28 h-28 border-[6px] shadow-xl flex flex-col items-center justify-center transition-all ${
+                    selectedPrefecture === 'hyogo'
+                      ? 'bg-blue-600 border-blue-300 text-white scale-105'
+                      : 'bg-white border-orange-300 text-zinc-800 hover:scale-105'
+                  }`}
+                >
+                  <span className="text-2xl font-black leading-none">兵庫</span>
+                  <span className={`text-xs tracking-[0.18em] mt-1 ${
+                    selectedPrefecture === 'hyogo' ? 'text-blue-100' : 'text-zinc-500'
+                  }`}>
+                    HYOGO
+                  </span>
+                  <span className={`absolute top-full left-1/2 -translate-x-1/2 border-x-[16px] border-x-transparent border-t-[22px] ${
+                    selectedPrefecture === 'hyogo' ? 'border-t-blue-600' : 'border-t-white'
+                  }`} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPrefecture('kyoto')}
+                  className={`absolute left-[64%] top-[26%] -translate-x-1/2 -translate-y-1/2 rounded-full w-28 h-28 border-[6px] shadow-xl flex flex-col items-center justify-center transition-all ${
+                    selectedPrefecture === 'kyoto'
+                      ? 'bg-blue-600 border-blue-300 text-white scale-105'
+                      : 'bg-white border-orange-300 text-zinc-800 hover:scale-105'
+                  }`}
+                >
+                  <span className="text-2xl font-black leading-none">京都</span>
+                  <span className={`text-xs tracking-[0.18em] mt-1 ${
+                    selectedPrefecture === 'kyoto' ? 'text-blue-100' : 'text-zinc-500'
+                  }`}>
+                    KYOTO
+                  </span>
+                  <span className={`absolute top-full left-1/2 -translate-x-1/2 border-x-[16px] border-x-transparent border-t-[22px] ${
+                    selectedPrefecture === 'kyoto' ? 'border-t-blue-600' : 'border-t-white'
+                  }`} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPrefecture('osaka')}
+                  className={`absolute left-[68%] top-[67%] -translate-x-1/2 -translate-y-1/2 rounded-full w-28 h-28 border-[6px] shadow-xl flex flex-col items-center justify-center transition-all ${
+                    selectedPrefecture === 'osaka'
+                      ? 'bg-blue-600 border-blue-300 text-white scale-105'
+                      : 'bg-white border-orange-300 text-zinc-800 hover:scale-105'
+                  }`}
+                >
+                  <span className="text-2xl font-black leading-none">大阪</span>
+                  <span className={`text-xs tracking-[0.18em] mt-1 ${
+                    selectedPrefecture === 'osaka' ? 'text-blue-100' : 'text-zinc-500'
+                  }`}>
+                    OSAKA
+                  </span>
+                  <span className={`absolute top-full left-1/2 -translate-x-1/2 border-x-[16px] border-x-transparent border-t-[22px] ${
+                    selectedPrefecture === 'osaka' ? 'border-t-blue-600' : 'border-t-white'
+                  }`} />
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-zinc-100 p-5 md:p-7 bg-zinc-50">
+              <div className="flex flex-col lg:flex-row gap-4 lg:items-center">
+                <div className="flex-1 flex items-center gap-4 bg-white border border-zinc-200 rounded-[28px] px-5 py-4 focus-within:border-blue-400 transition-all shadow-sm">
+                  <Search size={22} className="text-blue-600 shrink-0" />
+                  <input
+                    value={keywordQuery}
+                    onChange={(e) => setKeywordQuery(e.target.value)}
+                    placeholder="키워드 검색: 예) 민박, 투자, 타워맨션, 1LDK, 후쿠시마구"
+                    className="w-full bg-transparent outline-none text-sm md:text-base text-zinc-900 placeholder:text-zinc-400"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={clearSearchFilters}
+                  className="px-7 py-4 rounded-[24px] border border-zinc-200 bg-white text-sm font-bold text-zinc-700 hover:bg-zinc-900 hover:text-white transition-all"
+                >
+                  검색조건 초기화
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <p className="text-xs text-zinc-500">
+                  지역, 역명, 노선, 키워드는 동시에 조합해서 검색할 수 있습니다.
+                </p>
+
+                <div className="inline-flex items-center gap-2 text-xs font-bold text-zinc-600">
+                  <span className="w-2 h-2 rounded-full bg-electric-blue" />
+                  {hasSearchFilters ? `현재 조건에 맞는 매물 ${filteredProperties.length}건` : `현재 표시 가능한 추천 매물 ${filteredProperties.length}건`}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Properties Section */}
-      <section id="properties" className="py-24 px-10 bg-slate-50">
+      <section id="properties" className="pt-12 pb-24 px-10 bg-slate-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-10">
             <div>
@@ -343,6 +673,11 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               <p className="text-[11px] text-zinc-500 font-medium mt-2 leading-relaxed">
                 ※ 실시간 공실/만실 매물 상황은 무조건 문의바랍니다.
               </p>
+              {hasSearchFilters && (
+                <p className="text-sm text-blue-600 font-bold mt-4">
+                  검색 조건이 적용되어 있습니다. 현재 {filteredProperties.length}건이 표시됩니다.
+                </p>
+              )}
             </div>
             
             <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar w-full md:w-auto">
@@ -370,8 +705,8 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {properties.length > 0 ? (
-                  properties.slice(0, 6).map((prop, index) => (
+                {filteredProperties.length > 0 ? (
+                  filteredProperties.slice(0, 6).map((prop, index) => (
                     <motion.div
                       key={prop.id}
                       initial={{ opacity: 0, y: 30 }}
@@ -402,6 +737,18 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                       
                       <div className="p-5 bg-white flex flex-col h-[calc(100%-13rem)]">
                         <div className="mb-2">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            {prop.prefecture && (
+                              <span className="text-[9px] px-2 py-1 rounded-full bg-blue-50 text-blue-600 font-bold">
+                                {PREFECTURE_LABELS[prop.prefecture]}
+                              </span>
+                            )}
+                            {prop.nearestStation && (
+                              <span className="text-[9px] px-2 py-1 rounded-full bg-zinc-100 text-zinc-600 font-bold">
+                                {prop.nearestStation}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-1">{prop.location}</p>
                           <h3 className="text-base font-bold tracking-tight text-zinc-900 leading-tight line-clamp-2">
                             {prop.title}
@@ -426,8 +773,21 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                     </motion.div>
                   ))
                 ) : (
-                  <div className="col-span-full text-center py-24 text-zinc-500 text-sm tracking-widest uppercase bg-zinc-900/20 rounded-3xl border border-white/5">
-                    해당 카테고리에 등록된 매물이 없습니다.
+                  <div className="col-span-full text-center py-24 text-zinc-500 text-sm tracking-widest uppercase bg-white rounded-3xl border border-zinc-200">
+                    <p className="mb-5">
+                      {hasSearchFilters
+                        ? '검색 조건에 맞는 매물이 없습니다.'
+                        : '해당 카테고리에 등록된 매물이 없습니다.'}
+                    </p>
+                    {hasSearchFilters && (
+                      <button
+                        type="button"
+                        onClick={clearSearchFilters}
+                        className="px-6 py-3 rounded-full bg-zinc-950 text-white text-xs font-bold tracking-widest hover:bg-electric-blue transition-all"
+                      >
+                        검색조건 초기화
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -692,7 +1052,6 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </div>
           </div>
 
-          {/* Certifications Gallery */}
           <div className="mt-24 pt-16 border-t border-zinc-200">
             <div className="text-center mb-12">
               <span className="text-[10px] font-bold tracking-[0.3em] text-blue-600 uppercase">Professional License</span>
@@ -725,7 +1084,6 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </div>
           </div>
 
-          {/* Trust Bar */}
           <div className="mt-32 bg-zinc-950 text-white rounded-[40px] p-12 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-electric-blue/10 rounded-full blur-[120px] -mr-64 -mt-64 group-hover:bg-electric-blue/20 transition-colors duration-1000" />
             <div className="max-w-7xl w-full flex flex-col lg:flex-row items-center justify-between gap-10 relative z-10">
