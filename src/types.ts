@@ -28,6 +28,7 @@ export interface SiteSettings {
   siteName: string;
   heroTitle: string;
   heroSubtitle: string;
+  heroImage?: string;
   contactNumber: string;
   kakaoId: string;
   kakaoUrl?: string;
