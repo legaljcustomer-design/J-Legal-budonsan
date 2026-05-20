@@ -218,15 +218,15 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             </a>
           </div>
           
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-500">
+            <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-500">
             <a href="#hero" className="text-zinc-900 border-b-2 border-electric-blue pb-1 transition-all font-bold">홈</a>
             <a href="#properties" className="hover:text-electric-blue transition-colors">매물검색</a>
             <a href="#guide" className="hover:text-electric-blue transition-colors">고객후기</a>
             <a href="#about" className="hover:text-electric-blue transition-colors">회사소개</a>
             <Link to="/recruitment" className="hover:text-electric-blue transition-colors">채용 정보</Link>
             <Link to="/admin" className="hover:text-electric-blue transition-colors flex items-center gap-1.5 group/admin">
-              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 group-hover/admin:bg-electric-blue transition-colors mb-[1px]" />
-              관리자전용
+               <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 group-hover/admin:bg-electric-blue transition-colors mb-[1px]" />
+               관리자전용
             </Link>
           </div>
 
@@ -277,6 +277,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
 
       {/* Hero Section */}
       <section id="hero" className="relative h-[80vh] min-h-[700px] flex flex-col items-center justify-center text-center overflow-hidden">
+        {/* Background Image with Parallax */}
         <motion.div 
           className="absolute inset-0 z-0 bg-zinc-950"
           animate={{ x: mousePosition.x, y: mousePosition.y }}
@@ -291,10 +292,10 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-20 px-10"
+           initial={{ opacity: 0, y: 40 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+           className="relative z-20 px-10"
         >
           <div className="mt-10 mb-8 backdrop-blur-md bg-blue-600/30 border border-blue-400/30 text-white py-4 px-10 text-xl md:text-2xl font-bold tracking-tight inline-block mx-auto rounded-full shadow-[0_0_30px_rgba(37,99,235,0.3)]">
             현재 오사카J부동산에서 <span className="text-yellow-300 underline underline-offset-8 decoration-yellow-400/50 decoration-2">{consultationCount}명</span>이 상담 받고 계세요 ❤️
@@ -318,7 +319,6 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
         </motion.div>
       </section>
 
-      {/* 이하 나머지 기존 코드 동일 */}
       {/* Properties Section */}
       <section id="properties" className="py-24 px-10 bg-slate-50">
         <div className="max-w-7xl mx-auto">
@@ -334,13 +334,13 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
             <div className="flex overflow-x-auto gap-4 pb-2 no-scrollbar w-full md:w-auto">
               {CATEGORIES.map(cat => (
                 <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all border ${
-                    activeCategory === cat.id 
-                    ? 'bg-electric-blue text-white border-electric-blue shadow-lg shadow-blue-500/20' 
-                    : 'bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 shadow-sm'
-                  }`}
+                   key={cat.id}
+                   onClick={() => setActiveCategory(cat.id)}
+                   className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all border ${
+                     activeCategory === cat.id 
+                     ? 'bg-electric-blue text-white border-electric-blue shadow-lg shadow-blue-500/20' 
+                     : 'bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 shadow-sm'
+                   }`}
                 >
                   <cat.icon size={14} />
                   {cat.label}
@@ -350,9 +350,9 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-24">
-              <Loader2 className="animate-spin text-electric-blue" size={40} />
-            </div>
+             <div className="flex justify-center py-24">
+                <Loader2 className="animate-spin text-electric-blue" size={40} />
+             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -376,8 +376,8 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                         <span className="absolute top-4 left-4 px-2 py-1 bg-electric-blue text-[10px] font-bold rounded uppercase tracking-wider text-white">
                           {prop.type === 'OneRoom' ? '주거용 맨션' : 
-                          prop.type === 'TwoRoom' ? '주거용 맨션(투룸형)' : 
-                          CATEGORIES.find(c => c.id === prop.type)?.label || prop.type}
+                           prop.type === 'TwoRoom' ? '주거용 맨션(투룸형)' : 
+                           CATEGORIES.find(c => c.id === prop.type)?.label || prop.type}
                         </span>
                         {prop.isFeatured && (
                           <div className="absolute top-4 right-4 bg-emerald-600 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest text-white">
@@ -418,8 +418,12 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 )}
               </div>
 
+              {/* View More Button */}
               <div className="mt-16 flex justify-center">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   <Link
                     to="/properties"
                     className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
@@ -433,7 +437,495 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
         </div>
       </section>
 
-      {/* 기존 나머지 섹션들은 사용자님의 현재 코드와 동일하게 유지됩니다. */}
+      {/* Customer Reviews Section */}
+      <section id="guide" className="py-24 px-10 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-16">
+            <h2 className="text-4xl font-bold tracking-tight text-zinc-900 mb-4">고객후기</h2>
+            <p className="text-lg text-zinc-400 font-medium tracking-tight">
+              고객님들의 소중한 후기입니다.
+            </p>
+          </div>
+          
+          <div className="relative overflow-hidden py-10">
+            {reviews.length > 0 && (
+              <motion.div 
+                key={`marquee-${reviews.length}`}
+                className="flex gap-6 w-max"
+                animate={{ x: ["-50%", "0%"] }}
+                transition={{
+                  duration: reviews.length * 13.33,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              >
+                {[...reviews, ...reviews].map((review, idx) => (
+                  <div
+                    key={`${review.id}-${idx}`}
+                    className="min-w-[280px] md:min-w-[320px] flex-shrink-0"
+                    onClick={() => setSelectedReviewImage(review.image)}
+                  >
+                    <div className="flex flex-col group cursor-pointer transition-all max-w-[280px] mx-auto">
+                      <div className="aspect-[3/2] rounded-lg overflow-hidden mb-4 bg-zinc-100 shadow-lg border border-zinc-100 relative">
+                        <img 
+                          src={normalizeImageSrc(review.image)} 
+                          alt={review.title} 
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="bg-white/20 backdrop-blur-md rounded-full p-3 text-white border border-white/30">
+                            <Search size={20} />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-[14px] font-bold text-zinc-800 mb-0.5">{review.title}</div>
+                        <div className="text-[12px] text-zinc-400 font-medium">{review.subtitle}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+
+          <div className="mt-20 flex justify-center">
+            <motion.a
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                href="https://www.google.com/search?q=%E8%A1%8C%E6%94%BF%E6%9B%B8%E5%A3%ABLegal_+J+office&sca_esv=af156264804c4707&sxsrf=ANbL-n6PTulvYeQ1YmirvQ-AV53HXGehcg%3A1778469294606&source=hp&ei=rkkBaozKIvLl2roPuaHh4A8&iflsig=AFdpzrgAAAAAagFXvl2eaiNjN4cYlTHs8BEqS-87wUCg&ved=0ahUKEwiM2a-0orCUAxXyslYBHblQGPwQ4dUDCCA&uact=5&oq=%E8%A1%8C%E6%94%BF%E6%9B%B8%E5%A3%ABLegal_+J+office&gs_lp=Egdnd3Mtd2l6IhvooYzmlL_mm7jlo6tMZWdhbF8gSiBvZmZpY2UyBBAAGB4yBRAAGO8FSOMCUABYAHAAeACQAQCYAX-gAX-qAQMwLjG4AQPIAQD4AQL4AQGYAgGgAoMBmAMAkgcDMC4xoAeDAbIHAzAuMbgHgwHCBwMwLjHIBwKACAE&sclient=gws-wiz#lrd=0x6000e7000e280a5f:0x9dd4ad1e88341176,1,,,," 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
+            >
+              후기 더보기 <ChevronRight size={14} />
+            </motion.a>
+          </div>
+        </div>
+      </section>
+
+      {/* Osaka Info Section */}
+      <section id="osaka-info" className="py-24 px-10 bg-zinc-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-16">
+            <div className="text-electric-blue text-xs font-bold uppercase tracking-[0.3em] mb-4">Osaka Guide</div>
+            <h2 className="text-4xl font-bold tracking-tight text-zinc-900 mb-4">오사카 정보</h2>
+            <p className="text-lg text-zinc-500 font-medium tracking-tight">
+              오사카 생활에 도움이 되는 정보
+            </p>
+          </div>
+
+          <div className="relative overflow-hidden group/slider">
+            <motion.div 
+              animate={{ x: ["-50%", "0%"] }}
+              transition={{ 
+                duration: (osakaInfos.length > 0 ? osakaInfos.length : 3) * 13.33, 
+                ease: "linear", 
+                repeat: Infinity 
+              }}
+              whileHover={{ animationPlayState: "paused" }}
+              className="flex gap-8 w-max"
+            >
+              {[...(osakaInfos.length > 0 ? osakaInfos : [
+                {
+                  title: "일본 거주 초기 설정 가이드",
+                  desc: "주소지 등록부터 건강보험 가입까지, 정착의 첫걸음을 도와드립니다.",
+                  tag: "생활 정보",
+                  img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2694&auto=format&fit=crop",
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
+                },
+                {
+                  title: "수도/가스/전기 신청 방법",
+                  desc: "이사 후 가장 먼저 해야 할 라이프라인 신청 절차를 정리했습니다.",
+                  tag: "인프라",
+                  img: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2670&auto=format&fit=crop",
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
+                },
+                {
+                  title: "오사카 지하철 노선 완전 정복",
+                  desc: "미도스지선, 다니마치선 등 주요 노선 이용 팁과 교통카드 정보.",
+                  tag: "교통",
+                  img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=2670&auto=format&fit=crop",
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
+                }
+              ]), ...(osakaInfos.length > 0 ? osakaInfos : [
+                {
+                  title: "일본 거주 초기 설정 가이드",
+                  desc: "주소지 등록부터 건강보험 가입까지, 정착의 첫걸음을 도와드립니다.",
+                  tag: "생활 정보",
+                  img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2694&auto=format&fit=crop",
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
+                },
+                {
+                  title: "수도/가스/전기 신청 방법",
+                  desc: "이사 후 가장 먼저 해야 할 라이프라인 신청 절차를 정리했습니다.",
+                  tag: "인프라",
+                  img: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2670&auto=format&fit=crop",
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
+                },
+                {
+                  title: "오사카 지하철 노선 완전 정복",
+                  desc: "미도스지선, 다니마치선 등 주요 노선 이용 팁과 교통카드 정보.",
+                  tag: "교통",
+                  img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=2670&auto=format&fit=crop",
+                  instagramUrl: settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`
+                }
+              ])].map((info, idx) => (
+                <div
+                  key={info.id ? `${info.id}-${idx}` : idx}
+                  className="bg-white rounded-3xl overflow-hidden border border-zinc-100 shadow-sm hover:shadow-xl transition-all group/card flex flex-col h-full w-[350px] flex-none"
+                >
+                  <div className="relative h-64 bg-zinc-100 overflow-hidden flex items-center justify-center p-4">
+                    <img 
+                      src={normalizeImageSrc(info.img)} 
+                      alt={info.title} 
+                      className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover/card:scale-105"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold text-zinc-900 border border-white/20">
+                        {info.tag}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-8 flex flex-col flex-grow items-center text-center">
+                    <h3 className="text-xl font-bold text-zinc-900 mb-6 group-hover/card:text-electric-blue transition-colors">
+                      {info.title}
+                    </h3>
+                    <a 
+                      href={info.instagramUrl?.trim() || settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="flex items-center gap-2 text-xs font-bold text-zinc-900 group/btn mt-auto px-6 py-3 border border-zinc-200 rounded-full hover:bg-zinc-50 transition-all"
+                    >
+                      자세히 보기 <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          <div className="mt-16 flex justify-center">
+            <motion.a
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                href={settings.youtubeUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-12 py-4 rounded-full bg-zinc-950 text-white text-sm font-bold tracking-widest hover:bg-electric-blue transition-all flex items-center gap-2 shadow-xl"
+            >
+              더 많은 정보 보기 <ExternalLink size={14} />
+            </motion.a>
+          </div>
+        </div>
+      </section>
+
+       {/* About Us Section */}
+      <section id="about" className="py-24 px-10 bg-slate-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16 items-center">
+            <div className="lg:col-span-1">
+              <div className="tag-blue mb-4">About Us</div>
+              <h2 className="text-4xl font-bold tracking-tighter mb-8 leading-tight text-zinc-900">
+                <a href="https://legalj.jp/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                   行政書士Legal_ J office
+                </a><br />
+                & 오사카J부동산
+              </h2>
+              <p className="text-zinc-600 leading-relaxed mb-6 font-light">
+                저희는 오사카 지역 전문 부동산으로서, 단순한 매물 소개를 넘어 고객님의 일본 정착과 투자의 성공을 위한 모든 행정적/법률적 지원을 아우르는 토탈 솔루션을 제공합니다.
+              </p>
+              <p className="text-zinc-600 leading-relaxed font-light">
+                정직과 신뢰는 저희 서비스의 핵심 가치입니다. 모든 거래 단계에서 투명성을 유지하며, 한국인 고객님들의 입장에서 가장 유리한 조건의 매칭을 약속드립니다.
+              </p>
+            </div>
+            
+            <div className="lg:col-span-1">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
+                <img 
+                  src="https://legalj.jp/wp-content/uploads/2025/02/Photo_25-02-05-10-38-56.243.jpg" 
+                  alt="Legal J Office" 
+                  className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+            </div>
+
+            <div className="lg:col-span-1 bg-white p-10 rounded-3xl border border-zinc-200 shadow-xl relative overflow-hidden h-full flex flex-col justify-center">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-electric-blue/5 rounded-full blur-[60px]" />
+               <div className="relative z-10">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 bg-electric-blue flex items-center justify-center rounded-lg font-bold text-xl text-white shadow-lg shadow-blue-500/20">J</div>
+                    <span className="text-xl font-bold text-zinc-900">오사카 J 브랜드 철학</span>
+                  </div>
+                  <ul className="space-y-4 text-sm text-zinc-600">
+                    <li className="flex items-center gap-3">
+                      <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">신뢰 중심의 정직한 거래</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">한국어 완벽 대응 및 행정 지원</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">오사카 전 지역 데이터베이스 확보</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">행정서사 & 宅地建物取引士 자격증 보유</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <CheckCircle2 size={18} className="text-electric-blue shrink-0" /> <span className="font-medium">부동산 전문 전담팀 운영</span>
+                    </li>
+                  </ul>
+               </div>
+            </div>
+          </div>
+
+          {/* Certifications Gallery */}
+          <div className="mt-24 pt-16 border-t border-zinc-200">
+            <div className="text-center mb-12">
+              <span className="text-[10px] font-bold tracking-[0.3em] text-blue-600 uppercase">Professional License</span>
+              <h3 className="text-2xl font-bold mt-2 text-zinc-900">공인 자격 및 전문 라이선스</h3>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+              {[
+                { url: "https://images.weserv.nl/?url=https://legalj.jp/wp-content/uploads/2025/01/acc7ca0397ca9757de2dadff837859e3.png", label: "行政書士試験" },
+                { url: "https://images.weserv.nl/?url=https://legalj.jp/wp-content/uploads/2025/01/c53af1f0cba156493843f10955cbcc3f.png", label: "外国人雇用管理主任者" },
+                { url: "https://images.weserv.nl/?url=https://legalj.jp/wp-content/uploads/2025/01/4a29f6991741fa243bc2f110898e41a4.png", label: "宅地建物取引士" },
+                { url: "https://images.weserv.nl/?url=https://legalj.jp/wp-content/uploads/2025/01/3bf5e82c96385b7906d3ccf13505c5c4.png", label: "敷金診断士" }
+              ].map((cert, idx) => (
+                <motion.div 
+                  key={idx} 
+                  className="group"
+                  whileHover={{ y: -16, scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <div className="aspect-[3/4] bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 mb-4 shadow-sm group-hover:shadow-2xl transition-all duration-500">
+                    <img 
+                      src={cert.url} 
+                      className="w-full h-full object-cover" 
+                      alt={cert.label} 
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <p className="text-[10px] font-bold text-center text-zinc-500 group-hover:text-blue-600 transition-colors uppercase tracking-widest leading-relaxed whitespace-pre-wrap">{cert.label}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Trust Bar */}
+          <div className="mt-32 bg-zinc-950 text-white rounded-[40px] p-12 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-electric-blue/10 rounded-full blur-[120px] -mr-64 -mt-64 group-hover:bg-electric-blue/20 transition-colors duration-1000" />
+            <div className="max-w-7xl w-full flex flex-col lg:flex-row items-center justify-between gap-10 relative z-10">
+              <div className="flex items-center gap-12 flex-wrap justify-center">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Years of Trust</span>
+                  <span className="text-3xl font-bold tracking-tighter">10+</span>
+                </div>
+                <div className="flex flex-col border-l border-white/20 pl-12">
+                  <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Properties Managed</span>
+                  <span className="text-3xl font-bold tracking-tighter">1,240+</span>
+                </div>
+                <div className="flex flex-col border-l border-white/20 pl-12">
+                  <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Customer Rating</span>
+                  <span className="text-3xl font-bold tracking-tighter">4.9 / 5.0</span>
+                </div>
+              </div>
+              
+              <div className="flex gap-6 items-center">
+                <div className="hidden lg:flex flex-col items-end text-right">
+                  <p className="text-sm font-bold">지금 바로 전문가와 상담하세요</p>
+                  <p className="text-xs opacity-80">카카오톡 ID: {settings.kakaoId}</p>
+                </div>
+                <div className="flex gap-3">
+                    <a 
+                      href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-[#FEE500] rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl border-2 border-white/20"
+                    >
+                       <MessageCircle className="w-6 h-6 text-[#3C1E1E]" />
+                    </a>
+                    <a 
+                      href={`https://line.me/R/ti/p/${settings.lineId.startsWith('@') ? settings.lineId : '@' + settings.lineId}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
+                    >
+                       <MessageSquare className="w-6 h-6 text-emerald-500" />
+                    </a>
+                    <a 
+                      href={settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
+                    >
+                       <Instagram className="w-6 h-6 text-pink-500" />
+                    </a>
+                    <a 
+                      href={settings.youtubeUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl"
+                    >
+                       <Youtube className="w-6 h-6 text-red-600" />
+                    </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-zinc-50 py-20 px-10 border-t border-zinc-200">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mb-20">
+            <div>
+              <div className="text-2xl font-bold mb-6 flex items-center gap-2 text-zinc-900">
+                <div className="w-6 h-6 bg-electric-blue rounded-xs flex items-center justify-center text-sm text-white">J</div>
+                <a href="https://legalj.jp/" target="_blank" rel="noopener noreferrer" className="tracking-tighter hover:text-blue-600 transition-colors">
+                  行政書士Legal_ J office
+                </a>
+                <span className="tracking-tighter"> & 오사카J부동산</span>
+              </div>
+              <p className="text-zinc-600 max-w-md leading-relaxed text-sm font-medium">
+                오사카 한인 경제의 중심에서 정직과 신뢰를 바탕으로 한 <br />
+                부동산 거래 문화를 선도합니다. <br />
+                거주용 맨션부터 상가 매매까지 원스톱 토탈 리얼티 서비스를 경험하세요.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                <div>
+                  <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-600 mb-4">Office Address</h4>
+                  <p className="text-zinc-600 text-sm leading-relaxed">
+                    본사주소:〒553-0003<br />
+                    大阪府大阪市福島区福島7丁目20-18<br />
+                    ｼﾃｨﾀﾜｰ西梅田4203号
+                  </p>
+                </div>
+                <div className="flex flex-col gap-6">
+                  <div>
+                    <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-600 mb-2">Representative</h4>
+                    <p className="text-zinc-600 text-sm">070‐2805‐1749</p>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-600 mb-2">Official Email</h4>
+                    <p className="text-zinc-600 text-sm">visa.legal.j@gmail.com</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="pt-8 border-t border-zinc-200 text-zinc-500 text-[10px] uppercase tracking-[0.3em] flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+            <div className="normal-case tracking-normal text-zinc-400">
+              오사카J부동산은 Legal_J Office에서 운영하는 일본 부동산 서비스입니다.
+            </div>
+            {isAdmin && <Link to="/admin" className="text-electric-blue font-bold">ADMIN ACCESS</Link>}
+          </div>
+        </div>
+      </footer>
+
+      {/* Floating Social Sidebar */}
+      <div className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4">
+        <motion.a 
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 1, duration: 0.8 }}
+          href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="w-12 h-12 md:w-16 md:h-16 bg-[#FEE500] rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(254,229,0,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
+        >
+          <MessageCircle className="w-6 h-6 md:w-8 md:h-8 text-[#3C1E1E]" />
+          <span className="absolute right-20 bg-zinc-900 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10">
+            카카오톡 상담
+          </span>
+        </motion.a>
+        
+        <motion.a 
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 1.1, duration: 0.8 }}
+          href={`https://line.me/R/ti/p/${settings.lineId.startsWith('@') ? settings.lineId : '@' + settings.lineId}`} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="w-12 h-12 md:w-16 md:h-16 bg-[#06C755] rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(6,199,85,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
+        >
+          <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-white" />
+          <span className="absolute right-20 bg-zinc-900 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10">
+            라인 상담
+          </span>
+        </motion.a>
+
+        <motion.a 
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.8 }}
+          href={settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-tr from-[#f9ce67] via-[#f07030] to-[#833ab4] rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(131,58,180,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
+        >
+          <Instagram className="w-6 h-6 md:w-8 md:h-8 text-white" />
+          <span className="absolute right-20 bg-zinc-900 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10">
+            인스타그램
+          </span>
+        </motion.a>
+
+        <motion.a 
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 1.3, duration: 0.8 }}
+          href={settings.youtubeUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="w-12 h-12 md:w-16 md:h-16 bg-red-600 rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(220,38,38,0.3)] hover:scale-110 transition-transform group relative border-4 border-white"
+        >
+          <Youtube className="w-6 h-6 md:w-8 md:h-8 text-white" />
+          <span className="absolute right-20 bg-zinc-900 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10">
+            유튜브 채널
+          </span>
+        </motion.a>
+      </div>
+
+      {/* Review Image Modal */}
+      <AnimatePresence>
+        {selectedReviewImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedReviewImage(null)}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 md:p-10 cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-full max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setSelectedReviewImage(null)}
+                className="absolute -top-12 right-0 text-white hover:text-electric-blue transition-colors p-2"
+              >
+                <X size={32} />
+              </button>
+              <img 
+                src={normalizeImageSrc(selectedReviewImage || undefined)} 
+                alt="Full review" 
+                className="max-w-full max-h-[85vh] object-contain rounded-lg border border-white/10 shadow-2xl"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
