@@ -1,3 +1,208 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Home as HomeIcon, 
+  Briefcase, 
+  TrendingUp, 
+  ChevronRight, 
+  Loader2,
+  Building2,
+  Menu,
+  X,
+  MessageCircle,
+  MessageSquare
+} from 'lucide-react';
+import { Property } from '../types';
+import { firebaseService } from '../services/firebaseService';
+import { Link } from 'react-router-dom';
+
+const CATEGORIES = [
+  { id: 'all', label: '전체', icon: HomeIcon },
+  { id: 'OneRoom', label: '원룸/투룸', icon: Building2 },
+  { id: 'Family', label: '타워맨션', icon: HomeIcon },
+  { id: 'Office', label: '상가/사무실', icon: Briefcase },
+  { id: 'Investment', label: '수익형 부동산', icon: TrendingUp },
+];
+
+export default function Properties() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [settings, setSettings] = useState({
+    kakaoId: 'oosakaj',
+    kakaoUrl: 'https://pf.kakao.com/_TSvgxb',
+    lineId: '@845immxy',
+    instagramId: 'oosaka_j',
+    instagramUrl: '',
+    youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=Fvg2lwsd-_UGjgSx'
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const data = await firebaseService.getSettings();
+      if (data) setSettings(prev => ({ ...prev, ...data }));
+    };
+
+    fetchSettings();
+  }, []);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setLoading(true);
+
+      try {
+        const propData = await firebaseService.getProperties(activeCategory);
+        setProperties(propData);
+      } catch (error) {
+        console.error('Error fetching properties:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, [activeCategory]);
+
+  return (
+    <div className="min-h-screen bg-luxury-black text-zinc-900 font-sans overflow-x-hidden">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 glass-morphism h-20 flex items-center">
+        <div className="max-w-7xl mx-auto w-full px-10 flex justify-between items-center">
+          <div className="flex flex-col">
+            <Link to="/" className="flex items-center gap-2">
+              <img 
+                src="https://yt3.googleusercontent.com/ZNWF_L7kuC_cHkMdodV_-R27ac-oQModzDEdDhAm6h-qFoA9-mLjbJMi05MbA66tU8U7zqVN=s160-c-k-c0x00ffffff-no-rj" 
+                alt="J Logo" 
+                className="w-8 h-8 rounded-sm object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <span className="text-xl font-bold tracking-tight text-zinc-900">오사카J부동산</span>
+            </Link>
+          </div>
+          
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-500">
+            <Link to="/" className="hover:text-electric-blue transition-colors">
+              홈
+            </Link>
+            <Link 
+              to="/properties" 
+              className="text-zinc-900 border-b-2 border-electric-blue pb-1 transition-all font-bold"
+            >
+              전체 매물
+            </Link>
+            <Link to="/recruitment" className="hover:text-electric-blue transition-colors">
+              채용 정보
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <a 
+              href={
+                settings.kakaoUrl?.trim() ||
+                `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`
+              } 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hidden md:flex blue-glow-btn px-8 py-3 items-center justify-center text-white text-sm"
+            >
+              문의하기
+            </a>
+
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)} 
+              className="md:hidden text-zinc-400"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed inset-0 z-40 bg-white/95 backdrop-blur-xl pt-24 px-10 md:hidden flex flex-col gap-8 justify-center items-center text-center"
+          >
+            <div className="flex flex-col gap-8 text-3xl font-bold">
+              <Link 
+                to="/" 
+                onClick={() => setIsMenuOpen(false)} 
+                className="hover:text-electric-blue"
+              >
+                H O M E
+              </Link>
+
+              <Link 
+                to="/properties" 
+                onClick={() => setIsMenuOpen(false)} 
+                className="hover:text-electric-blue text-electric-blue"
+              >
+                전체 매물
+              </Link>
+
+              <Link 
+                to="/recruitment" 
+                onClick={() => setIsMenuOpen(false)} 
+                className="hover:text-electric-blue"
+              >
+                채용 정보
+              </Link>
+            </div>
+
+            <a 
+              href={
+                settings.kakaoUrl?.trim() ||
+                `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`
+              } 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="blue-glow-btn w-full max-w-xs py-4 text-sm font-bold text-white shadow-xl"
+            >
+              문의하기
+            </a>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <div className="pt-32 pb-20 px-10 bg-slate-50 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-16">
+            <div className="text-electric-blue text-xs font-bold uppercase tracking-[0.3em] mb-4">
+              All Properties
+            </div>
+            <h1 className="text-5xl font-bold tracking-tighter text-zinc-900 mb-4">
+              전체 매물 보기
+            </h1>
+            <p className="text-lg text-zinc-500 font-medium tracking-tight">
+              오사카J부동산에 등록된 매물을 한눈에 확인하세요.
+            </p>
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex overflow-x-auto gap-4 pb-6 mb-12 no-scrollbar">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all border ${
+                  activeCategory === cat.id 
+                    ? 'bg-electric-blue text-white border-electric-blue shadow-lg shadow-blue-500/20' 
+                    : 'bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 shadow-sm'
+                }`}
+              >
+                <cat.icon size={14} />
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
           {/* Property Grid */}
           {loading ? (
             <div className="flex justify-center py-24">
@@ -36,6 +241,7 @@
                           {prop.title}
                         </h3>
                       </div>
+
                       <div className="flex flex-col mb-6 pt-4 border-t border-zinc-100">
                         <span className="text-2xl font-black tracking-tighter text-zinc-900 whitespace-pre-wrap leading-tight">
                           {prop.price.replace(/상담\s*문의/g, '').trim()}
@@ -62,6 +268,7 @@
           )}
         </div>
       </div>
+
       {/* Footer */}
       <footer className="bg-zinc-950 text-white py-20 px-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
@@ -76,6 +283,7 @@
               오사카 한인 경제의 중심에서 정직과 신뢰를 바탕으로 한 부동산 거래 문화를 선도합니다.
             </p>
           </div>
+
           <div className="flex gap-4">
             <a 
               href={
@@ -88,6 +296,7 @@
             >
               <MessageCircle size={20} />
             </a>
+
             <a 
               href={`https://line.me/R/ti/p/${settings.lineId.startsWith('@') ? settings.lineId : '@' + settings.lineId}`} 
               target="_blank" 
@@ -98,6 +307,7 @@
             </a>
           </div>
         </div>
+
         <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-white/10 text-center text-zinc-600 text-xs uppercase tracking-widest">
           &copy; {new Date().getFullYear()} OSAKA J REALTY. ALL RIGHTS RESERVED.
         </div>
