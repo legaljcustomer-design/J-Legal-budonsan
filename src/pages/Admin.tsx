@@ -78,17 +78,13 @@ export default function Admin() {
     if (!src) return '';
     if (src.startsWith('data:')) return src;
     
-    // 아직 GitHub에 반영되지 않은 업로드 대기 이미지인지 확인
     const cleanSrc = src.startsWith('/') ? src.slice(1) : src;
     const pending = pendingImageFiles.find(f => f.path.endsWith(cleanSrc));
     
-    // dataUrl이 있으면 우선 사용
     if (pending?.dataUrl) {
       return pending.dataUrl;
     }
 
-    // ImageManager는 base64를 넘기므로,
-    // 저장 전 미리보기에서는 base64를 data URL로 변환해 표시
     if (pending?.base64) {
       return `data:image/webp;base64,${pending.base64}`;
     }
@@ -96,7 +92,6 @@ export default function Admin() {
     return normalizeImageSrc(src);
   };
 
-  // Load from sessionStorage on mount
   useEffect(() => {
     const saved = sessionStorage.getItem('admin_gh_auth');
     if (saved) {
@@ -118,10 +113,9 @@ export default function Admin() {
         setGhService(service);
         sessionStorage.setItem('admin_gh_auth', JSON.stringify(data));
         
-        // Fetch data
         const ghRaw = await service.getAllConfigData();
         setOriginalData(ghRaw);
-        setPendingData(JSON.parse(JSON.stringify(ghRaw))); // Deep clone for editing
+        setPendingData(JSON.parse(JSON.stringify(ghRaw)));
       } else {
         throw new Error('유효하지 않은 토큰이거나 저장소 권한이 없습니다.');
       }
@@ -152,19 +146,17 @@ export default function Admin() {
     setPendingData(null);
   };
 
-  // CRUD Helpers
   const hasChanges = () => {
     const jsonChanged = JSON.stringify(originalData) !== JSON.stringify(pendingData);
     const imagesChanged = pendingImageFiles.length > 0 || deletedImagePaths.length > 0;
     return jsonChanged || imagesChanged;
   };
 
-  // Handle Save Status Timeout
   useEffect(() => {
     if (saveStatus) {
       const timer = setTimeout(() => {
         setSaveStatus(null);
-      }, 8000); // 8 seconds
+      }, 8000);
       return () => clearTimeout(timer);
     }
   }, [saveStatus]);
@@ -175,7 +167,6 @@ export default function Admin() {
     setSaveStatus(null);
     
     try {
-      // 1. JSON 파일 변경사항 수집
       const filesToUpdate: { path: string; content?: string; base64?: string; delete?: boolean }[] = [];
       
       if (JSON.stringify(originalData.properties) !== JSON.stringify(pendingData.properties)) {
@@ -191,12 +182,10 @@ export default function Admin() {
         filesToUpdate.push({ path: 'src/data/siteConfig.json', content: JSON.stringify(pendingData.siteConfig, null, 2) });
       }
 
-      // 2. 새로운 이미지 파일 및 폰트 파일 추가
       pendingImageFiles.forEach(file => {
         filesToUpdate.push({ path: file.path, base64: file.base64 });
       });
 
-      // 3. 삭제 요청된 이미지 및 폰트 파일 처리
       deletedImagePaths.forEach(path => {
         filesToUpdate.push({ path, delete: true });
       });
@@ -207,10 +196,8 @@ export default function Admin() {
          return;
       }
 
-      // 4. 단일 커밋 실행
       await ghService.commitMultipleFiles(filesToUpdate, 'chore: update site content and assets via admin CMS');
       
-      // 5. 성공 후 상태 동기화
       setOriginalData(JSON.parse(JSON.stringify(pendingData)));
       setPendingImageFiles([]);
       setDeletedImagePaths([]);
@@ -233,8 +220,6 @@ export default function Admin() {
     }
   };
 
-  // --- Sub-components (Editors) ---
-
   const PropertyEditor = () => {
     const list = pendingData.properties || [];
     
@@ -256,6 +241,7 @@ export default function Admin() {
         title: '',
         price: '¥0',
         location: '',
+        prefecture: 'osaka',
         type: 'OneRoom',
         description: '',
         images: [],
@@ -263,6 +249,7 @@ export default function Admin() {
         construction: '',
         completionYear: '',
         nearestStation: '',
+        nearestLine: '',
         youtubeUrl: '',
         mapAddress: '',
         floorPlan: '',
@@ -289,9 +276,16 @@ export default function Admin() {
             <div key={prop.id} className="bg-zinc-900 border border-white/5 p-6 rounded-2xl group hover:border-electric-blue/30 transition-all flex flex-col justify-between">
               <div>
                 <div className="flex justify-between items-start mb-4">
-                  <span className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${prop.isFeatured ? 'bg-amber-500/20 text-amber-500' : 'bg-zinc-800 text-zinc-500'}`}>
-                    {prop.isFeatured ? 'featured' : 'standard'}
-                  </span>
+                  <div className="flex gap-2 flex-wrap">
+                    <span className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${prop.isFeatured ? 'bg-amber-500/20 text-amber-500' : 'bg-zinc-800 text-zinc-500'}`}>
+                      {prop.isFeatured ? 'featured' : 'standard'}
+                    </span>
+                    {prop.prefecture && (
+                      <span className="px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400">
+                        {prop.prefecture === 'osaka' ? '오사카' : prop.prefecture === 'kyoto' ? '교토' : '효고'}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     <button onClick={() => handleEdit(prop, idx)} className="p-2 bg-white/5 rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-all"><Edit3 size={14} /></button>
                     <button onClick={() => handleDelete(idx)} className="p-2 bg-white/5 rounded-lg text-zinc-500 hover:text-red-500 hover:bg-red-500/10 transition-all"><Trash2 size={14} /></button>
@@ -299,7 +293,7 @@ export default function Admin() {
                 </div>
                 <h3 className="font-bold text-sm mb-1 line-clamp-1">{prop.title}</h3>
                 <p className="text-electric-blue text-xs font-bold mb-3">{prop.price}</p>
-                <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
+                <div className="flex flex-wrap items-center gap-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
                   <span className="bg-zinc-800 px-2 py-0.5 rounded italic">
                     {prop.type === 'OneRoom' ? '주거용 맨션' : 
                      prop.type === 'TwoRoom' ? '주거용 맨션(투룸형)' : 
@@ -401,8 +395,6 @@ export default function Admin() {
 
       const finalDeletedPaths = [...deletedPaths];
 
-      // 이미 GitHub에 반영된 대표 이미지를 새 이미지로 교체하는 경우,
-      // 기존 업로드 파일은 삭제 대기 목록으로 이동한다.
       if (
         oldHeroImage &&
         oldHeroImage.startsWith('/assets/uploads/') &&
@@ -417,8 +409,6 @@ export default function Admin() {
         }
       }
 
-      // 저장 전 대표 이미지를 다시 교체하는 경우,
-      // 이전에 대기 중이던 대표 이미지 파일은 pending 목록에서 제거한다.
       setPendingImageFiles(prev => {
         let cleaned = prev;
 
@@ -446,7 +436,6 @@ export default function Admin() {
         const currentImage = config.heroImage;
         const deletedPaths: string[] = [];
 
-        // 실제 GitHub에 저장되어 있던 대표 이미지 파일만 삭제 대기열로 보낸다.
         if (currentImage && currentImage.startsWith('/assets/uploads/')) {
           const wasCommitted = originalData?.siteConfig?.heroImage === currentImage;
           if (wasCommitted) {
@@ -454,7 +443,6 @@ export default function Admin() {
           }
         }
 
-        // 아직 저장하지 않은 대표 이미지 파일은 대기 목록에서 제거한다.
         if (currentImage) {
           setPendingImageFiles(prev => prev.filter(f => f.path !== `public${currentImage}`));
         }
@@ -513,7 +501,6 @@ export default function Admin() {
           siteConfig: { ...config, heroTitleFontFile: appPath }
         });
 
-        // 저장 전 폰트를 다시 교체하는 경우, 이전 pending 폰트 파일을 제거한다.
         setPendingImageFiles(prev => {
           let cleaned = prev;
 
@@ -527,7 +514,6 @@ export default function Admin() {
           ];
         });
 
-        // 이미 GitHub에 저장된 폰트를 새 폰트로 교체하는 경우, 기존 파일은 삭제 대기 목록에 넣는다.
         if (
           oldFontFile &&
           oldFontFile.startsWith('/assets/uploads/site/fonts/') &&
@@ -567,12 +553,10 @@ export default function Admin() {
         siteConfig: { ...config, heroTitleFontFile: '' }
       });
 
-      // 아직 저장하지 않은 pending 폰트 파일은 업로드 대기 목록에서 제거한다.
       if (currentFontFile) {
         setPendingImageFiles(prev => prev.filter(f => f.path !== `public${currentFontFile}`));
       }
 
-      // 실제 GitHub에 저장되어 있던 커스텀 폰트만 삭제 대기 목록에 넣는다.
       if (
         currentFontFile &&
         currentFontFile.startsWith('/assets/uploads/site/fonts/') &&
@@ -591,7 +575,6 @@ export default function Admin() {
            <section>
              <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-4 border-b border-white/5 pb-2">Hero Section</h3>
 
-             {/* 홈페이지 대표 이미지 관리 섹션 */}
              <div className="mb-8 p-6 bg-zinc-900/50 border border-white/5 rounded-2xl space-y-6">
                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                  <div>
@@ -628,7 +611,6 @@ export default function Admin() {
                </div>
              </div>
 
-             {/* 메인 타이틀 문구 및 스타일 관리 섹션 */}
              <div className="space-y-6 p-6 bg-zinc-900/50 border border-white/5 rounded-2xl">
                <div>
                  <h4 className="text-zinc-200 font-bold text-sm">메인 타이틀 문구 및 스타일</h4>
@@ -850,8 +832,6 @@ export default function Admin() {
     );
   };
 
-  // --- Global Helpers ---
-  
   if (isVerifying) {
     return (
       <div className="min-h-screen bg-luxury-black flex items-center justify-center">
@@ -863,7 +843,6 @@ export default function Admin() {
     );
   }
 
-  // Token Input Screen
   if (!authData) {
     return (
       <div className="min-h-screen bg-luxury-black flex items-center justify-center p-6">
@@ -933,7 +912,6 @@ export default function Admin() {
     );
   }
 
-  // Dashboard Editor Screen
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row">
       <AnimatePresence>
@@ -950,14 +928,12 @@ export default function Admin() {
         )}
       </AnimatePresence>
 
-      {/* Persistence Notification/Top Bar for Mobile */}
       {hasChanges() && (
         <div className="absolute top-0 inset-x-0 bg-amber-500 text-black py-2 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] z-50 animate-pulse">
            저장되지 않은 변경사항이 있습니다. 사이트에 반영하기 버튼을 눌러주세요.
         </div>
       )}
 
-      {/* Sidebar Navigation */}
       <aside className="w-full md:w-80 bg-zinc-900 border-r border-white/5 p-8 flex flex-col justify-between h-auto md:h-screen md:sticky top-0 pt-16 md:pt-8">
         <div>
           <div className="flex items-center gap-3 mb-12">
@@ -1003,9 +979,7 @@ export default function Admin() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-grow min-h-screen bg-zinc-950 p-8 md:p-16 relative">
-        {/* Global Save Action Floating Bar & Notifications */}
         <div className="fixed bottom-10 inset-x-0 md:left-auto md:right-10 flex flex-col items-end gap-3 z-40 p-6 pointer-events-none md:p-0">
           <AnimatePresence>
             {saveStatus && (
@@ -1089,8 +1063,6 @@ export default function Admin() {
   );
 }
 
-// --- Standalone Modal Form Component ---
-
 interface ModalFormProps {
   editingItem: { type: string; item: any; index: number } | null;
   setEditingItem: (val: { type: string; item: any; index: number } | null) => void;
@@ -1131,21 +1103,16 @@ const ModalForm = ({
 
     setEditingItem({ ...editingItem, item: updatedItem });
     
-    // Update pending image files state
     setPendingImageFiles(prev => {
-      // Create a map of paths to be added for easier handling
       const newFilesMap = new Map(newFiles.map(f => [f.path, f]));
       const deletedSet = new Set(deletedPaths);
       
-      // Filter out ANY files that match the new files paths to avoid duplicates,
-      // and also filter out any files that were in the previous set but are now in deletedPaths.
       return [
         ...prev.filter(f => !newFilesMap.has(f.path) && !deletedSet.has(f.path)),
         ...newFiles
       ];
     });
 
-    // Update deleted image paths state
     setDeletedImagePaths(prev => {
       const combined = new Set([...prev, ...deletedPaths]);
       return Array.from(combined);
@@ -1205,14 +1172,31 @@ const ModalForm = ({
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">매물 제목</label>
                   <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.title} onChange={e => handleFormChange('title', e.target.value)} required />
                 </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">지역</label>
+                  <select
+                    className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all"
+                    value={item.prefecture || ''}
+                    onChange={e => handleFormChange('prefecture', e.target.value)}
+                  >
+                    <option value="">지역 선택</option>
+                    <option value="osaka">오사카</option>
+                    <option value="kyoto">교토</option>
+                    <option value="hyogo">효고</option>
+                  </select>
+                </div>
+
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가격</label>
                   <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.price} onChange={e => handleFormChange('price', e.target.value)} placeholder="예: ¥188,000" required />
                 </div>
+
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">위치 (구/동)</label>
                   <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.location} onChange={e => handleFormChange('location', e.target.value)} required />
                 </div>
+
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">타입</label>
                   <select className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.type} onChange={e => handleFormChange('type', e.target.value)}>
@@ -1223,22 +1207,32 @@ const ModalForm = ({
                     <option value="Investment">수익형 부동산</option>
                   </select>
                 </div>
+
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가까운 역</label>
-                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.nearestStation} onChange={e => handleFormChange('nearestStation', e.target.value)} />
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.nearestStation || ''} onChange={e => handleFormChange('nearestStation', e.target.value)} placeholder="예: 우메다역, 난바역" />
                 </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">가까운 노선명</label>
+                  <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.nearestLine || ''} onChange={e => handleFormChange('nearestLine', e.target.value)} placeholder="예: 미도스지선, JR 오사카환상선" />
+                </div>
+
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">간取り / 구조</label>
                   <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.floorPlan || ''} onChange={e => handleFormChange('floorPlan', e.target.value)} placeholder="예: 1K, 1LDK, 3LDK" />
                 </div>
+
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">전용면적</label>
                   <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.area || ''} onChange={e => handleFormChange('area', e.target.value)} placeholder="예: 19.59㎡, 70.35㎡" />
                 </div>
+
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">준공연도 / 건축정보</label>
                   <input className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all" value={item.completionYear || ''} onChange={e => handleFormChange('completionYear', e.target.value)} placeholder="예: 2018년 3월, 2024년 신축, 築6年" />
                 </div>
+
                 <div className="md:col-span-2">
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">유튜브 쇼츠 URL</label>
                   <input 
@@ -1248,6 +1242,7 @@ const ModalForm = ({
                     placeholder="예: https://www.youtube.com/shorts/VIDEO_ID 또는 https://www.youtube.com/watch?v=VIDEO_ID"
                   />
                 </div>
+
                 <div className="md:col-span-2">
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">Google Maps 표시 주소</label>
                   <input 
@@ -1257,6 +1252,7 @@ const ModalForm = ({
                     placeholder="예: 大阪府大阪市浪速区桜川1丁目... (주소를 입력하면 상세페이지에 지도가 표시됩니다)"
                   />
                 </div>
+
                 <div className="md:col-span-2">
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">상세 설명</label>
                   <textarea rows={6} className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm leading-relaxed focus:border-electric-blue/50 outline-none transition-all" value={item.description} onChange={e => handleFormChange('description', e.target.value)} />
