@@ -29,6 +29,9 @@ export interface SiteSettings {
   heroTitle: string;
   heroSubtitle: string;
   heroImage?: string;
+  heroTitleFontSizeMobile?: number;
+  heroTitleFontSizeDesktop?: number;
+  heroTitleFontFile?: string;
   contactNumber: string;
   kakaoId: string;
   kakaoUrl?: string;
