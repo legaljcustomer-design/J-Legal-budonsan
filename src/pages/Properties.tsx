@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Home as HomeIcon, 
@@ -10,11 +10,12 @@ import {
   Menu,
   X,
   MessageCircle,
-  MessageSquare
+  MessageSquare,
+  Search
 } from 'lucide-react';
 import { Property } from '../types';
 import { firebaseService } from '../services/firebaseService';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 const CATEGORIES = [
   { id: 'all', label: '전체', icon: HomeIcon },
@@ -24,7 +25,18 @@ const CATEGORIES = [
   { id: 'Investment', label: '수익형 부동산', icon: TrendingUp },
 ];
 
+type PrefectureFilter = 'all' | 'osaka' | 'kyoto' | 'hyogo';
+
+const PREFECTURE_LABELS: Record<'osaka' | 'kyoto' | 'hyogo', string> = {
+  osaka: '오사카',
+  kyoto: '교토',
+  hyogo: '효고',
+};
+
 export default function Properties() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [properties, setProperties] = useState<Property[]>([]);
@@ -38,6 +50,35 @@ export default function Properties() {
     instagramUrl: '',
     youtubeUrl: 'https://youtube.com/channel/UC7DZHrosVAYHdfP6VzSPvog?si=Fvg2lwsd-_UGjgSx'
   });
+
+  const rawPrefecture = searchParams.get('prefecture');
+  const selectedPrefecture: PrefectureFilter =
+    rawPrefecture === 'osaka' ||
+    rawPrefecture === 'kyoto' ||
+    rawPrefecture === 'hyogo'
+      ? rawPrefecture
+      : 'all';
+
+  const stationQuery = searchParams.get('station')?.trim() || '';
+  const lineQuery = searchParams.get('line')?.trim() || '';
+  const keywordQuery = searchParams.get('keyword')?.trim() || '';
+
+  const hasSearchFilters =
+    selectedPrefecture !== 'all' ||
+    stationQuery.length > 0 ||
+    lineQuery.length > 0 ||
+    keywordQuery.length > 0;
+
+  const normalizeSearchText = (value: unknown) => {
+    return String(value ?? '')
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .trim();
+  };
+
+  const clearSearchFilters = () => {
+    navigate('/properties');
+  };
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -64,6 +105,72 @@ export default function Properties() {
 
     fetchProperties();
   }, [activeCategory]);
+
+  const filteredProperties = useMemo(() => {
+    return properties.filter((prop) => {
+      const prefectureMatch =
+        selectedPrefecture === 'all' ||
+        prop.prefecture === selectedPrefecture;
+
+      const stationNeedle = normalizeSearchText(stationQuery);
+      const stationHaystack = normalizeSearchText([
+        prop.nearestStation,
+        prop.location,
+        prop.title,
+      ].filter(Boolean).join(' '));
+
+      const stationMatch =
+        !stationNeedle ||
+        stationHaystack.includes(stationNeedle);
+
+      const lineNeedle = normalizeSearchText(lineQuery);
+      const lineHaystack = normalizeSearchText([
+        prop.nearestLine,
+        prop.title,
+        prop.description,
+      ].filter(Boolean).join(' '));
+
+      const lineMatch =
+        !lineNeedle ||
+        lineHaystack.includes(lineNeedle);
+
+      const keywordNeedle = normalizeSearchText(keywordQuery);
+
+      const prefectureLabel =
+        prop.prefecture
+          ? PREFECTURE_LABELS[prop.prefecture]
+          : '';
+
+      const keywordHaystack = normalizeSearchText([
+        prop.title,
+        prop.price,
+        prop.location,
+        prop.description,
+        prop.nearestStation,
+        prop.nearestLine,
+        prop.floorPlan,
+        prop.area,
+        prop.mapAddress,
+        prop.construction,
+        prop.completionYear,
+        Array.isArray(prop.features) ? prop.features.join(' ') : '',
+        prefectureLabel,
+        prop.type,
+      ].filter(Boolean).join(' '));
+
+      const keywordMatch =
+        !keywordNeedle ||
+        keywordHaystack.includes(keywordNeedle);
+
+      return prefectureMatch && stationMatch && lineMatch && keywordMatch;
+    });
+  }, [
+    properties,
+    selectedPrefecture,
+    stationQuery,
+    lineQuery,
+    keywordQuery
+  ]);
 
   return (
     <div className="min-h-screen bg-luxury-black text-zinc-900 font-sans overflow-x-hidden">
@@ -173,17 +280,75 @@ export default function Properties() {
       {/* Main Content */}
       <div className="pt-32 pb-20 px-10 bg-slate-50 min-h-screen">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-16">
+          <div className="mb-12">
             <div className="text-electric-blue text-xs font-bold uppercase tracking-[0.3em] mb-4">
-              All Properties
+              {hasSearchFilters ? 'Search Results' : 'All Properties'}
             </div>
+
             <h1 className="text-5xl font-bold tracking-tighter text-zinc-900 mb-4">
-              전체 매물 보기
+              {hasSearchFilters ? '검색 결과' : '전체 매물 보기'}
             </h1>
+
             <p className="text-lg text-zinc-500 font-medium tracking-tight">
-              오사카J부동산에 등록된 매물을 한눈에 확인하세요.
+              {hasSearchFilters
+                ? '선택하신 조건에 맞는 매물을 확인하세요.'
+                : '오사카J부동산에 등록된 매물을 한눈에 확인하세요.'}
             </p>
           </div>
+
+          {/* Search Summary */}
+          {hasSearchFilters && (
+            <div className="mb-12 bg-white border border-zinc-200 rounded-3xl p-6 md:p-8 shadow-sm">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-2 text-electric-blue text-xs font-black uppercase tracking-[0.25em] mb-4">
+                    <Search size={14} />
+                    Applied Search Conditions
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {selectedPrefecture !== 'all' && (
+                      <span className="px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm font-bold">
+                        지역: {PREFECTURE_LABELS[selectedPrefecture]}
+                      </span>
+                    )}
+
+                    {stationQuery && (
+                      <span className="px-4 py-2 rounded-full bg-zinc-100 text-zinc-700 text-sm font-bold">
+                        역명: {stationQuery}
+                      </span>
+                    )}
+
+                    {lineQuery && (
+                      <span className="px-4 py-2 rounded-full bg-zinc-100 text-zinc-700 text-sm font-bold">
+                        노선: {lineQuery}
+                      </span>
+                    )}
+
+                    {keywordQuery && (
+                      <span className="px-4 py-2 rounded-full bg-zinc-100 text-zinc-700 text-sm font-bold">
+                        키워드: {keywordQuery}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                  <div className="px-5 py-3 rounded-2xl bg-zinc-950 text-white text-sm font-bold text-center">
+                    검색 결과 {filteredProperties.length}건
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={clearSearchFilters}
+                    className="px-5 py-3 rounded-2xl border border-zinc-200 bg-white text-zinc-700 text-sm font-bold hover:bg-zinc-950 hover:text-white transition-all"
+                  >
+                    검색조건 초기화
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Category Filter */}
           <div className="flex overflow-x-auto gap-4 pb-6 mb-12 no-scrollbar">
@@ -210,8 +375,8 @@ export default function Properties() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-              {properties.length > 0 ? (
-                properties.map((prop, index) => (
+              {filteredProperties.length > 0 ? (
+                filteredProperties.map((prop, index) => (
                   <motion.div
                     key={prop.id}
                     initial={{ opacity: 0, y: 30 }}
@@ -232,11 +397,32 @@ export default function Properties() {
                       </span>
                     </div>
                     
-                    <div className="p-6 flex flex-col h-[280px]">
+                    <div className="p-6 flex flex-col h-[300px]">
                       <div className="mb-4">
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {prop.prefecture && (
+                            <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold">
+                              {PREFECTURE_LABELS[prop.prefecture]}
+                            </span>
+                          )}
+
+                          {prop.nearestStation && (
+                            <span className="px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 text-[10px] font-bold">
+                              {prop.nearestStation}
+                            </span>
+                          )}
+
+                          {prop.nearestLine && (
+                            <span className="px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 text-[10px] font-bold">
+                              {prop.nearestLine}
+                            </span>
+                          )}
+                        </div>
+
                         <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-1">
                           {prop.location}
                         </p>
+
                         <h3 className="text-lg font-bold tracking-tight text-zinc-900 leading-tight line-clamp-2">
                           {prop.title}
                         </h3>
@@ -261,7 +447,21 @@ export default function Properties() {
                 ))
               ) : (
                 <div className="col-span-full text-center py-24 text-zinc-500 text-sm tracking-widest uppercase bg-zinc-200/50 rounded-3xl border border-zinc-200">
-                  해당 카테고리에 등록된 매물이 없습니다.
+                  <p className="mb-6">
+                    {hasSearchFilters
+                      ? '검색 조건에 맞는 매물이 없습니다.'
+                      : '해당 카테고리에 등록된 매물이 없습니다.'}
+                  </p>
+
+                  {hasSearchFilters && (
+                    <button
+                      type="button"
+                      onClick={clearSearchFilters}
+                      className="px-6 py-3 rounded-full bg-zinc-950 text-white text-xs font-bold tracking-widest hover:bg-electric-blue transition-all"
+                    >
+                      검색조건 초기화
+                    </button>
+                  )}
                 </div>
               )}
             </div>
