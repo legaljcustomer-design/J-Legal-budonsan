@@ -87,7 +87,7 @@ export default function Admin() {
       return pending.dataUrl;
     }
 
-    // 현재 ImageManager는 base64를 넘기므로,
+    // ImageManager는 base64를 넘기므로,
     // 저장 전 미리보기에서는 base64를 data URL로 변환해 표시
     if (pending?.base64) {
       return `data:image/webp;base64,${pending.base64}`;
@@ -191,12 +191,12 @@ export default function Admin() {
         filesToUpdate.push({ path: 'src/data/siteConfig.json', content: JSON.stringify(pendingData.siteConfig, null, 2) });
       }
 
-      // 2. 새로운 이미지 파일 추가
+      // 2. 새로운 이미지 파일 및 폰트 파일 추가
       pendingImageFiles.forEach(file => {
         filesToUpdate.push({ path: file.path, base64: file.base64 });
       });
 
-      // 3. 삭제 요청된 이미지 처리
+      // 3. 삭제 요청된 이미지 및 폰트 파일 처리
       deletedImagePaths.forEach(path => {
         filesToUpdate.push({ path, delete: true });
       });
@@ -217,7 +217,7 @@ export default function Admin() {
       
       setSaveStatus({ 
         success: true, 
-        message: '이미지와 데이터 반영이 완료되었습니다! Cloudflare Pages 배포 후 공개 홈페이지에 반영됩니다. (1~2분 소요)' 
+        message: '이미지, 폰트, 데이터 반영이 완료되었습니다! Cloudflare Pages 배포 후 공개 홈페이지에 반영됩니다. (1~2분 소요)' 
       });
     } catch (err: any) {
       console.error(err);
@@ -463,6 +463,126 @@ export default function Admin() {
       }
     };
 
+    const handleHeroTitleFontFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const allowedExtensions = ['woff2', 'woff', 'ttf', 'otf'];
+      const extension = file.name.split('.').pop()?.toLowerCase() || '';
+
+      if (!allowedExtensions.includes(extension)) {
+        setSaveStatus({
+          success: false,
+          message: '폰트 파일은 .woff2, .woff, .ttf, .otf 형식만 업로드할 수 있습니다.'
+        });
+        e.target.value = '';
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        setSaveStatus({
+          success: false,
+          message: '폰트 파일은 10MB 이하만 업로드할 수 있습니다.'
+        });
+        e.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const result = typeof reader.result === 'string' ? reader.result : '';
+        const base64 = result.includes(',') ? result.split(',')[1] : '';
+
+        if (!base64) {
+          setSaveStatus({
+            success: false,
+            message: '폰트 파일을 읽지 못했습니다. 다른 파일로 다시 시도해 주세요.'
+          });
+          return;
+        }
+
+        const oldFontFile = config.heroTitleFontFile || '';
+        const timestamp = Date.now();
+        const fileName = `${timestamp}_hero-title-font.${extension}`;
+        const gitPath = `public/assets/uploads/site/fonts/${fileName}`;
+        const appPath = `/assets/uploads/site/fonts/${fileName}`;
+
+        setPendingData({
+          ...pendingData,
+          siteConfig: { ...config, heroTitleFontFile: appPath }
+        });
+
+        // 저장 전 폰트를 다시 교체하는 경우, 이전 pending 폰트 파일을 제거한다.
+        setPendingImageFiles(prev => {
+          let cleaned = prev;
+
+          if (oldFontFile && oldFontFile !== appPath) {
+            cleaned = prev.filter(f => f.path !== `public${oldFontFile}`);
+          }
+
+          return [
+            ...cleaned.filter(f => f.path !== gitPath),
+            { path: gitPath, base64 }
+          ];
+        });
+
+        // 이미 GitHub에 저장된 폰트를 새 폰트로 교체하는 경우, 기존 파일은 삭제 대기 목록에 넣는다.
+        if (
+          oldFontFile &&
+          oldFontFile.startsWith('/assets/uploads/site/fonts/') &&
+          oldFontFile !== appPath &&
+          originalData?.siteConfig?.heroTitleFontFile === oldFontFile
+        ) {
+          const gitPathToDelete = `public${oldFontFile}`;
+          setDeletedImagePaths(prev => Array.from(new Set([...prev, gitPathToDelete])));
+        }
+
+        setSaveStatus({
+          success: true,
+          message: '폰트 파일이 선택되었습니다. 사이트에 반영하기를 누르면 실제 홈페이지에 적용됩니다.'
+        });
+      };
+
+      reader.onerror = () => {
+        setSaveStatus({
+          success: false,
+          message: '폰트 파일을 읽는 중 오류가 발생했습니다.'
+        });
+      };
+
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    };
+
+    const handleResetHeroTitleFont = () => {
+      if (!window.confirm('메인 타이틀 폰트를 기본 폰트로 되돌리시겠습니까?')) {
+        return;
+      }
+
+      const currentFontFile = config.heroTitleFontFile || '';
+
+      setPendingData({
+        ...pendingData,
+        siteConfig: { ...config, heroTitleFontFile: '' }
+      });
+
+      // 아직 저장하지 않은 pending 폰트 파일은 업로드 대기 목록에서 제거한다.
+      if (currentFontFile) {
+        setPendingImageFiles(prev => prev.filter(f => f.path !== `public${currentFontFile}`));
+      }
+
+      // 실제 GitHub에 저장되어 있던 커스텀 폰트만 삭제 대기 목록에 넣는다.
+      if (
+        currentFontFile &&
+        currentFontFile.startsWith('/assets/uploads/site/fonts/') &&
+        originalData?.siteConfig?.heroTitleFontFile === currentFontFile
+      ) {
+        const gitPathToDelete = `public${currentFontFile}`;
+        setDeletedImagePaths(prev => Array.from(new Set([...prev, gitPathToDelete])));
+      }
+    };
+
     return (
       <div className="max-w-2xl space-y-10">
         <h2 className="text-2xl font-bold tracking-tight mb-8">사이트 기본 설정</h2>
@@ -508,15 +628,100 @@ export default function Admin() {
                </div>
              </div>
 
-             <div className="space-y-4">
+             {/* 메인 타이틀 문구 및 스타일 관리 섹션 */}
+             <div className="space-y-6 p-6 bg-zinc-900/50 border border-white/5 rounded-2xl">
+               <div>
+                 <h4 className="text-zinc-200 font-bold text-sm">메인 타이틀 문구 및 스타일</h4>
+                 <p className="text-zinc-500 text-xs mt-1">줄바꿈, 글씨 크기, 전용 폰트를 관리자페이지에서 조절할 수 있습니다.</p>
+               </div>
+
                <div>
                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Main Title</label>
-                 <input 
-                   className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                 <textarea
+                   rows={3}
+                   className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm leading-relaxed resize-y"
                    value={config.heroTitle}
                    onChange={e => handleChange('heroTitle', e.target.value)}
+                   placeholder={'예:\n편안한 일본 첫걸음\n그 시작을, 오사카 J 부동산'}
                  />
+                 <p className="text-[10px] text-zinc-600 mt-2">Enter를 입력하면 공개 홈페이지에서도 같은 위치에서 줄바꿈됩니다.</p>
                </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                   <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">모바일 글씨 크기(px)</label>
+                   <input 
+                     type="number"
+                     min={24}
+                     max={140}
+                     step={1}
+                     className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                     value={config.heroTitleFontSizeMobile ?? 60}
+                     onChange={e => handleChange('heroTitleFontSizeMobile', Math.max(24, Math.min(140, Number(e.target.value) || 60)))}
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">PC 글씨 크기(px)</label>
+                   <input 
+                     type="number"
+                     min={32}
+                     max={220}
+                     step={1}
+                     className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 text-sm"
+                     value={config.heroTitleFontSizeDesktop ?? 96}
+                     onChange={e => handleChange('heroTitleFontSizeDesktop', Math.max(32, Math.min(220, Number(e.target.value) || 96)))}
+                   />
+                 </div>
+               </div>
+
+               <div className="space-y-3">
+                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                   <div>
+                     <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">메인 타이틀 전용 폰트 파일</label>
+                     <p className="text-xs text-zinc-500">
+                       {config.heroTitleFontFile
+                         ? `현재 선택된 폰트: ${String(config.heroTitleFontFile).split('/').pop()}`
+                         : '현재 기본 폰트를 사용하고 있습니다.'}
+                     </p>
+                   </div>
+
+                   <div className="flex flex-wrap gap-2">
+                     <button
+                       type="button"
+                       onClick={() => document.getElementById('hero-title-font-input')?.click()}
+                       className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest text-zinc-200 transition-all"
+                     >
+                       폰트 파일 선택
+                     </button>
+
+                     {config.heroTitleFontFile && (
+                       <button
+                         type="button"
+                         onClick={handleResetHeroTitleFont}
+                         className="px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-[10px] font-bold uppercase tracking-widest text-red-500 transition-all"
+                       >
+                         기본 폰트로 되돌리기
+                       </button>
+                     )}
+                   </div>
+                 </div>
+
+                 <input
+                   id="hero-title-font-input"
+                   type="file"
+                   accept=".woff2,.woff,.ttf,.otf,font/woff2,font/woff,application/font-woff,font/ttf,font/otf"
+                   className="hidden"
+                   onChange={handleHeroTitleFontFileChange}
+                 />
+
+                 <div className="flex items-start gap-2 text-[10px] text-zinc-500 leading-relaxed">
+                   <Info size={12} className="text-zinc-500 shrink-0 mt-0.5" />
+                   <span>.woff2, .woff, .ttf, .otf 파일을 지원합니다. 폰트 파일을 선택한 뒤 “사이트에 반영하기”를 눌러야 실제 공개 홈페이지에 적용됩니다.</span>
+                 </div>
+               </div>
+             </div>
+
+             <div className="space-y-4 mt-6">
                <div>
                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Subtitle</label>
                  <input 
