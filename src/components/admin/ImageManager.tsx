@@ -25,6 +25,8 @@ interface ImageManagerProps {
   maxImages?: number;
   mode?: 'single' | 'multiple';
   title?: string;
+  maxWidth?: number;
+  maxHeight?: number;
 }
 
 interface ImageItem {
@@ -42,7 +44,9 @@ export default function ImageManager({
   folderPath, 
   maxImages = 15, 
   mode = 'multiple',
-  title
+  title,
+  maxWidth,
+  maxHeight
 }: ImageManagerProps) {
   const [items, setItems] = useState<ImageItem[]>(
     images.map((url) => ({ 
@@ -134,8 +138,23 @@ export default function ImageManager({
     setIsProcessing(true);
     setError(null);
 
-    const newPending = [...pendingFiles];
+    // single 모드에서는 기존의 미저장 임시 업로드 파일이 누적되지 않도록 초기화한다.
+    // multiple 모드는 기존 동작을 그대로 유지한다.
+    const newPending = mode === 'single' ? [] : [...pendingFiles];
     const newItems = mode === 'single' ? [] : [...items];
+    let updatedDeleted = [...deletedFiles];
+
+    // single 모드에서 이미 GitHub에 저장된 기존 업로드 이미지를 새 이미지로 교체하는 경우,
+    // 기존 파일은 삭제 대기 목록에 추가한다.
+    if (mode === 'single' && items.length > 0) {
+      const prevItem = items[0];
+      if (!prevItem.isNew && prevItem.url.startsWith('/assets/uploads/')) {
+        const gitPath = `public${prevItem.url}`;
+        if (!updatedDeleted.includes(gitPath)) {
+          updatedDeleted.push(gitPath);
+        }
+      }
+    }
 
     try {
       for (const file of files) {
@@ -144,8 +163,8 @@ export default function ImageManager({
         }
 
         const processed = await compressImage(file, {
-          maxWidth: mode === 'single' ? 800 : 1600,
-          maxHeight: mode === 'single' ? 800 : 1600,
+          maxWidth: maxWidth || (mode === 'single' ? 800 : 1600),
+          maxHeight: maxHeight || (mode === 'single' ? 800 : 1600),
           quality: 0.8
         });
 
@@ -172,7 +191,8 @@ export default function ImageManager({
 
       setItems(newItems);
       setPendingFiles(newPending);
-      notifyChange(newItems, newPending, deletedFiles);
+      setDeletedFiles(updatedDeleted);
+      notifyChange(newItems, newPending, updatedDeleted);
     } catch (err: any) {
       setError(err.message);
     } finally {
