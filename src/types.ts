@@ -3,6 +3,7 @@ export interface Property {
   title: string;
   price: string;
   location: string;
+  prefecture?: 'osaka' | 'kyoto' | 'hyogo';
   type: 'OneRoom' | 'TwoRoom' | 'Family' | 'Office' | 'Investment';
   description: string;
   images: string[];
@@ -10,6 +11,7 @@ export interface Property {
   construction: string;
   completionYear: string;
   nearestStation?: string;
+  nearestLine?: string;
   floorPlan?: string;
   floorPlanImage?: string;
   area?: string;
