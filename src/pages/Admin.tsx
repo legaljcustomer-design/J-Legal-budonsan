@@ -379,6 +379,83 @@ export default function Admin() {
       });
     };
 
+    const handleHeroImageChange = (
+      newUrls: string[],
+      newFiles: { path: string; base64: string; dataUrl?: string }[],
+      deletedPaths: string[]
+    ) => {
+      const oldHeroImage = config.heroImage;
+      const newHeroImage = newUrls[0] || '';
+
+      setPendingData({
+        ...pendingData,
+        siteConfig: { ...config, heroImage: newHeroImage }
+      });
+
+      const finalDeletedPaths = [...deletedPaths];
+
+      // 이미 GitHub에 반영된 대표 이미지를 새 이미지로 교체하는 경우,
+      // 기존 업로드 파일은 삭제 대기 목록으로 이동한다.
+      if (
+        oldHeroImage &&
+        oldHeroImage.startsWith('/assets/uploads/') &&
+        oldHeroImage !== newHeroImage
+      ) {
+        const wasCommitted = originalData?.siteConfig?.heroImage === oldHeroImage;
+        if (wasCommitted) {
+          const gitPathToDelete = `public${oldHeroImage}`;
+          if (!finalDeletedPaths.includes(gitPathToDelete)) {
+            finalDeletedPaths.push(gitPathToDelete);
+          }
+        }
+      }
+
+      // 저장 전 대표 이미지를 다시 교체하는 경우,
+      // 이전에 대기 중이던 대표 이미지 파일은 pending 목록에서 제거한다.
+      setPendingImageFiles(prev => {
+        let cleaned = prev;
+
+        if (oldHeroImage && oldHeroImage !== newHeroImage) {
+          cleaned = prev.filter(f => f.path !== `public${oldHeroImage}`);
+        }
+
+        const newFilesMap = new Map(newFiles.map(f => [f.path, f]));
+        const deletedSet = new Set(finalDeletedPaths);
+
+        return [
+          ...cleaned.filter(f => !newFilesMap.has(f.path) && !deletedSet.has(f.path)),
+          ...newFiles
+        ];
+      });
+
+      setDeletedImagePaths(prev => {
+        const combined = new Set([...prev, ...finalDeletedPaths]);
+        return Array.from(combined);
+      });
+    };
+
+    const handleResetHeroImage = () => {
+      if (window.confirm('대표 이미지를 기본 이미지로 되돌리시겠습니까?')) {
+        const currentImage = config.heroImage;
+        const deletedPaths: string[] = [];
+
+        // 실제 GitHub에 저장되어 있던 대표 이미지 파일만 삭제 대기열로 보낸다.
+        if (currentImage && currentImage.startsWith('/assets/uploads/')) {
+          const wasCommitted = originalData?.siteConfig?.heroImage === currentImage;
+          if (wasCommitted) {
+            deletedPaths.push(`public${currentImage}`);
+          }
+        }
+
+        // 아직 저장하지 않은 대표 이미지 파일은 대기 목록에서 제거한다.
+        if (currentImage) {
+          setPendingImageFiles(prev => prev.filter(f => f.path !== `public${currentImage}`));
+        }
+
+        handleHeroImageChange([], [], deletedPaths);
+      }
+    };
+
     return (
       <div className="max-w-2xl space-y-10">
         <h2 className="text-2xl font-bold tracking-tight mb-8">사이트 기본 설정</h2>
@@ -386,6 +463,44 @@ export default function Admin() {
         <div className="space-y-8">
            <section>
              <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-4 border-b border-white/5 pb-2">Hero Section</h3>
+
+             {/* 홈페이지 대표 이미지 관리 섹션 */}
+             <div className="mb-8 p-6 bg-zinc-900/50 border border-white/5 rounded-2xl space-y-6">
+               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                 <div>
+                   <h4 className="text-zinc-200 font-bold text-sm">홈페이지 대표 이미지 관리</h4>
+                   <p className="text-zinc-500 text-xs mt-1">공개 홈페이지 메인 화면에 표시되는 대표 이미지를 변경할 수 있습니다.</p>
+                 </div>
+
+                 {config.heroImage && (
+                   <button 
+                     type="button"
+                     onClick={handleResetHeroImage}
+                     className="text-[10px] font-bold uppercase tracking-widest text-red-500 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-4 py-2.5 rounded-xl transition-all"
+                   >
+                     기본 이미지로 되돌리기
+                   </button>
+                 )}
+               </div>
+
+               <div className="space-y-4">
+                 <ImageManager 
+                   title="대표 이미지"
+                   folderPath="site/hero"
+                   images={config.heroImage ? [getDisplaySrc(config.heroImage)] : []}
+                   mode="single"
+                   maxWidth={1920}
+                   maxHeight={1080}
+                   onChange={handleHeroImageChange}
+                 />
+
+                 <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+                   <Info size={12} className="text-zinc-500 shrink-0" />
+                   <span>이미지를 등록하지 않거나 초기화하면 기본으로 준비된 우메다 비즈니스 지구 이미지가 나타납니다.</span>
+                 </div>
+               </div>
+             </div>
+
              <div className="space-y-4">
                <div>
                  <label className="block text-[10px] uppercase font-bold text-zinc-600 mb-2">Main Title</label>
