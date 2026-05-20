@@ -31,7 +31,9 @@
     "area": "24.62㎡",
     "isFeatured": false,
     "createdAt": 1779172872720,
-    "ownerId": "system"
+    "ownerId": "system",
+    "prefecture": "osaka",
+    "nearestLine": "센니치마에선"
   },
   {
     "id": "prop-1779091148145",
@@ -63,7 +65,9 @@
     "createdAt": 1779091148145,
     "ownerId": "system",
     "mapAddress": "大阪府大阪市中央区東心斎橋１丁目３−５",
-    "floorPlanImage": "/assets/uploads/properties/prop-1779091148145/floorplan/1779172230269_00.webp"
+    "floorPlanImage": "/assets/uploads/properties/prop-1779091148145/floorplan/1779172230269_00.webp",
+    "nearestLine": "나가호리츠루미료쿠치선",
+    "prefecture": "osaka"
   },
   {
     "id": "prop-1779073876920",
@@ -95,7 +99,9 @@
     "createdAt": 1779073876920,
     "ownerId": "system",
     "mapAddress": "大阪府大阪市浪速区稲荷２丁目7-1",
-    "floorPlanImage": "/assets/uploads/properties/prop-1779073876920/floorplan/1779172041983_00.webp"
+    "floorPlanImage": "/assets/uploads/properties/prop-1779073876920/floorplan/1779172041983_00.webp",
+    "nearestLine": "센니치마에선",
+    "prefecture": "osaka"
   },
   {
     "id": "sample-1",
@@ -131,7 +137,9 @@
     "isFeatured": true,
     "createdAt": 1715560000000,
     "ownerId": "system",
-    "youtubeUrl": "https://youtube.com/shorts/OvaAOSFhoyw?si=SeLF5uU7JFfSdDAX"
+    "youtubeUrl": "https://youtube.com/shorts/OvaAOSFhoyw?si=SeLF5uU7JFfSdDAX",
+    "prefecture": "osaka",
+    "nearestLine": "난카이본선"
   },
   {
     "id": "sample-2",
@@ -168,7 +176,9 @@
     "mansionFeatures": "• 고급스러운 차콜 계열 인테리어\n• 쾌적한 수납 공간 및 드레스룸\n• 최첨단 보안 오토록 시스템\n• 전 세대 남향 배치로 뛰어난 채광",
     "isFeatured": true,
     "createdAt": 1715560000000,
-    "ownerId": "system"
+    "ownerId": "system",
+    "nearestLine": "미도스지선",
+    "prefecture": "osaka"
   },
   {
     "id": "sample-3",
@@ -176,10 +186,9 @@
     "price": "¥850,000,000",
     "location": "주오구 신사이바시",
     "type": "Investment",
-    "description": "유동인구가 가장 많은 신사이바시 메인 스트리트에 위치한 8층 규모의 수익형 빌딩입니다. 현재 전 층 임대 완료 상태로 안정적인 임대 수익이 발생하고 있습니다.",
+    "description": "유동인구가 가장 많은 신사이바시 메인 스트리트에 위치한 8층 규모의 수익형 빌딩입니다. ",
     "images": [
-      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2048&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1497366216548-3752e00edcba4?q=80&w=2070&auto=format&fit=crop"
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2048&auto=format&fit=crop"
     ],
     "features": [
       "고수익",
@@ -193,6 +202,8 @@
     "area": "450.8㎡",
     "isFeatured": false,
     "createdAt": 1715560000000,
-    "ownerId": "system"
+    "ownerId": "system",
+    "nearestLine": "미도스지선",
+    "prefecture": "osaka"
   }
 ]
