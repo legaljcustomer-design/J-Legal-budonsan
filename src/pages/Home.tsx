@@ -1088,56 +1088,65 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           </div>
 
           {/* Trust Bar */}
-          <div className="mt-20 md:mt-32 bg-zinc-950 text-white rounded-[28px] md:rounded-[40px] p-6 md:p-12 shadow-2xl relative overflow-hidden group">
+          <div className="mt-20 md:mt-32 bg-zinc-950 text-white rounded-[28px] md:rounded-[40px] p-5 md:p-10 lg:p-12 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-[360px] md:w-[500px] h-[360px] md:h-[500px] bg-electric-blue/10 rounded-full blur-[100px] md:blur-[120px] -mr-48 md:-mr-64 -mt-48 md:-mt-64 group-hover:bg-electric-blue/20 transition-colors duration-1000" />
 
-            <div className="max-w-7xl w-full flex flex-col xl:flex-row items-center justify-between gap-10 relative z-10">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full xl:flex-1">
-                <div className="border border-white/10 rounded-2xl p-5 md:p-6 bg-white/[0.03]">
-                  <span className="block text-[10px] uppercase opacity-70 tracking-widest font-bold mb-3">
+            <div className="max-w-7xl w-full flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-8 xl:gap-10 relative z-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 xl:flex-1">
+                <div className="min-h-[180px] md:min-h-[205px] rounded-3xl border border-white/10 bg-white/[0.035] p-5 md:p-6 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                  <span className="text-lg md:text-xl font-black tracking-tight text-white mb-4">
                     전문성
                   </span>
-                  <p className="text-base md:text-lg font-black tracking-tight leading-snug mb-3">
-                    택지건물거래사, 행정서사, 시키킹진단사 등
+                  <div className="h-px w-full bg-white/10 mb-4" />
+                  <p className="text-[12px] md:text-[13px] text-white/80 leading-[1.75] font-bold break-keep">
+                    택지건물거래사, 행정서사,<br className="hidden md:block" />
+                    시키킹진단사 등
                   </p>
-                  <p className="text-xs md:text-sm text-white/70 leading-relaxed font-medium">
+                  <p className="mt-3 text-[11px] md:text-xs text-white/55 leading-[1.8] font-medium break-keep">
                     약 20개가 넘는 자격을 보유한 전문가가 중개하고 있습니다.
                   </p>
                 </div>
 
-                <div className="border border-white/10 rounded-2xl p-5 md:p-6 bg-white/[0.03]">
-                  <span className="block text-[10px] uppercase opacity-70 tracking-widest font-bold mb-3">
+                <div className="min-h-[180px] md:min-h-[205px] rounded-3xl border border-white/10 bg-white/[0.035] p-5 md:p-6 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                  <span className="text-lg md:text-xl font-black tracking-tight text-white mb-4">
                     성실성
                   </span>
-                  <p className="text-base md:text-lg font-black tracking-tight leading-snug mb-3">
-                    온라인 뿐만 아니라,
+                  <div className="h-px w-full bg-white/10 mb-4" />
+                  <p className="text-[12px] md:text-[13px] text-white/80 leading-[1.75] font-bold break-keep">
+                    온라인 뿐만 아니라,<br />
+                    오프라인에서도 언제든 상담과 내견이 가능합니다.
                   </p>
-                  <p className="text-xs md:text-sm text-white/70 leading-relaxed font-medium">
-                    오프라인에서도 언제든 상담, 내견이 가능합니다. <br />
-                    <span className="text-white/50">※ 사전예약必</span>
+                  <p className="mt-3 text-[11px] md:text-xs text-white/55 leading-[1.8] font-medium">
+                    ※ 사전예약必
                   </p>
                 </div>
 
-                <div className="border border-white/10 rounded-2xl p-5 md:p-6 bg-white/[0.03]">
-                  <span className="block text-[10px] uppercase opacity-70 tracking-widest font-bold mb-3">
+                <div className="min-h-[180px] md:min-h-[205px] rounded-3xl border border-white/10 bg-white/[0.035] p-5 md:p-6 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                  <span className="text-lg md:text-xl font-black tracking-tight text-white mb-4">
                     신뢰성
                   </span>
-                  <p className="text-base md:text-lg font-black tracking-tight leading-snug mb-3">
-                    후기와 리뷰는 거짓말을 하지 않습니다.
+                  <div className="h-px w-full bg-white/10 mb-4" />
+                  <p className="text-[12px] md:text-[13px] text-white/80 leading-[1.75] font-bold break-keep">
+                    후기와 리뷰는<br className="hidden md:block" />
+                    거짓말을 하지 않습니다.
                   </p>
-                  <p className="text-xs md:text-sm text-white/70 leading-relaxed font-medium">
+                  <p className="mt-3 text-[11px] md:text-xs text-white/55 leading-[1.8] font-medium break-keep">
                     구글 평점 5.0점의 이유가 분명 존재합니다.
                   </p>
                 </div>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-6 items-center shrink-0">
-                <div className="hidden lg:flex flex-col items-end text-right">
-                  <p className="text-sm font-bold">지금 바로 전문가와 상담하세요</p>
-                  <p className="text-xs opacity-80">카카오톡 ID: {settings.kakaoId}</p>
+              <div className="w-full xl:w-auto xl:min-w-[300px] flex flex-col sm:flex-row xl:flex-col items-center xl:items-end justify-center gap-5 xl:gap-4 shrink-0 border-t xl:border-t-0 xl:border-l border-white/10 pt-7 xl:pt-0 xl:pl-8">
+                <div className="text-center sm:text-left xl:text-right">
+                  <p className="text-sm md:text-base font-black text-white leading-tight">
+                    지금 바로 전문가와 상담하세요
+                  </p>
+                  <p className="text-xs text-white/60 mt-1">
+                    카카오톡 ID: {settings.kakaoId}
+                  </p>
                 </div>
 
-                <div className="flex gap-3 flex-wrap justify-center">
+                <div className="flex gap-3 flex-wrap justify-center xl:justify-end">
                   <a 
                     href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
                     target="_blank" 
