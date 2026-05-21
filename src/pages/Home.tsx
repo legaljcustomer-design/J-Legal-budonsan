@@ -755,7 +755,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-6 md:gap-10">
             <div>
               <div className="text-electric-blue text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] mb-3 md:mb-4">Properties</div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tighter text-zinc-900 leading-tight">오사카 추천 프리미엄 매물</h2>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tighter text-zinc-900 leading-tight">오늘의 추천 프리미엄 매물</h2>
               <p className="text-[11px] text-zinc-500 font-medium mt-2 leading-relaxed">
                 ※ 실시간 공실/만실 매물 상황은 무조건 문의바랍니다.
               </p>
