@@ -54,7 +54,7 @@ const TRUST_ITEMS = [
     iconAlt: '전문성 아이콘',
     headline: (
       <>
-        택지건물거래사, 행정서사,<br className="hidden md:block" />
+        택지건물거래사, 행정서사,<br />
         시키킹진단사 등
       </>
     ),
@@ -78,7 +78,7 @@ const TRUST_ITEMS = [
     iconAlt: '신뢰성 아이콘',
     headline: (
       <>
-        후기와 리뷰는<br className="hidden md:block" />
+        후기와 리뷰는<br />
         거짓말을 하지 않습니다.
       </>
     ),
@@ -1135,7 +1135,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 {TRUST_ITEMS.map((item) => (
                   <div
                     key={item.title}
-                    className="min-h-[225px] md:min-h-[250px] rounded-3xl border border-white/10 bg-white/[0.035] p-5 md:p-6 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+                    className="min-h-[240px] md:min-h-[270px] rounded-3xl border border-white/10 bg-white/[0.035] px-5 py-6 md:px-6 md:py-7 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
                   >
                     <div className="flex items-center gap-4 mb-5">
                       <div className="w-16 h-16 md:w-[72px] md:h-[72px] rounded-2xl bg-white flex items-center justify-center shadow-xl shadow-black/20 shrink-0">
@@ -1147,23 +1147,18 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                         />
                       </div>
 
-                      <div className="flex flex-col justify-center min-w-0">
-                        <span className="text-xl md:text-2xl font-black tracking-tight text-white leading-none">
-                          {item.title}
-                        </span>
-                        <span className="mt-2 text-[10px] md:text-[11px] font-bold tracking-[0.22em] uppercase text-blue-300/80">
-                          Osaka J Trust
-                        </span>
-                      </div>
+                      <h3 className="text-[28px] md:text-[32px] font-black tracking-tight text-white leading-none break-keep">
+                        {item.title}
+                      </h3>
                     </div>
 
                     <div className="h-px w-full bg-white/10 mb-5" />
 
-                    <p className="text-[12px] md:text-[13px] text-white/85 leading-[1.8] font-bold break-keep">
+                    <p className="text-[17px] md:text-[19px] text-white leading-[1.65] font-extrabold break-keep">
                       {item.headline}
                     </p>
 
-                    <p className="mt-3 text-[11px] md:text-xs text-white/55 leading-[1.85] font-medium break-keep">
+                    <p className="mt-4 text-[13px] md:text-[14px] text-white/65 leading-[1.8] font-medium break-keep">
                       {item.body}
                     </p>
                   </div>
