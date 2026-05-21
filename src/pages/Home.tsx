@@ -1090,27 +1090,53 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           {/* Trust Bar */}
           <div className="mt-20 md:mt-32 bg-zinc-950 text-white rounded-[28px] md:rounded-[40px] p-6 md:p-12 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-[360px] md:w-[500px] h-[360px] md:h-[500px] bg-electric-blue/10 rounded-full blur-[100px] md:blur-[120px] -mr-48 md:-mr-64 -mt-48 md:-mt-64 group-hover:bg-electric-blue/20 transition-colors duration-1000" />
-            <div className="max-w-7xl w-full flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-10 relative z-10">
-              <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 md:gap-12 justify-center w-full lg:w-auto text-center sm:text-left">
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Years of Trust</span>
-                  <span className="text-3xl font-bold tracking-tighter">10+</span>
+
+            <div className="max-w-7xl w-full flex flex-col xl:flex-row items-center justify-between gap-10 relative z-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full xl:flex-1">
+                <div className="border border-white/10 rounded-2xl p-5 md:p-6 bg-white/[0.03]">
+                  <span className="block text-[10px] uppercase opacity-70 tracking-widest font-bold mb-3">
+                    전문성
+                  </span>
+                  <p className="text-base md:text-lg font-black tracking-tight leading-snug mb-3">
+                    택지건물거래사, 행정서사, 시키킹진단사 등
+                  </p>
+                  <p className="text-xs md:text-sm text-white/70 leading-relaxed font-medium">
+                    약 20개가 넘는 자격을 보유한 전문가가 중개하고 있습니다.
+                  </p>
                 </div>
-                <div className="flex flex-col border-t sm:border-t-0 sm:border-l border-white/20 pt-6 sm:pt-0 sm:pl-8 md:pl-12">
-                  <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Properties Managed</span>
-                  <span className="text-3xl font-bold tracking-tighter">1,240+</span>
+
+                <div className="border border-white/10 rounded-2xl p-5 md:p-6 bg-white/[0.03]">
+                  <span className="block text-[10px] uppercase opacity-70 tracking-widest font-bold mb-3">
+                    성실성
+                  </span>
+                  <p className="text-base md:text-lg font-black tracking-tight leading-snug mb-3">
+                    온라인 뿐만 아니라,
+                  </p>
+                  <p className="text-xs md:text-sm text-white/70 leading-relaxed font-medium">
+                    오프라인에서도 언제든 상담, 내견이 가능합니다. <br />
+                    <span className="text-white/50">※ 사전예약必</span>
+                  </p>
                 </div>
-                <div className="flex flex-col border-t sm:border-t-0 sm:border-l border-white/20 pt-6 sm:pt-0 sm:pl-8 md:pl-12">
-                  <span className="text-[10px] uppercase opacity-70 tracking-widest font-bold">Customer Rating</span>
-                  <span className="text-3xl font-bold tracking-tighter">4.9 / 5.0</span>
+
+                <div className="border border-white/10 rounded-2xl p-5 md:p-6 bg-white/[0.03]">
+                  <span className="block text-[10px] uppercase opacity-70 tracking-widest font-bold mb-3">
+                    신뢰성
+                  </span>
+                  <p className="text-base md:text-lg font-black tracking-tight leading-snug mb-3">
+                    후기와 리뷰는 거짓말을 하지 않습니다.
+                  </p>
+                  <p className="text-xs md:text-sm text-white/70 leading-relaxed font-medium">
+                    구글 평점 5.0점의 이유가 분명 존재합니다.
+                  </p>
                 </div>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-6 items-center">
+              <div className="flex flex-col sm:flex-row gap-6 items-center shrink-0">
                 <div className="hidden lg:flex flex-col items-end text-right">
                   <p className="text-sm font-bold">지금 바로 전문가와 상담하세요</p>
                   <p className="text-xs opacity-80">카카오톡 ID: {settings.kakaoId}</p>
                 </div>
+
                 <div className="flex gap-3 flex-wrap justify-center">
                   <a 
                     href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`} 
@@ -1120,6 +1146,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   >
                     <MessageCircle className="w-6 h-6 text-[#3C1E1E]" />
                   </a>
+
                   <a 
                     href={`https://line.me/R/ti/p/${settings.lineId.startsWith('@') ? settings.lineId : '@' + settings.lineId}`} 
                     target="_blank" 
@@ -1128,6 +1155,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   >
                     <MessageSquare className="w-6 h-6 text-emerald-500" />
                   </a>
+
                   <a 
                     href={settings.instagramUrl || `https://www.instagram.com/${settings.instagramId?.replace('@', '')}/`} 
                     target="_blank" 
@@ -1136,6 +1164,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   >
                     <Instagram className="w-6 h-6 text-pink-500" />
                   </a>
+
                   <a 
                     href={settings.youtubeUrl} 
                     target="_blank" 
@@ -1186,8 +1215,33 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                     <p className="text-zinc-600 text-sm">070‐2805‐1749</p>
                   </div>
                   <div>
-                    <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-600 mb-2">Official Email</h4>
-                    <p className="text-zinc-600 text-sm">visa.legal.j@gmail.com</p>
+                    <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-600 mb-2">
+                      Official Email
+                    </h4>
+
+                    <div className="space-y-2 text-zinc-600 text-sm leading-relaxed">
+                      <p>
+                        <span className="font-bold text-zinc-900">비자&법무 상담</span>
+                        <br />
+                        <a 
+                          href="mailto:visa.legal.j@gmail.com"
+                          className="hover:text-blue-600 transition-colors break-all"
+                        >
+                          visa.legal.j@gmail.com
+                        </a>
+                      </p>
+
+                      <p>
+                        <span className="font-bold text-zinc-900">부동산 상담</span>
+                        <br />
+                        <a 
+                          href="mailto:budonsan.tk@gmail.com"
+                          className="hover:text-blue-600 transition-colors break-all"
+                        >
+                          budonsan.tk@gmail.com
+                        </a>
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
