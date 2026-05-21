@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
@@ -155,6 +155,28 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
       .trim();
   };
 
+  const getJstDateKey = () => {
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const jst = new Date(utc + 9 * 60 * 60000);
+    const year = jst.getFullYear();
+    const month = String(jst.getMonth() + 1).padStart(2, '0');
+    const day = String(jst.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getStableDailyScore = (id: string, seed: string) => {
+    const text = `${seed}-${id}`;
+    let hash = 0;
+
+    for (let i = 0; i < text.length; i += 1) {
+      hash = ((hash << 5) - hash) + text.charCodeAt(i);
+      hash |= 0;
+    }
+
+    return Math.abs(hash);
+  };
+
   const moveToSearchResults = () => {
     const params = new URLSearchParams();
 
@@ -191,10 +213,10 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
       const jstOffset = 9 * 60;
       const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
       const jstNow = new Date(utc + (jstOffset * 60000));
-      
+
       const startOfDay = new Date(jstNow);
       startOfDay.setHours(0, 0, 0, 0);
-      
+
       const minutesPassed = Math.floor((jstNow.getTime() - startOfDay.getTime()) / 60000);
       setConsultationCount((Number(settings.consultationBaseCount) || 0) + Math.floor(minutesPassed / 12));
     };
@@ -329,6 +351,18 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     return prefectureMatch && stationMatch && lineMatch && keywordMatch;
   });
 
+  const dailyRecommendationSeed = useMemo(() => getJstDateKey(), []);
+
+  const dailyRecommendedProperties = useMemo(() => {
+    return [...filteredProperties]
+      .sort((a, b) => {
+        const aScore = getStableDailyScore(a.id || a.title, dailyRecommendationSeed);
+        const bScore = getStableDailyScore(b.id || b.title, dailyRecommendationSeed);
+        return aScore - bScore;
+      })
+      .slice(0, 6);
+  }, [filteredProperties, dailyRecommendationSeed]);
+
   const osakaInfoFallbacks = [
     {
       title: "일본 거주 초기 설정 가이드",
@@ -414,7 +448,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               行政書士Legal_ J office <ExternalLink size={16} />
             </a>
           </div>
-          
+
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-500">
             <a href="#hero" className="text-zinc-900 border-b-2 border-electric-blue pb-1 transition-all font-bold">홈</a>
             <a href="#properties" className="hover:text-electric-blue transition-colors">매물검색</a>
@@ -765,7 +799,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 </p>
               )}
             </div>
-            
+
             <div className="flex overflow-x-auto gap-3 md:gap-4 pb-2 no-scrollbar w-full md:w-auto">
               {CATEGORIES.map(cat => (
                 <button
@@ -791,8 +825,8 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                {filteredProperties.length > 0 ? (
-                  filteredProperties.slice(0, 6).map((prop, index) => (
+                {dailyRecommendedProperties.length > 0 ? (
+                  dailyRecommendedProperties.map((prop, index) => (
                     <motion.div
                       key={prop.id}
                       initial={{ opacity: 0, y: 30 }}
@@ -820,7 +854,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="p-5 bg-white flex flex-col min-h-[250px]">
                         <div className="mb-2">
                           <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -846,7 +880,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                             {prop.price.replace(/상담\s*문의/g, '').trim()}
                           </span>
                         </div>
-                        
+
                         <div className="mt-auto">
                           <Link 
                             to={`/property/${prop.id}`}
@@ -902,7 +936,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               고객님들의 소중한 후기입니다.
             </p>
           </div>
-          
+
           <div className="relative overflow-hidden py-6 md:py-10">
             {reviews.length > 0 && (
               <motion.div 
@@ -1052,7 +1086,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 정직과 신뢰는 저희 서비스의 핵심 가치입니다. 모든 거래 단계에서 투명성을 유지하며, 한국인 고객님들의 입장에서 가장 유리한 조건의 매칭을 약속드립니다.
               </p>
             </div>
-            
+
             <div className="lg:col-span-1">
               <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
                 <img 
@@ -1164,7 +1198,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                   </div>
                 ))}
               </div>
-              
+
               <div className="w-full xl:w-auto xl:min-w-[300px] flex flex-col sm:flex-row xl:flex-col items-center xl:items-end justify-center gap-5 xl:gap-4 shrink-0 border-t xl:border-t-0 xl:border-l border-white/10 pt-7 xl:pt-0 xl:pl-8">
                 <div className="text-center sm:text-left xl:text-right">
                   <p className="text-sm md:text-base font-black text-white leading-tight">
@@ -1285,7 +1319,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
               </div>
             </div>
           </div>
-          
+
           <div className="pt-8 border-t border-zinc-200 text-zinc-500 text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
             <div className="normal-case tracking-normal text-zinc-400">
               오사카J부동산은 Legal_J Office에서 운영하는 일본 부동산 서비스입니다.
@@ -1305,7 +1339,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
         >
           <MessageCircle className="w-5 h-5 md:w-8 md:h-8 text-[#3C1E1E]" />
         </a>
-        
+
         <a 
           href={`https://line.me/R/ti/p/${settings.lineId.startsWith('@') ? settings.lineId : '@' + settings.lineId}`} 
           target="_blank" 
