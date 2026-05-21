@@ -47,6 +47,45 @@ const PREFECTURE_LABELS: Record<'osaka' | 'kyoto' | 'hyogo', string> = {
   hyogo: '효고',
 };
 
+const TRUST_ITEMS = [
+  {
+    title: '전문성',
+    icon: '/trust-icons/전문성.png',
+    iconAlt: '전문성 아이콘',
+    headline: (
+      <>
+        택지건물거래사, 행정서사,<br className="hidden md:block" />
+        시키킹진단사 등
+      </>
+    ),
+    body: '약 20개가 넘는 자격을 보유한 전문가가 중개하고 있습니다.'
+  },
+  {
+    title: '성실성',
+    icon: '/trust-icons/성실성.png',
+    iconAlt: '성실성 아이콘',
+    headline: (
+      <>
+        온라인 뿐만 아니라,<br />
+        오프라인에서도 언제든 상담과 내견이 가능합니다.
+      </>
+    ),
+    body: '※ 사전예약必'
+  },
+  {
+    title: '신뢰성',
+    icon: '/trust-icons/신뢰성.png',
+    iconAlt: '신뢰성 아이콘',
+    headline: (
+      <>
+        후기와 리뷰는<br className="hidden md:block" />
+        거짓말을 하지 않습니다.
+      </>
+    ),
+    body: '구글 평점 5.0점의 이유가 분명 존재합니다.'
+  }
+];
+
 interface Review {
   id: string;
   image: string;
@@ -764,7 +803,7 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                     >
                       <div className="relative h-48 md:h-52 overflow-hidden bg-zinc-800">
                         <img 
-                          src={normalizeImageSrc(prop.images[0]) || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
+                          src={normalizeImageSrc(prop.images?.[0]) || 'https://via.placeholder.com/1080x1080?text=Premium+Listing'} 
                           alt={prop.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           referrerPolicy="no-referrer"
@@ -1093,47 +1132,35 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
 
             <div className="max-w-7xl w-full flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-8 xl:gap-10 relative z-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 xl:flex-1">
-                <div className="min-h-[180px] md:min-h-[205px] rounded-3xl border border-white/10 bg-white/[0.035] p-5 md:p-6 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <span className="text-lg md:text-xl font-black tracking-tight text-white mb-4">
-                    전문성
-                  </span>
-                  <div className="h-px w-full bg-white/10 mb-4" />
-                  <p className="text-[12px] md:text-[13px] text-white/80 leading-[1.75] font-bold break-keep">
-                    택지건물거래사, 행정서사,<br className="hidden md:block" />
-                    시키킹진단사 등
-                  </p>
-                  <p className="mt-3 text-[11px] md:text-xs text-white/55 leading-[1.8] font-medium break-keep">
-                    약 20개가 넘는 자격을 보유한 전문가가 중개하고 있습니다.
-                  </p>
-                </div>
+                {TRUST_ITEMS.map((item) => (
+                  <div
+                    key={item.title}
+                    className="min-h-[250px] md:min-h-[285px] rounded-3xl border border-white/10 bg-white/[0.035] p-5 md:p-6 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+                  >
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white flex items-center justify-center mb-5 shadow-xl shadow-black/20">
+                      <img
+                        src={item.icon}
+                        alt={item.iconAlt}
+                        className="w-10 h-10 md:w-12 md:h-12 object-contain"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
 
-                <div className="min-h-[180px] md:min-h-[205px] rounded-3xl border border-white/10 bg-white/[0.035] p-5 md:p-6 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <span className="text-lg md:text-xl font-black tracking-tight text-white mb-4">
-                    성실성
-                  </span>
-                  <div className="h-px w-full bg-white/10 mb-4" />
-                  <p className="text-[12px] md:text-[13px] text-white/80 leading-[1.75] font-bold break-keep">
-                    온라인 뿐만 아니라,<br />
-                    오프라인에서도 언제든 상담과 내견이 가능합니다.
-                  </p>
-                  <p className="mt-3 text-[11px] md:text-xs text-white/55 leading-[1.8] font-medium">
-                    ※ 사전예약必
-                  </p>
-                </div>
+                    <span className="text-lg md:text-xl font-black tracking-tight text-white mb-4">
+                      {item.title}
+                    </span>
 
-                <div className="min-h-[180px] md:min-h-[205px] rounded-3xl border border-white/10 bg-white/[0.035] p-5 md:p-6 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <span className="text-lg md:text-xl font-black tracking-tight text-white mb-4">
-                    신뢰성
-                  </span>
-                  <div className="h-px w-full bg-white/10 mb-4" />
-                  <p className="text-[12px] md:text-[13px] text-white/80 leading-[1.75] font-bold break-keep">
-                    후기와 리뷰는<br className="hidden md:block" />
-                    거짓말을 하지 않습니다.
-                  </p>
-                  <p className="mt-3 text-[11px] md:text-xs text-white/55 leading-[1.8] font-medium break-keep">
-                    구글 평점 5.0점의 이유가 분명 존재합니다.
-                  </p>
-                </div>
+                    <div className="h-px w-full bg-white/10 mb-4" />
+
+                    <p className="text-[12px] md:text-[13px] text-white/80 leading-[1.75] font-bold break-keep">
+                      {item.headline}
+                    </p>
+
+                    <p className="mt-3 text-[11px] md:text-xs text-white/55 leading-[1.8] font-medium break-keep">
+                      {item.body}
+                    </p>
+                  </div>
+                ))}
               </div>
               
               <div className="w-full xl:w-auto xl:min-w-[300px] flex flex-col sm:flex-row xl:flex-col items-center xl:items-end justify-center gap-5 xl:gap-4 shrink-0 border-t xl:border-t-0 xl:border-l border-white/10 pt-7 xl:pt-0 xl:pl-8">
