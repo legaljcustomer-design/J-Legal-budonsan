@@ -1135,28 +1135,35 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 {TRUST_ITEMS.map((item) => (
                   <div
                     key={item.title}
-                    className="min-h-[250px] md:min-h-[285px] rounded-3xl border border-white/10 bg-white/[0.035] p-5 md:p-6 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+                    className="min-h-[225px] md:min-h-[250px] rounded-3xl border border-white/10 bg-white/[0.035] p-5 md:p-6 flex flex-col justify-start shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
                   >
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white flex items-center justify-center mb-5 shadow-xl shadow-black/20">
-                      <img
-                        src={item.icon}
-                        alt={item.iconAlt}
-                        className="w-10 h-10 md:w-12 md:h-12 object-contain"
-                        referrerPolicy="no-referrer"
-                      />
+                    <div className="flex items-center gap-4 mb-5">
+                      <div className="w-16 h-16 md:w-[72px] md:h-[72px] rounded-2xl bg-white flex items-center justify-center shadow-xl shadow-black/20 shrink-0">
+                        <img
+                          src={item.icon}
+                          alt={item.iconAlt}
+                          className="w-10 h-10 md:w-11 md:h-11 object-contain"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+
+                      <div className="flex flex-col justify-center min-w-0">
+                        <span className="text-xl md:text-2xl font-black tracking-tight text-white leading-none">
+                          {item.title}
+                        </span>
+                        <span className="mt-2 text-[10px] md:text-[11px] font-bold tracking-[0.22em] uppercase text-blue-300/80">
+                          Osaka J Trust
+                        </span>
+                      </div>
                     </div>
 
-                    <span className="text-lg md:text-xl font-black tracking-tight text-white mb-4">
-                      {item.title}
-                    </span>
+                    <div className="h-px w-full bg-white/10 mb-5" />
 
-                    <div className="h-px w-full bg-white/10 mb-4" />
-
-                    <p className="text-[12px] md:text-[13px] text-white/80 leading-[1.75] font-bold break-keep">
+                    <p className="text-[12px] md:text-[13px] text-white/85 leading-[1.8] font-bold break-keep">
                       {item.headline}
                     </p>
 
-                    <p className="mt-3 text-[11px] md:text-xs text-white/55 leading-[1.8] font-medium break-keep">
+                    <p className="mt-3 text-[11px] md:text-xs text-white/55 leading-[1.85] font-medium break-keep">
                       {item.body}
                     </p>
                   </div>
