@@ -155,7 +155,7 @@ export default function Admin() {
   const [inputData, setInputData] = useState<StorageData>({
     token: '',
     owner: '',
-    repo: 'legalj-osaka'
+    repo: ''
   });
   const [loading, setLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(true);
@@ -1026,7 +1026,8 @@ export default function Admin() {
                 className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 transition-all text-sm"
                 value={inputData.owner}
                 onChange={e => setInputData({...inputData, owner: e.target.value})}
-                placeholder="GitHub Username"
+                autoComplete="off"
+                spellCheck={false}
               />
             </div>
             <div>
@@ -1035,7 +1036,8 @@ export default function Admin() {
                 className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 transition-all text-sm"
                 value={inputData.repo}
                 onChange={e => setInputData({...inputData, repo: e.target.value})}
-                placeholder="Repository Name"
+                autoComplete="off"
+                spellCheck={false}
               />
             </div>
             <div>
@@ -1045,7 +1047,8 @@ export default function Admin() {
                 className="w-full bg-white/5 border border-white/5 rounded-xl px-5 py-3 outline-none focus:border-electric-blue/50 transition-all text-sm"
                 value={inputData.token}
                 onChange={e => setInputData({...inputData, token: e.target.value})}
-                placeholder="github_pat_..."
+                autoComplete="new-password"
+                spellCheck={false}
               />
             </div>
 
