@@ -815,8 +815,8 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                           CATEGORIES.find(c => c.id === prop.type)?.label || prop.type}
                         </span>
                         {prop.isFeatured && (
-                          <div className="absolute top-4 right-4 bg-emerald-600 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest text-white">
-                            FEATURED
+                          <div className="absolute top-4 right-4 max-w-[150px] truncate bg-emerald-600 text-[10px] font-black px-3 py-1.5 rounded-md tracking-wide text-white shadow-lg">
+                            {prop.badgeLabel?.trim() || 'FEATURED'}
                           </div>
                         )}
                       </div>
