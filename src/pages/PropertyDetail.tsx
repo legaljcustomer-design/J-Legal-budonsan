@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, 
@@ -21,6 +21,7 @@ import { firebaseService } from '../services/firebaseService';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -87,6 +88,17 @@ export default function PropertyDetail() {
     if (property?.images?.length) {
       setActiveImageIndex((prev) => (prev - 1 + property.images.length) % property.images.length);
     }
+  };
+
+  const handleBackToList = () => {
+    const historyIndex = window.history.state?.idx;
+
+    if (typeof historyIndex === 'number' && historyIndex > 0) {
+      navigate(-1);
+      return;
+    }
+
+    navigate('/#properties');
   };
 
   useEffect(() => {
@@ -159,10 +171,14 @@ export default function PropertyDetail() {
       {/* Navigation Bar */}
       <nav className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-zinc-100 h-16 flex items-center">
         <div className="max-w-7xl mx-auto w-full px-4 md:px-10 flex justify-between items-center">
-          <Link to="/properties" className="flex items-center gap-2 text-zinc-900 hover:text-blue-600 transition-colors min-w-0">
+          <button
+            type="button"
+            onClick={handleBackToList}
+            className="flex items-center gap-2 text-zinc-900 hover:text-blue-600 transition-colors min-w-0"
+          >
             <ArrowLeft size={20} className="shrink-0" />
             <span className="font-bold text-sm tracking-tight truncate">목록으로 돌아가기</span>
-          </Link>
+          </button>
 
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
             {isAdmin && !id?.startsWith('sample') && (
