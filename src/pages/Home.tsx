@@ -879,11 +879,11 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                 {[...reviews, ...reviews].map((review, idx) => (
                   <div
                     key={`${review.id}-${idx}`}
-                    className="min-w-[240px] md:min-w-[320px] flex-shrink-0"
+                    className="min-w-[310px] md:min-w-[460px] flex-shrink-0"
                     onClick={() => setSelectedReviewImage(review.image)}
                   >
-                    <div className="flex flex-col group cursor-pointer transition-all max-w-[240px] md:max-w-[280px] mx-auto">
-                      <div className="aspect-[3/2] rounded-lg overflow-hidden mb-4 bg-zinc-100 shadow-lg border border-zinc-100 relative">
+                    <div className="flex flex-col group cursor-pointer transition-all max-w-[310px] md:max-w-[460px] mx-auto">
+                      <div className="aspect-[16/9] rounded-xl overflow-hidden mb-4 bg-zinc-100 shadow-lg border border-zinc-100 relative">
                         <img 
                           src={normalizeImageSrc(review.image)} 
                           alt={review.title} 
