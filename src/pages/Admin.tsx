@@ -757,7 +757,7 @@ export default function Admin() {
                  <ImageManager 
                    title="대표 이미지"
                    folderPath="site/hero"
-                   images={config.heroImage ? [getDisplaySrc(config.heroImage)] : []}
+                   images={config.heroImage ? [config.heroImage] : []}
                    mode="single"
                    maxWidth={1920}
                    maxHeight={1080}
@@ -1321,7 +1321,7 @@ const ModalForm = ({
                <ImageManager 
                 title="매물 이미지 관리"
                 folderPath={`properties/${item.id}`}
-                images={(item.images || []).map(src => getDisplaySrc(src))}
+                images={item.images || []}
                 mode="multiple"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'property')}
               />
@@ -1329,7 +1329,7 @@ const ModalForm = ({
               <ImageManager 
                 title="마도리(구조도) 이미지 관리"
                 folderPath={`properties/${item.id}/floorplan`}
-                images={item.floorPlanImage ? [getDisplaySrc(item.floorPlanImage)] : []}
+                images={item.floorPlanImage ? [item.floorPlanImage] : []}
                 mode="single"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'floorPlan')}
               />
@@ -1475,7 +1475,7 @@ const ModalForm = ({
               <ImageManager 
                 title="후기 대표 이미지"
                 folderPath={`reviews`}
-                images={item.image ? [getDisplaySrc(item.image)] : []}
+                images={item.image ? [item.image] : []}
                 mode="single"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'review')}
               />
@@ -1501,7 +1501,7 @@ const ModalForm = ({
               <ImageManager 
                 title="정보글 대표 이미지"
                 folderPath={`osaka-info`}
-                images={item.img ? [getDisplaySrc(item.img)] : []}
+                images={item.img ? [item.img] : []}
                 mode="single"
                 onChange={(urls, files, deleted) => handleImageChange(urls, files, deleted, 'osakaInfo')}
               />
