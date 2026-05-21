@@ -13,7 +13,6 @@ import {
   Menu,
   X,
   ChevronRight,
-  ArrowRight,
   Loader2,
   ExternalLink,
   Building2,
@@ -143,6 +142,10 @@ export default function Properties() {
     setKeywordQuery('');
     navigate('/properties');
   };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -304,7 +307,7 @@ export default function Properties() {
       </AnimatePresence>
 
       {/* Page Header */}
-      <section className="relative pt-28 md:pt-36 pb-10 md:pb-14 px-4 md:px-10 bg-zinc-950 text-white overflow-hidden">
+      <section className="relative pt-32 md:pt-40 pb-10 md:pb-14 px-4 md:px-10 bg-zinc-950 text-white overflow-hidden">
         <div className="absolute top-0 right-0 w-[420px] h-[420px] bg-electric-blue/20 rounded-full blur-[120px] -mr-48 -mt-48" />
         <div className="absolute bottom-0 left-0 w-[360px] h-[360px] bg-blue-500/10 rounded-full blur-[100px] -ml-40 -mb-40" />
 
@@ -312,11 +315,11 @@ export default function Properties() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/10 text-blue-200 text-[10px] md:text-xs font-black tracking-[0.22em] uppercase mb-5">
             Property Search
           </div>
-          <h1 className="text-3xl md:text-5xl font-black tracking-tighter leading-tight break-keep">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tighter leading-tight break-keep text-white">
             조건에 맞는 오사카·간사이 매물을<br className="hidden md:block" />
             빠르게 확인하세요
           </h1>
-          <p className="mt-5 max-w-2xl text-sm md:text-base text-white/65 leading-relaxed">
+          <p className="mt-5 max-w-2xl text-sm md:text-base text-white/70 leading-relaxed">
             지역, 역명, 노선, 키워드를 조합해 고객님께 맞는 매물을 검색할 수 있습니다.
           </p>
         </div>
