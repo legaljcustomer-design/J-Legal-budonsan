@@ -355,6 +355,7 @@ export default function Admin() {
         floorPlanImage: '',
         area: '',
         isFeatured: false,
+        badgeLabel: '',
         createdAt: Date.now(),
         ownerId: 'system'
       };
@@ -376,8 +377,12 @@ export default function Admin() {
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex gap-2 flex-wrap">
-                    <span className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${prop.isFeatured ? 'bg-amber-500/20 text-amber-500' : 'bg-zinc-800 text-zinc-500'}`}>
-                      {prop.isFeatured ? 'featured' : 'standard'}
+                    <span className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${
+                      prop.isFeatured 
+                        ? 'bg-emerald-500/20 text-emerald-400' 
+                        : 'bg-zinc-800 text-zinc-500'
+                    }`}>
+                      {prop.isFeatured ? (prop.badgeLabel?.trim() || '추천 배지') : 'standard'}
                     </span>
                     {prop.prefecture && (
                       <span className="px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400">
@@ -1365,6 +1370,48 @@ const ModalForm = ({
                     <option value="Office">상가/사무실</option>
                     <option value="Investment">수익형 부동산</option>
                   </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">
+                          추천 배지 표시
+                        </label>
+                        <p className="text-[11px] text-zinc-500 leading-relaxed">
+                          홈페이지 매물 이미지 오른쪽 위에 표시될 추천 문구를 설정합니다.
+                        </p>
+                      </div>
+
+                      <label className="inline-flex items-center gap-3 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(item.isFeatured)}
+                          onChange={e => handleFormChange('isFeatured', e.target.checked)}
+                          className="w-5 h-5 accent-blue-600"
+                        />
+                        <span className="text-sm font-bold text-zinc-200">
+                          배지 표시하기
+                        </span>
+                      </label>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-2">
+                        배지 문구
+                      </label>
+                      <input
+                        className="w-full bg-zinc-950 border border-white/5 rounded-xl px-5 py-4 text-sm focus:border-electric-blue/50 outline-none transition-all"
+                        value={item.badgeLabel || ''}
+                        onChange={e => handleFormChange('badgeLabel', e.target.value)}
+                        placeholder="예: 유학생 추천!, 워홀러 추천!, 2인거주 가능!, 애완동물 가능!"
+                      />
+                      <p className="text-[10px] text-zinc-500 mt-2 leading-relaxed">
+                        비워두면 홈페이지에는 기본값으로 FEATURED가 표시됩니다. 문구를 넣으면 해당 문구가 우선 표시됩니다.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
