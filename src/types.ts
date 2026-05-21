@@ -20,6 +20,13 @@ export interface Property {
   youtubeUrl?: string;
   mansionFeatures?: string;
   isFeatured: boolean;
+
+  /**
+   * 매물 카드 상단에 표시되는 추천 배지 문구입니다.
+   * 예: 유학생 추천!, 워홀러 추천!, 2인거주 가능!, 애완동물 가능!
+   */
+  badgeLabel?: string;
+
   createdAt: any;
   updatedAt?: any;
   ownerId: string;
