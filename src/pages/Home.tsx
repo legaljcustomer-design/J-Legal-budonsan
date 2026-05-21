@@ -155,17 +155,11 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
       .trim();
   };
 
-  const getJstDateKey = () => {
-    const now = new Date();
-    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-    const jst = new Date(utc + 9 * 60 * 60000);
-    const year = jst.getFullYear();
-    const month = String(jst.getMonth() + 1).padStart(2, '0');
-    const day = String(jst.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  const getRandomRecommendationSeed = () => {
+    return `${Date.now()}-${Math.random()}`;
   };
 
-  const getStableDailyScore = (id: string, seed: string) => {
+  const getStableRandomScore = (id: string, seed: string) => {
     const text = `${seed}-${id}`;
     let hash = 0;
 
@@ -351,17 +345,17 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     return prefectureMatch && stationMatch && lineMatch && keywordMatch;
   });
 
-  const dailyRecommendationSeed = useMemo(() => getJstDateKey(), []);
+  const recommendationRandomSeed = useMemo(() => getRandomRecommendationSeed(), []);
 
-  const dailyRecommendedProperties = useMemo(() => {
+  const randomRecommendedProperties = useMemo(() => {
     return [...filteredProperties]
       .sort((a, b) => {
-        const aScore = getStableDailyScore(a.id || a.title, dailyRecommendationSeed);
-        const bScore = getStableDailyScore(b.id || b.title, dailyRecommendationSeed);
+        const aScore = getStableRandomScore(a.id || a.title, recommendationRandomSeed);
+        const bScore = getStableRandomScore(b.id || b.title, recommendationRandomSeed);
         return aScore - bScore;
       })
       .slice(0, 6);
-  }, [filteredProperties, dailyRecommendationSeed]);
+  }, [filteredProperties, recommendationRandomSeed]);
 
   const osakaInfoFallbacks = [
     {
@@ -825,8 +819,8 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                {dailyRecommendedProperties.length > 0 ? (
-                  dailyRecommendedProperties.map((prop, index) => (
+                {randomRecommendedProperties.length > 0 ? (
+                  randomRecommendedProperties.map((prop, index) => (
                     <motion.div
                       key={prop.id}
                       initial={{ opacity: 0, y: 30 }}
