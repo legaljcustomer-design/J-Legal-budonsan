@@ -29,11 +29,12 @@
     "floorPlan": "1K",
     "floorPlanImage": "/assets/uploads/properties/prop-1779172872720/floorplan/1779173624600_00.webp",
     "area": "24.62㎡",
-    "isFeatured": false,
+    "isFeatured": true,
     "createdAt": 1779172872720,
     "ownerId": "system",
     "prefecture": "osaka",
-    "nearestLine": "센니치마에선"
+    "nearestLine": "센니치마에선",
+    "badgeLabel": "NEW!!"
   },
   {
     "id": "prop-1779091148145",
@@ -61,13 +62,14 @@
     "youtubeUrl": "",
     "floorPlan": "-/-",
     "area": "62.06㎡",
-    "isFeatured": false,
+    "isFeatured": true,
     "createdAt": 1779091148145,
     "ownerId": "system",
     "mapAddress": "大阪府大阪市中央区東心斎橋１丁目３−５",
     "floorPlanImage": "/assets/uploads/properties/prop-1779091148145/floorplan/1779172230269_00.webp",
     "nearestLine": "나가호리츠루미료쿠치선",
-    "prefecture": "osaka"
+    "prefecture": "osaka",
+    "badgeLabel": "NEW!!"
   },
   {
     "id": "prop-1779073876920",
@@ -95,13 +97,14 @@
     "youtubeUrl": "",
     "floorPlan": "3LDK",
     "area": "70.35㎡",
-    "isFeatured": false,
+    "isFeatured": true,
     "createdAt": 1779073876920,
     "ownerId": "system",
     "mapAddress": "大阪府大阪市浪速区稲荷２丁目7-1",
     "floorPlanImage": "/assets/uploads/properties/prop-1779073876920/floorplan/1779172041983_00.webp",
     "nearestLine": "센니치마에선",
-    "prefecture": "osaka"
+    "prefecture": "osaka",
+    "badgeLabel": "NEW!!"
   },
   {
     "id": "sample-1",
@@ -139,7 +142,8 @@
     "ownerId": "system",
     "youtubeUrl": "https://youtube.com/shorts/OvaAOSFhoyw?si=SeLF5uU7JFfSdDAX",
     "prefecture": "osaka",
-    "nearestLine": "난카이본선"
+    "nearestLine": "난카이본선",
+    "badgeLabel": "워홀러 추천!"
   },
   {
     "id": "sample-2",
@@ -178,7 +182,8 @@
     "createdAt": 1715560000000,
     "ownerId": "system",
     "nearestLine": "미도스지선",
-    "prefecture": "osaka"
+    "prefecture": "osaka",
+    "badgeLabel": "유학생 추천!"
   },
   {
     "id": "sample-3",
