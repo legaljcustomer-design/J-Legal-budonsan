@@ -1,82 +1,82 @@
 [
   {
-    "id": "rev-1779332136657",
+    "id": "rev-1779332746522",
     "title": "비자&부동산",
     "content": ".",
     "author": ".",
-    "image": "/assets/uploads/reviews/1779332139786_00.webp",
-    "createdAt": 1779332136657
+    "image": "/assets/uploads/reviews/1779332750066_00.webp",
+    "createdAt": 1779332746522
   },
   {
-    "id": "rev-1778809388852",
+    "id": "rev-1779332735959",
+    "title": "행정",
+    "content": ".",
+    "author": ".",
+    "image": "/assets/uploads/reviews/1779332739576_00.webp",
+    "createdAt": 1779332735959
+  },
+  {
+    "id": "rev-1779332723741",
     "title": "행정&부동산",
-    "content": "아주 좋았습니다!",
-    "author": "LEE様",
-    "image": "/assets/uploads/reviews/1778809444202_00.webp",
-    "createdAt": 1778809388852
-  },
-  {
-    "id": "rev-1779332123472",
-    "title": "비자&부동산",
     "content": ".",
     "author": ".",
-    "image": "/assets/uploads/reviews/1779332125525_00.webp",
-    "createdAt": 1779332123472
+    "image": "/assets/uploads/reviews/1779332727804_00.webp",
+    "createdAt": 1779332723741
   },
   {
-    "id": "rev-1778748230287",
-    "title": "경영관리비자 대성공!",
-    "content": "너무 기쁩니다!!",
-    "author": "KIM様",
-    "image": "/assets/uploads/reviews/1778748364357_00.webp",
-    "createdAt": 1778748230287
-  },
-  {
-    "id": "rev-1779332112479",
-    "title": "비자&부동산",
-    "content": ".",
-    "author": ".",
-    "image": "/assets/uploads/reviews/1779332114920_00.webp",
-    "createdAt": 1779332112479
-  },
-  {
-    "id": "s-rev-1",
-    "title": "친절한 상담 감사합니다",
-    "content": "행정&비자",
-    "author": "LEE様",
-    "image": "/assets/uploads/reviews/1778662835846_00.webp",
-    "createdAt": 1715560000000
-  },
-  {
-    "id": "rev-1779332098784",
-    "title": "비자&부동산",
-    "content": ".",
-    "author": ".",
-    "image": "/assets/uploads/reviews/1779332101794_00.webp",
-    "createdAt": 1779332098784
-  },
-  {
-    "id": "rev-1778811063239",
+    "id": "rev-1779332711507",
     "title": "행정&비자",
-    "content": "눈물나게 감사합니다",
-    "author": "HAN様",
-    "image": "/assets/uploads/reviews/1778811106383_00.webp",
-    "createdAt": 1778811063239
+    "content": ".",
+    "author": ".",
+    "image": "/assets/uploads/reviews/1779332716315_00.webp",
+    "createdAt": 1779332711507
   },
   {
-    "id": "rev-1779331148784",
+    "id": "rev-1779332702384",
+    "title": "행정&부동산",
+    "content": ".",
+    "author": ".",
+    "image": "/assets/uploads/reviews/1779332704762_00.webp",
+    "createdAt": 1779332702384
+  },
+  {
+    "id": "rev-1779332658864",
+    "title": "행정&비자",
+    "content": ".",
+    "author": ".",
+    "image": "/assets/uploads/reviews/1779332687635_00.webp",
+    "createdAt": 1779332658864
+  },
+  {
+    "id": "rev-1779332644679",
     "title": "비자&부동산",
     "content": ".",
     "author": ".",
-    "image": "/assets/uploads/reviews/1779332073807_00.webp",
-    "createdAt": 1779331148784
+    "image": "/assets/uploads/reviews/1779332647630_00.webp",
+    "createdAt": 1779332644679
   },
   {
-    "id": "s-rev-2",
-    "title": "빠른 일처리 대만족",
-    "content": "행정&비자",
-    "author": "PARK様",
-    "image": "/assets/uploads/reviews/1778662701809_00.webp",
-    "createdAt": 1715560000000
+    "id": "rev-1779332631398",
+    "title": "행정&비자",
+    "content": ".",
+    "author": ".",
+    "image": "/assets/uploads/reviews/1779332637447_00.webp",
+    "createdAt": 1779332631398
+  },
+  {
+    "id": "rev-1779332616907",
+    "title": "비자&부동산",
+    "content": ".",
+    "author": ".",
+    "image": "/assets/uploads/reviews/1779332620312_00.webp",
+    "createdAt": 1779332616907
+  },
+  {
+    "id": "rev-1779332605195",
+    "title": "행정&비자",
+    "content": ".",
+    "author": ".",
+    "image": "/assets/uploads/reviews/1779332607727_00.webp",
+    "createdAt": 1779332605195
   }
 ]
