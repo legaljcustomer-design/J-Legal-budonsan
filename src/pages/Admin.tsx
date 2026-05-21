@@ -14,18 +14,11 @@ import {
   Info,
   Settings,
   ChevronRight,
-  ExternalLink,
   Plus,
   Trash2,
   Edit3,
   X,
-  Save,
   CloudUpload,
-  ArrowLeft,
-  Youtube,
-  Link as LinkIcon,
-  Search,
-  Check,
   Image as ImageIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -39,6 +32,114 @@ const normalizeImageSrc = (src: string | undefined) => {
   }
   return `/${src}`;
 };
+
+const ADMIN_READABLE_CSS = `
+  .admin-readable {
+    color-scheme: dark;
+  }
+
+  .admin-readable h1,
+  .admin-readable h2,
+  .admin-readable h3,
+  .admin-readable h4,
+  .admin-readable h5,
+  .admin-readable h6 {
+    color: #f8fafc !important;
+  }
+
+  .admin-readable p,
+  .admin-readable span,
+  .admin-readable label,
+  .admin-readable div {
+    text-rendering: optimizeLegibility;
+  }
+
+  .admin-readable [class*="text-zinc-700"],
+  .admin-readable [class*="text-zinc-600"],
+  .admin-readable [class*="text-zinc-500"] {
+    color: #d4d4d8 !important;
+  }
+
+  .admin-readable [class*="text-zinc-400"] {
+    color: #e4e4e7 !important;
+  }
+
+  .admin-readable [class*="text-zinc-300"] {
+    color: #f4f4f5 !important;
+  }
+
+  .admin-readable label,
+  .admin-readable [class*="uppercase"][class*="font-bold"] {
+    color: #e5e7eb !important;
+  }
+
+  .admin-readable input,
+  .admin-readable textarea,
+  .admin-readable select {
+    color: #f8fafc !important;
+    background-color: #09090b !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+  }
+
+  .admin-readable input::placeholder,
+  .admin-readable textarea::placeholder {
+    color: #a1a1aa !important;
+  }
+
+  .admin-readable input:focus,
+  .admin-readable textarea:focus,
+  .admin-readable select:focus {
+    border-color: rgba(37, 99, 235, 0.85) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18) !important;
+  }
+
+  .admin-readable option {
+    background-color: #18181b !important;
+    color: #f8fafc !important;
+  }
+
+  .admin-readable [class*="border-white/5"] {
+    border-color: rgba(255, 255, 255, 0.16) !important;
+  }
+
+  .admin-readable [class*="border-white/10"] {
+    border-color: rgba(255, 255, 255, 0.24) !important;
+  }
+
+  .admin-readable [class*="bg-white/5"] {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .admin-readable [class*="bg-zinc-900/50"] {
+    background-color: rgba(39, 39, 42, 0.9) !important;
+  }
+
+  .admin-readable [class*="bg-zinc-900"] {
+    background-color: #18181b !important;
+  }
+
+  .admin-readable [class*="bg-zinc-950"] {
+    background-color: #09090b !important;
+  }
+
+  .admin-readable [class*="text-[10px]"],
+  .admin-readable [class*="text-[9px]"],
+  .admin-readable [class*="text-[8px]"] {
+    letter-spacing: 0.08em;
+  }
+
+  .admin-readable button {
+    text-rendering: optimizeLegibility;
+  }
+
+  .admin-readable .admin-muted {
+    color: #d4d4d8 !important;
+  }
+
+  .admin-readable .admin-strong {
+    color: #ffffff !important;
+  }
+`;
 
 interface StorageData {
   token: string;
@@ -60,17 +161,14 @@ export default function Admin() {
   const [error, setError] = useState<string | null>(null);
   const [ghService, setGhService] = useState<GithubService | null>(null);
   
-  // Data States
   const [originalData, setOriginalData] = useState<any>(null);
   const [pendingData, setPendingData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   
-  // Editor States
   const [editingItem, setEditingItem] = useState<{ type: string; item: any; index: number } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ success?: boolean; message?: string } | null>(null);
 
-  // New Image States for Stage 3
   const [pendingImageFiles, setPendingImageFiles] = useState<{ path: string; base64: string; dataUrl?: string }[]>([]);
   const [deletedImagePaths, setDeletedImagePaths] = useState<string[]>([]);
 
@@ -834,7 +932,8 @@ export default function Admin() {
 
   if (isVerifying) {
     return (
-      <div className="min-h-screen bg-luxury-black flex items-center justify-center">
+      <div className="admin-readable min-h-screen bg-luxury-black flex items-center justify-center">
+        <style>{ADMIN_READABLE_CSS}</style>
         <div className="text-center">
             <Loader2 className="animate-spin text-electric-blue mx-auto mb-4" size={48} />
             <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">인증 정보를 확인 중입니다...</p>
@@ -845,7 +944,8 @@ export default function Admin() {
 
   if (!authData) {
     return (
-      <div className="min-h-screen bg-luxury-black flex items-center justify-center p-6">
+      <div className="admin-readable min-h-screen bg-luxury-black flex items-center justify-center p-6">
+        <style>{ADMIN_READABLE_CSS}</style>
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -913,7 +1013,8 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row">
+    <div className="admin-readable min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row">
+      <style>{ADMIN_READABLE_CSS}</style>
       <AnimatePresence>
         {editingItem && (
           <ModalForm 
@@ -1137,7 +1238,8 @@ const ModalForm = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+    <div className="admin-readable fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+      <style>{ADMIN_READABLE_CSS}</style>
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
