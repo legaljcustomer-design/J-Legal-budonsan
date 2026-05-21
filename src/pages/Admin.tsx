@@ -19,7 +19,8 @@ import {
   Edit3,
   X,
   CloudUpload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  GripVertical
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createGithubService, GithubService } from '../services/githubService';
@@ -411,6 +412,25 @@ export default function Admin() {
 
   const ReviewEditor = () => {
     const list = pendingData.reviews || [];
+    const [draggingReviewIndex, setDraggingReviewIndex] = useState<number | null>(null);
+
+    const moveReview = (fromIndex: number, toIndex: number) => {
+      if (
+        fromIndex === toIndex ||
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= list.length ||
+        toIndex >= list.length
+      ) {
+        return;
+      }
+
+      const newList = [...list];
+      const [movedItem] = newList.splice(fromIndex, 1);
+      newList.splice(toIndex, 0, movedItem);
+
+      setPendingData({ ...pendingData, reviews: newList });
+    };
     
     const handleDelete = (index: number) => {
       if (window.confirm('후기를 삭제하시겠습니까?')) {
@@ -426,17 +446,54 @@ export default function Admin() {
 
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold tracking-tight">고객 후기 관리</h2>
-          <button onClick={() => setEditingItem({ type: 'review', item: { id: `rev-${Date.now()}`, title: '', content: '', author: '', image: '', createdAt: Date.now() }, index: -1 })} className="flex items-center gap-2 bg-zinc-800 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-700 transition-all">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">고객 후기 관리</h2>
+            <p className="text-xs text-zinc-500 mt-2">
+              왼쪽 손잡이를 잡고 위아래로 드래그하면 공개 홈페이지의 후기 노출 순서를 변경할 수 있습니다.
+            </p>
+          </div>
+          <button onClick={() => setEditingItem({ type: 'review', item: { id: `rev-${Date.now()}`, title: '', content: '', author: '', image: '', createdAt: Date.now() }, index: -1 })} className="flex items-center justify-center gap-2 bg-zinc-800 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-700 transition-all">
             <Plus size={16} /> 후기 추가
           </button>
         </div>
 
         <div className="space-y-3">
           {list.map((rev: any, idx: number) => (
-            <div key={rev.id} className="bg-zinc-900 border border-white/5 p-6 rounded-2xl flex items-center justify-between group">
-              <div className="flex items-center gap-4">
+            <div
+              key={rev.id}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', String(idx));
+                setDraggingReviewIndex(idx);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const fromIndex = Number(e.dataTransfer.getData('text/plain'));
+                moveReview(fromIndex, idx);
+                setDraggingReviewIndex(null);
+              }}
+              onDragEnd={() => setDraggingReviewIndex(null)}
+              className={`bg-zinc-900 border p-6 rounded-2xl flex items-center justify-between group transition-all ${
+                draggingReviewIndex === idx
+                  ? 'border-electric-blue/70 opacity-60 scale-[0.99]'
+                  : 'border-white/5 hover:border-electric-blue/40'
+              }`}
+            >
+              <div className="flex items-center gap-4 min-w-0">
+                 <div className="cursor-grab active:cursor-grabbing p-2 rounded-xl bg-white/5 text-zinc-500 group-hover:text-white group-hover:bg-white/10 transition-all shrink-0" title="드래그해서 순서 변경">
+                   <GripVertical size={18} />
+                 </div>
+
+                 <div className="flex items-center justify-center w-7 h-7 rounded-full bg-zinc-950 border border-white/10 text-[10px] font-black text-zinc-400 shrink-0">
+                   {idx + 1}
+                 </div>
+
                  <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0 overflow-hidden border border-white/10 relative flex items-center justify-center">
                    <ImageIcon className="text-zinc-700 absolute" size={16} />
                    {rev.image && (
@@ -451,12 +508,12 @@ export default function Admin() {
                      />
                    )}
                  </div>
-                 <div>
-                   <h3 className="font-bold text-sm">{rev.title}</h3>
-                   <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">{rev.author}</p>
+                 <div className="min-w-0">
+                   <h3 className="font-bold text-sm truncate">{rev.title}</h3>
+                   <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest truncate">{rev.author}</p>
                  </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0">
                 <button onClick={() => handleEdit(rev, idx)} className="p-2 text-zinc-500 hover:text-white transition-all"><Edit3 size={16} /></button>
                 <button onClick={() => handleDelete(idx)} className="p-2 text-zinc-500 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
               </div>
