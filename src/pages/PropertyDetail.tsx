@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Property } from '../types';
 import { firebaseService } from '../services/firebaseService';
+import Seo from '../components/Seo';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -166,8 +167,66 @@ export default function PropertyDetail() {
 
   const youtubeEmbedId = getYoutubeEmbedId(property.youtubeUrl);
 
+  const seoTitle = `${property.title} | ${property.location} ${getPropertyTypeLabel(property.type)}`;
+  const seoDescription = `${property.title}은 오사카J부동산에서 안내하는 ${property.location} 지역 ${getPropertyTypeLabel(property.type)} 매물입니다. ${property.nearestStation ? `가까운 역은 ${property.nearestStation}입니다. ` : ''}오사카 한인, 유학생, 워홀러, 일본 정착 예정자를 위한 부동산 상담을 한국어로 지원합니다.`;
+  const seoImage = property.images?.[0]
+    ? (
+        normalizeImageSrc(property.images[0]).startsWith('http')
+          ? normalizeImageSrc(property.images[0])
+          : `https://osaka-j.pages.dev${normalizeImageSrc(property.images[0])}`
+      )
+    : 'https://osaka-j.pages.dev/favicon.PNG';
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans overflow-x-hidden">
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        keywords={`${property.title}, ${property.location}, ${property.nearestStation || ''}, ${property.nearestLine || ''}, 오사카 부동산, 오사카 한인 부동산, 오사카 유학생 집, 오사카 워홀 집, 일본 부동산, ${getPropertyTypeLabel(property.type)}`}
+        canonical={`https://osaka-j.pages.dev/property/${property.id}`}
+        image={seoImage}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'RealEstateListing',
+          '@id': `https://osaka-j.pages.dev/property/${property.id}#listing`,
+          name: property.title,
+          url: `https://osaka-j.pages.dev/property/${property.id}`,
+          image: property.images?.length
+            ? property.images.map((img) => (
+                normalizeImageSrc(img).startsWith('http')
+                  ? normalizeImageSrc(img)
+                  : `https://osaka-j.pages.dev${normalizeImageSrc(img)}`
+              ))
+            : ['https://osaka-j.pages.dev/favicon.PNG'],
+          description: property.description || seoDescription,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: property.location,
+            addressRegion: property.prefecture ? {
+              osaka: '大阪府',
+              kyoto: '京都府',
+              hyogo: '兵庫県',
+            }[property.prefecture] : '大阪府',
+            addressCountry: 'JP',
+          },
+          floorSize: property.area || undefined,
+          numberOfRooms: property.floorPlan || undefined,
+          datePosted: property.createdAt ? String(property.createdAt) : undefined,
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: 'JPY',
+            price: property.price || '상담 문의',
+            availability: 'https://schema.org/InStock',
+          },
+          provider: {
+            '@type': 'RealEstateAgent',
+            name: '오사카J부동산',
+            url: 'https://osaka-j.pages.dev/',
+            email: 'budonsan.tk@gmail.com',
+            telephone: '+81-70-2805-1749',
+          },
+        }}
+      />
       {/* Navigation Bar */}
       <nav className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-zinc-100 h-16 flex items-center">
         <div className="max-w-7xl mx-auto w-full px-4 md:px-10 flex justify-between items-center">
