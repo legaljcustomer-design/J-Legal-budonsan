@@ -66,26 +66,17 @@ const Recruitment = () => {
             name: '오사카J부동산 & 行政書士Legal_ J office',
             url: 'https://osaka-j.pages.dev/',
           },
-          mainEntity: positions.map((position) => ({
-            '@type': 'JobPosting',
-            title: position.title,
-            description: position.description,
-            employmentType: position.type,
-            hiringOrganization: {
-              '@type': 'Organization',
-              name: '오사카J부동산 & 行政書士Legal_ J office',
-              sameAs: 'https://osaka-j.pages.dev/',
+          mainEntity: {
+            '@type': 'Organization',
+            name: '오사카J부동산 & 行政書士Legal_ J office',
+            url: 'https://osaka-j.pages.dev/',
+            sameAs: 'https://legalj.jp/',
+            contactPoint: {
+              '@type': 'ContactPoint',
+              contactType: 'recruiting',
+              availableLanguage: ['Korean', 'Japanese'],
             },
-            jobLocation: {
-              '@type': 'Place',
-              address: {
-                '@type': 'PostalAddress',
-                addressLocality: '大阪市',
-                addressRegion: '大阪府',
-                addressCountry: 'JP',
-              },
-            },
-          })),
+          },
         }}
       />
       {/* Navigation */}
