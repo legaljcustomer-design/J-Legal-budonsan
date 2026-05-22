@@ -21,6 +21,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Property } from '../types';
 import { firebaseService } from '../services/firebaseService';
 import siteConfig from '../data/siteConfig.json';
+import Seo from '../components/Seo';
 
 const CATEGORIES = [
   { id: 'all', label: '전체', icon: HomeIcon },
@@ -222,6 +223,31 @@ export default function Properties() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-zinc-900 font-sans overflow-x-hidden">
+      <Seo
+        title="오사카 부동산 매물검색·한인 주거 상담"
+        description="오사카J부동산 매물검색 페이지입니다. 오사카, 교토, 효고 지역의 주거용 맨션, 타워맨션, 상가, 사무실, 수익형 부동산을 지역·역명·노선·키워드로 검색할 수 있습니다."
+        keywords="오사카 매물검색, 오사카 부동산 매물, 오사카 한인 부동산, 오사카 유학생 집, 오사카 워홀 집, 오사카 맨션 검색, 오사카 타워맨션, 교토 부동산, 효고 부동산, 일본 부동산 검색"
+        canonical="https://osaka-j.pages.dev/properties"
+        image="https://osaka-j.pages.dev/favicon.PNG"
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          '@id': 'https://osaka-j.pages.dev/properties#collection',
+          name: '오사카J부동산 매물검색',
+          url: 'https://osaka-j.pages.dev/properties',
+          description: '오사카, 교토, 효고 지역의 부동산 매물을 검색할 수 있는 오사카J부동산 매물검색 페이지입니다.',
+          isPartOf: {
+            '@type': 'WebSite',
+            name: '오사카J부동산',
+            url: 'https://osaka-j.pages.dev/',
+          },
+          about: {
+            '@type': 'RealEstateAgent',
+            name: '오사카J부동산',
+            url: 'https://osaka-j.pages.dev/',
+          },
+        }}
+      />
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 glass-morphism h-16 md:h-20 flex items-center">
         <div className="max-w-7xl mx-auto w-full px-4 md:px-10 flex justify-between items-center">
