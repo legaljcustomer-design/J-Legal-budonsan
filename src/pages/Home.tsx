@@ -134,6 +134,20 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
   );
 
   const [selectedReviewImage, setSelectedReviewImage] = useState<string | null>(null);
+  const [isEventBannerVisible, setIsEventBannerVisible] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.localStorage.getItem('settlementPromotionBannerClosed') !== 'true';
+  });
+
+  const EVENT_IMAGE_SRC = '/events/osaka-settlement-promotion.png';
+
+  const closeEventBanner = () => {
+    setIsEventBannerVisible(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('settlementPromotionBannerClosed', 'true');
+    }
+  };
+
 
   const normalizeImageSrc = (src: string | undefined) => {
     if (!src) return '';
@@ -777,6 +791,96 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
         </div>
       </section>
 
+      {/* Settlement Promotion Section */}
+      <section id="settlement-promotion" className="py-16 md:py-24 px-4 md:px-10 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-8 md:gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.55 }}
+              className="relative"
+            >
+              <div className="absolute -inset-4 bg-pink-200/30 blur-3xl rounded-[40px]" />
+              <div className="relative bg-white rounded-[28px] md:rounded-[36px] border border-zinc-200 shadow-2xl overflow-hidden">
+                <img
+                  src={EVENT_IMAGE_SRC}
+                  alt="오사카 정착 올인원 프로모션"
+                  className="w-full h-auto object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.55, delay: 0.1 }}
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-50 text-pink-600 text-[10px] md:text-xs font-black tracking-[0.22em] uppercase mb-5">
+                Event Promotion
+              </div>
+
+              <h2 className="text-3xl md:text-5xl font-black tracking-tighter leading-tight text-zinc-900 mb-5 break-keep">
+                오사카 정착<br className="hidden md:block" />
+                올인원 프로모션
+              </h2>
+
+              <p className="text-sm md:text-base text-zinc-500 leading-relaxed mb-7 md:mb-8">
+                오사카 첫 생활을 준비하는 고객님을 위해 생활 선물세트, 행정서사 상담 쿠폰,
+                재류자격 변경 할인 쿠폰, 후기 작성 혜택까지 함께 제공하는 기간 한정 이벤트입니다.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-7 md:mb-8">
+                <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-5">
+                  <p className="text-[10px] font-black tracking-[0.2em] text-pink-500 uppercase mb-3">Promotion 01</p>
+                  <h3 className="text-base font-black text-zinc-900 mb-2">첫 생활 선물세트 증정</h3>
+                  <p className="text-xs text-zinc-500 leading-relaxed">오사카 정착을 시작하는 고객님께 실용적인 첫 생활 선물세트를 준비했습니다.</p>
+                </div>
+
+                <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-5">
+                  <p className="text-[10px] font-black tracking-[0.2em] text-pink-500 uppercase mb-3">Promotion 02</p>
+                  <h3 className="text-base font-black text-zinc-900 mb-2">행정서사 상담 쿠폰</h3>
+                  <p className="text-xs text-zinc-500 leading-relaxed">무료 쿠폰 및 재류자격 변경 시 15% 할인 쿠폰 혜택을 제공합니다.</p>
+                </div>
+
+                <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-5">
+                  <p className="text-[10px] font-black tracking-[0.2em] text-pink-500 uppercase mb-3">Promotion 03</p>
+                  <h3 className="text-base font-black text-zinc-900 mb-2">후기 작성 혜택</h3>
+                  <p className="text-xs text-zinc-500 leading-relaxed">후기 작성 시 5,000엔 상당의 상품을 증정합니다.</p>
+                </div>
+
+                <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-5">
+                  <p className="text-[10px] font-black tracking-[0.2em] text-pink-500 uppercase mb-3">Event Period</p>
+                  <h3 className="text-base font-black text-zinc-900 mb-2">2026.04.01 ~ 2026.08.01</h3>
+                  <p className="text-xs text-zinc-500 leading-relaxed">조기 신청 시 종료될 수 있는 기간 한정 이벤트입니다.</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href={settings.kakaoUrl?.trim() || `https://pf.kakao.com/${settings.kakaoId.startsWith('_') ? settings.kakaoId : '_' + settings.kakaoId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-8 py-4 rounded-full bg-zinc-950 text-white text-sm font-black tracking-widest hover:bg-electric-blue transition-all shadow-xl flex items-center justify-center gap-2"
+                >
+                  이벤트 상담하기 <MessageCircle size={18} />
+                </a>
+
+                <a
+                  href="#properties"
+                  className="px-8 py-4 rounded-full border border-zinc-200 bg-white text-zinc-900 text-sm font-black tracking-widest hover:bg-zinc-50 transition-all flex items-center justify-center gap-2"
+                >
+                  매물 먼저 보기 <ChevronRight size={16} />
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Properties Section */}
       <section id="properties" className="pt-10 md:pt-12 pb-16 md:pb-24 px-4 md:px-10 bg-slate-50">
         <div className="max-w-7xl mx-auto">
@@ -1322,6 +1426,62 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
           </div>
         </div>
       </footer>
+
+      {/* Floating Event Banner */}
+      <AnimatePresence>
+        {isEventBannerVisible && (
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.96 }}
+            transition={{ duration: 0.35 }}
+            className="fixed left-4 right-4 bottom-24 md:left-8 md:right-auto md:bottom-8 z-40 md:w-[310px]"
+          >
+            <div className="relative rounded-[24px] border border-white/20 bg-zinc-950/95 text-white shadow-2xl backdrop-blur-xl overflow-hidden">
+              <div className="absolute -top-16 -right-16 w-40 h-40 bg-pink-500/25 rounded-full blur-3xl" />
+              <div className="relative p-4 md:p-5">
+                <button
+                  type="button"
+                  onClick={closeEventBanner}
+                  className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                  aria-label="이벤트 배너 닫기"
+                >
+                  <X size={15} />
+                </button>
+
+                <a href="#settlement-promotion" className="block pr-8">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-2xl bg-pink-100 overflow-hidden shrink-0">
+                      <img
+                        src={EVENT_IMAGE_SRC}
+                        alt="오사카 정착 올인원 프로모션"
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black tracking-[0.24em] text-pink-300 uppercase">
+                        Event
+                      </p>
+                      <p className="text-sm font-black leading-snug break-keep">
+                        오사카 정착 올인원 프로모션
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] md:text-xs text-white/65 leading-relaxed mb-3 break-keep">
+                    생활 선물세트 · 상담 쿠폰 · 후기 작성 혜택을 확인해보세요.
+                  </p>
+
+                  <div className="inline-flex items-center gap-1 text-[11px] font-black text-pink-200 tracking-widest">
+                    혜택 보기 <ChevronRight size={13} />
+                  </div>
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Floating Social Sidebar */}
       <div className="fixed left-1/2 -translate-x-1/2 bottom-4 top-auto right-auto md:right-8 md:left-auto md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:translate-x-0 z-50 flex flex-row md:flex-col gap-3 md:gap-4 bg-white/70 md:bg-transparent backdrop-blur-xl md:backdrop-blur-0 rounded-full md:rounded-none px-3 py-2 md:p-0 shadow-xl md:shadow-none border border-white/60 md:border-0">
