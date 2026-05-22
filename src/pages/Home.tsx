@@ -138,12 +138,14 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
     if (typeof window === 'undefined') return true;
     return window.localStorage.getItem('settlementPromotionBannerClosed') !== 'true';
   });
+  const [doNotShowEventBannerAgain, setDoNotShowEventBannerAgain] = useState(false);
 
   const EVENT_IMAGE_SRC = '/events/osaka-settlement-promotion.png';
 
   const closeEventBanner = () => {
     setIsEventBannerVisible(false);
-    if (typeof window !== 'undefined') {
+
+    if (doNotShowEventBannerAgain && typeof window !== 'undefined') {
       window.localStorage.setItem('settlementPromotionBannerClosed', 'true');
     }
   };
@@ -1477,6 +1479,19 @@ export default function Home({ isAdmin }: { isAdmin: boolean }) {
                     혜택 보기 <ChevronRight size={13} />
                   </div>
                 </a>
+
+                <label
+                  className="mt-4 flex items-center gap-2 text-[11px] text-white/65 select-none cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={doNotShowEventBannerAgain}
+                    onChange={(e) => setDoNotShowEventBannerAgain(e.target.checked)}
+                    className="w-4 h-4 rounded border-white/30 bg-transparent accent-pink-500"
+                  />
+                  <span>다시 열지 않기</span>
+                </label>
               </div>
             </div>
           </motion.div>
