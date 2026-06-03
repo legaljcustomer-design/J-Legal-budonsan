@@ -646,6 +646,52 @@ function loadPdfJs() {
   });
 }
 
+function buildPageTextFromPdfItems(items: any[]) {
+  const textItems = items
+    .map((item: any) => {
+      const text = String(item.str || '').trim();
+      const transform = Array.isArray(item.transform) ? item.transform : [];
+
+      return {
+        text,
+        x: Number(transform[4] || 0),
+        y: Number(transform[5] || 0),
+      };
+    })
+    .filter((item) => item.text);
+
+  const lineGroups: Array<{ y: number; items: Array<{ text: string; x: number; y: number }> }> = [];
+  const yTolerance = 3;
+
+  textItems.forEach((item) => {
+    const existingGroup = lineGroups.find((group) => Math.abs(group.y - item.y) <= yTolerance);
+
+    if (existingGroup) {
+      existingGroup.items.push(item);
+      existingGroup.y = (existingGroup.y + item.y) / 2;
+    } else {
+      lineGroups.push({ y: item.y, items: [item] });
+    }
+  });
+
+  return lineGroups
+    .sort((a, b) => b.y - a.y)
+    .map((group) =>
+      group.items
+        .sort((a, b) => a.x - b.x)
+        .map((item) => item.text)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .replace(/\s*／\s*/g, ' ／ ')
+        .replace(/「\s+/g, '「')
+        .replace(/\s+」/g, '」')
+        .replace(/徒歩\s+(\d+)\s+分/g, '徒歩$1分')
+        .trim(),
+    )
+    .filter(Boolean)
+    .join('\n');
+}
+
 async function extractTextFromPdfFile(
   file: File,
   onProgress: (page: number, total: number) => void,
@@ -660,10 +706,7 @@ async function extractTextFromPdfFile(
     onProgress(pageNumber, pdf.numPages);
     const page = await pdf.getPage(pageNumber);
     const textContent = await page.getTextContent();
-    const pageText = textContent.items
-      .map((item: any) => String(item.str || '').trim())
-      .filter(Boolean)
-      .join('\n');
+    const pageText = buildPageTextFromPdfItems(textContent.items || []);
 
     pages.push(pageText);
   }
@@ -740,13 +783,17 @@ function isMetadataLine(line: string) {
   );
 }
 
+function extractRoomNumber(line: string) {
+  return line.trim().match(/^([A-Za-z]?\d{3,5}[A-Za-z]?)(?:\s|$|（)/)?.[1] || '';
+}
+
 function isRoomNumber(line: string) {
-  return /^[A-Za-z]?\d{3,5}[A-Za-z]?$/.test(line);
+  return Boolean(extractRoomNumber(line));
 }
 
 function looksLikeRoomStart(lines: string[], index: number) {
-  if (!isRoomNumber(lines[index])) return false;
-  const nextText = lines.slice(index, index + 24).join(' ');
+  if (!extractRoomNumber(lines[index])) return false;
+  const nextText = lines.slice(index, index + 18).join(' ');
   return /（\d+階部分）/.test(nextText) && /円/.test(nextText) && /(㎡|1K|1R|1DK|1LDK|ワンルーム)/.test(nextText);
 }
 
@@ -846,7 +893,7 @@ function parseRoomChunk(
   },
 ) {
   const chunkText = chunkLines.join(' ');
-  const roomNo = chunkLines[0] || '';
+  const roomNo = extractRoomNumber(chunkLines[0] || '') || chunkLines[0] || '';
   const floorMatch = chunkText.match(/（(\d+)階部分）/);
   const layoutMatch = chunkText.match(/(ワンルーム|1R|1K|1DK|1LDK|2K|2DK|2LDK|3K|3DK|3LDK)/);
   const areaMatch = chunkText.match(/(\d+(?:\.\d+)?)㎡/);
