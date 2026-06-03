@@ -25,6 +25,7 @@ import {
 import { Link } from 'react-router-dom';
 import { createGithubService, GithubService } from '../services/githubService';
 import ImageManager from '../components/admin/ImageManager';
+import PropertyAiSearch from './PropertyAiSearch';
 
 const normalizeImageSrc = (src: string | undefined) => {
   if (!src) return '';
@@ -140,6 +141,37 @@ const ADMIN_READABLE_CSS = `
   .admin-readable .admin-strong {
     color: #ffffff !important;
   }
+
+  .admin-readable .admin-ai-search-light {
+    color-scheme: light;
+  }
+
+  .admin-readable .admin-ai-search-light h1,
+  .admin-readable .admin-ai-search-light h2,
+  .admin-readable .admin-ai-search-light h3,
+  .admin-readable .admin-ai-search-light h4,
+  .admin-readable .admin-ai-search-light h5,
+  .admin-readable .admin-ai-search-light h6 {
+    color: #241d18 !important;
+  }
+
+  .admin-readable .admin-ai-search-light input,
+  .admin-readable .admin-ai-search-light textarea,
+  .admin-readable .admin-ai-search-light select {
+    color: #241d18 !important;
+    background-color: #fffdfb !important;
+    border-color: #ded2c7 !important;
+  }
+
+  .admin-readable .admin-ai-search-light input::placeholder,
+  .admin-readable .admin-ai-search-light textarea::placeholder {
+    color: #8a7b70 !important;
+  }
+
+  .admin-readable .admin-ai-search-light option {
+    background-color: #fffdfb !important;
+    color: #241d18 !important;
+  }
 `;
 
 interface StorageData {
@@ -148,7 +180,7 @@ interface StorageData {
   repo: string;
 }
 
-type TabType = 'overview' | 'properties' | 'reviews' | 'osakaInfo' | 'siteConfig';
+type TabType = 'overview' | 'properties' | 'reviews' | 'osakaInfo' | 'siteConfig' | 'aiPropertySearch';
 
 export default function Admin() {
   const [authData, setAuthData] = useState<StorageData | null>(null);
@@ -1117,6 +1149,7 @@ export default function Admin() {
                { id: 'reviews', icon: MessageSquare, label: 'Reviews' },
                { id: 'osakaInfo', icon: Info, label: 'Osaka Info' },
                { id: 'siteConfig', icon: Settings, label: 'Site Settings' },
+               { id: 'aiPropertySearch', icon: Database, label: 'AI 매물 검색' },
              ].map((tab) => (
                 <button 
                   key={tab.id}
@@ -1187,7 +1220,7 @@ export default function Admin() {
           )}
         </div>
 
-        <div className="max-w-5xl mx-auto">
+        <div className={activeTab === 'aiPropertySearch' ? 'max-w-none mx-auto' : 'max-w-5xl mx-auto'}>
           {activeTab === 'overview' && (
              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <header className="mb-16">
@@ -1222,6 +1255,11 @@ export default function Admin() {
             {activeTab === 'reviews' && <ReviewEditor />}
             {activeTab === 'osakaInfo' && <OsakaInfoEditor />}
             {activeTab === 'siteConfig' && <ConfigEditor />}
+            {activeTab === 'aiPropertySearch' && (
+              <div className="admin-ai-search-light">
+                <PropertyAiSearch />
+              </div>
+            )}
           </div>
         </div>
       </main>
