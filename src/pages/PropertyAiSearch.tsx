@@ -681,7 +681,45 @@ function cleanPdfLines(text: string) {
 }
 
 function isAddressTransitLine(line: string) {
-  return /[都道府県市区町村].+／.+「.+」徒歩\d+分/.test(line);
+  const compact = line.replace(/\s+/g, '');
+  return compact.includes('／') && /[都道府県市区町村]/.test(compact) && /「.+?」徒歩\d+分/.test(compact);
+}
+
+function preparePdfLinesForParsing(text: string) {
+  const rawLines = cleanPdfLines(text);
+  const mergedLines: string[] = [];
+
+  for (let index = 0; index < rawLines.length; index += 1) {
+    let combined = rawLines[index];
+    let consumed = 0;
+
+    for (let offset = 1; offset <= 5 && index + offset < rawLines.length; offset += 1) {
+      const candidate = `${combined} ${rawLines[index + offset]}`.replace(/\s+/g, ' ').trim();
+
+      if (isAddressTransitLine(candidate)) {
+        combined = candidate;
+        consumed = offset;
+        break;
+      }
+
+      const compactCandidate = candidate.replace(/\s+/g, '');
+      const mayBeSplitAddress =
+        compactCandidate.includes('／') ||
+        (/[都道府県市区町村]/.test(compactCandidate) && /丁目|番|号|-/.test(compactCandidate));
+      const mayBeTransitTail =
+        compactCandidate.includes('「') || compactCandidate.includes('徒歩') || /\d+分/.test(compactCandidate);
+
+      if (mayBeSplitAddress && mayBeTransitTail) {
+        combined = candidate;
+        consumed = offset;
+      }
+    }
+
+    mergedLines.push(combined);
+    index += consumed;
+  }
+
+  return mergedLines;
 }
 
 function isMetadataLine(line: string) {
@@ -725,8 +763,10 @@ function findBuildingName(lines: string[], addressLineIndex: number) {
 }
 
 function parseAddressAndTransit(line: string) {
-  const [addressPart, transitPart = ''] = line.split('／').map((part) => part.trim());
-  const stationMatch = transitPart.match(/(.+?)「(.+?)」徒歩(\d+)分/);
+  const normalizedLine = line.replace(/\s+/g, ' ').trim();
+  const [addressPart, transitPart = ''] = normalizedLine.split('／').map((part) => part.trim());
+  const compactTransit = transitPart.replace(/\s+/g, '');
+  const stationMatch = compactTransit.match(/(.+?)「(.+?)」徒歩(\d+)分/);
 
   return {
     address: addressPart || '',
@@ -870,7 +910,7 @@ function parseRoomChunk(
 }
 
 function parseRealnetPdfText(text: string) {
-  const lines = cleanPdfLines(text);
+  const lines = preparePdfLinesForParsing(text);
   const addressLineIndexes = lines
     .map((line, index) => ({ line, index }))
     .filter(({ line }) => isAddressTransitLine(line))
