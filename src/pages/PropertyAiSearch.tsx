@@ -3,6 +3,7 @@ import { useMemo, useState, type CSSProperties } from 'react';
 declare global {
   interface Window {
     pdfjsLib?: any;
+    Tesseract?: any;
   }
 }
 
@@ -80,6 +81,7 @@ type MatchResult = {
 
 const PDFJS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
 const PDFJS_WORKER_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const TESSERACT_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js';
 
 const sampleInquiry = `이름 : 이기현 (남성추정)
 
@@ -646,6 +648,83 @@ function loadPdfJs() {
   });
 }
 
+
+
+function loadTesseractJs() {
+  return new Promise<any>((resolve, reject) => {
+    if (window.Tesseract) {
+      resolve(window.Tesseract);
+      return;
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>('script[data-tesseract="true"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => {
+        if (window.Tesseract) resolve(window.Tesseract);
+        else reject(new Error('OCR 엔진 로드에 실패했습니다.'));
+      });
+      existingScript.addEventListener('error', () => reject(new Error('OCR 엔진 로드에 실패했습니다.')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = TESSERACT_SRC;
+    script.async = true;
+    script.dataset.tesseract = 'true';
+
+    script.onload = () => {
+      if (!window.Tesseract) {
+        reject(new Error('OCR 엔진을 사용할 수 없습니다.'));
+        return;
+      }
+      resolve(window.Tesseract);
+    };
+
+    script.onerror = () => {
+      reject(new Error('OCR 엔진을 불러오지 못했습니다. 네트워크 연결을 확인해주세요.'));
+    };
+
+    document.body.appendChild(script);
+  });
+}
+
+async function renderPdfPageToCanvas(page: any) {
+  const viewport = page.getViewport({ scale: 2.35 });
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    throw new Error('PDF 페이지 렌더링용 캔버스를 만들 수 없습니다.');
+  }
+
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+
+  await page.render({ canvasContext: context, viewport }).promise;
+  return canvas;
+}
+
+async function createOcrWorker(onStatus: (message: string) => void) {
+  const Tesseract = await loadTesseractJs();
+  const worker = await Tesseract.createWorker({
+    logger: (message: any) => {
+      if (message?.status) {
+        const progress = typeof message.progress === 'number' ? ` ${Math.round(message.progress * 100)}%` : '';
+        onStatus(`OCR 준비/분석 중: ${message.status}${progress}`);
+      }
+    },
+  });
+
+  await worker.loadLanguage('jpn+eng');
+  await worker.initialize('jpn+eng');
+  return worker;
+}
+
+async function recognizePageWithOcr(page: any, worker: any) {
+  const canvas = await renderPdfPageToCanvas(page);
+  const result = await worker.recognize(canvas);
+  return String(result?.data?.text || '').trim();
+}
 function buildPageTextFromPdfItems(items: any[]) {
   const textItems = items
     .map((item: any) => {
@@ -694,21 +773,40 @@ function buildPageTextFromPdfItems(items: any[]) {
 
 async function extractTextFromPdfFile(
   file: File,
-  onProgress: (page: number, total: number) => void,
+  onProgress: (page: number, total: number, status?: string) => void,
 ) {
   const pdfjsLib = await loadPdfJs();
   const arrayBuffer = await file.arrayBuffer();
   const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
   const pdf = await loadingTask.promise;
   const pages: string[] = [];
+  let ocrWorker: any = null;
 
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    onProgress(pageNumber, pdf.numPages);
-    const page = await pdf.getPage(pageNumber);
-    const textContent = await page.getTextContent();
-    const pageText = buildPageTextFromPdfItems(textContent.items || []);
+  try {
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      onProgress(pageNumber, pdf.numPages, 'PDF 텍스트 추출 중');
+      const page = await pdf.getPage(pageNumber);
+      const textContent = await page.getTextContent();
+      let pageText = buildPageTextFromPdfItems(textContent.items || []);
 
-    pages.push(pageText);
+      if (pageText.trim().length < 30) {
+        if (!ocrWorker) {
+          onProgress(pageNumber, pdf.numPages, 'PDF가 이미지형이라 OCR 엔진을 준비 중');
+          ocrWorker = await createOcrWorker((message) => {
+            onProgress(pageNumber, pdf.numPages, message);
+          });
+        }
+
+        onProgress(pageNumber, pdf.numPages, '이미지형 PDF OCR 분석 중');
+        pageText = await recognizePageWithOcr(page, ocrWorker);
+      }
+
+      pages.push(pageText);
+    }
+  } finally {
+    if (ocrWorker) {
+      await ocrWorker.terminate();
+    }
   }
 
   return pages.join('\n\n---PAGE---\n\n');
@@ -1406,8 +1504,8 @@ export default function PropertyAiSearch() {
     setPdfStatus('PDF 분석 준비 중입니다...');
 
     try {
-      const extractedText = await extractTextFromPdfFile(file, (page, total) => {
-        setPdfStatus(`PDF 텍스트 추출 중... ${page}/${total}페이지`);
+      const extractedText = await extractTextFromPdfFile(file, (page, total, status) => {
+        setPdfStatus(`${status || 'PDF 분석 중'}... ${page}/${total}페이지`);
       });
 
       setExtractedTextPreview(extractedText.slice(0, 2500));
@@ -1455,7 +1553,7 @@ export default function PropertyAiSearch() {
           <span style={styles.statusDot} />
           <div>
             <strong>PDF 분석 모드</strong>
-            <p>RealnetPro에서 공식 출력한 PDF를 업로드하면 브라우저 안에서 텍스트를 추출해 분석합니다.</p>
+            <p>RealnetPro에서 공식 출력한 PDF를 업로드하면 텍스트 추출을 먼저 시도하고, 이미지형 PDF는 OCR로 분석합니다.</p>
           </div>
         </div>
       </section>
