@@ -215,14 +215,19 @@ function parseMaxWalkMinutes(text: string) {
     return Number(rangeMatch[2]);
   }
 
+  const stationWalkRangeMatch = normalized.match(/역까지\s*도보\s*(\d+)\s*~\s*(\d+)\s*분/);
+  if (stationWalkRangeMatch?.[2]) {
+    return Number(stationWalkRangeMatch[2]);
+  }
+
   const withinMatch = normalized.match(/도보\s*(\d+)\s*분\s*이내/);
   if (withinMatch?.[1]) {
     return Number(withinMatch[1]);
   }
 
-  const stationWalkMatch = normalized.match(/역까지\s*도보\s*(\d+)\s*~\s*(\d+)\s*분/);
-  if (stationWalkMatch?.[2]) {
-    return Number(stationWalkMatch[2]);
+  const stationWalkWithinMatch = normalized.match(/역까지\s*도보\s*(\d+)\s*분\s*이내/);
+  if (stationWalkWithinMatch?.[1]) {
+    return Number(stationWalkWithinMatch[1]);
   }
 
   return null;
@@ -235,7 +240,10 @@ function detectExcludedAreas(text: string) {
 
   Object.entries(areaDictionary).forEach(([koreanArea, japaneseKeywords]) => {
     const areaLower = koreanArea.toLowerCase();
-    const appears = normalized.includes(areaLower) || japaneseKeywords.some((word) => normalized.includes(word.toLowerCase()));
+    const appears =
+      normalized.includes(areaLower) ||
+      japaneseKeywords.some((word) => normalized.includes(word.toLowerCase()));
+
     const negativeNearby =
       normalized.includes(`${areaLower}역 근처로는 절대`) ||
       normalized.includes(`${areaLower} 근처는 절대`) ||
@@ -251,9 +259,14 @@ function detectExcludedAreas(text: string) {
     }
   });
 
-  if (normalized.includes('신이마미야') && (normalized.includes('절대') || normalized.includes('xxx') || normalized.includes('out'))) {
+  if (
+    normalized.includes('신이마미야') &&
+    (normalized.includes('절대') || normalized.includes('xxx') || normalized.includes('out'))
+  ) {
     addUnique(excludedAreas, '신이마미야 주변');
-    ['新今宮', '動物園前', '萩之茶屋', '西成'].forEach((word) => addUnique(excludedJapaneseKeywords, word));
+    ['新今宮', '動物園前', '萩之茶屋', '西成'].forEach((word) =>
+      addUnique(excludedJapaneseKeywords, word),
+    );
   }
 
   return { excludedAreas, excludedJapaneseKeywords };
@@ -281,7 +294,11 @@ function parseCustomerRequest(rawText: string): ParsedCustomerRequest {
     .replace(/\(.+\)/g, '')
     .trim();
 
-  const genderMemo = rawText.includes('남성') ? '남성 추정' : rawText.includes('여성') ? '여성 추정' : '미입력';
+  const genderMemo = rawText.includes('남성')
+    ? '남성 추정'
+    : rawText.includes('여성')
+      ? '여성 추정'
+      : '미입력';
 
   let visaStatus = extractLineValue(rawText, ['재류자격', '비자', '체류자격']);
 
@@ -423,13 +440,15 @@ function parseCustomerRequest(rawText: string): ParsedCustomerRequest {
     );
   }
 
-  if (normalized.includes('신이마미야')) {
-    addCondition(
-      ngConditions,
-      'NG',
-      '신이마미야역 주변',
-      '고객이 명확히 제외한 지역입니다.',
-    );
+  if (excludedAreas.length > 0) {
+    excludedAreas.forEach((area) => {
+      addCondition(
+        ngConditions,
+        'NG',
+        area,
+        '고객이 명확히 제외한 지역 또는 생활권입니다.',
+      );
+    });
   }
 
   if (normalized.includes('선로') || normalized.includes('전철')) {
@@ -691,21 +710,36 @@ function buildCustomerSummary(parsed: ParsedCustomerRequest) {
   lines.push(`${parsed.customerName} 고객님 조건을 아래와 같이 정리했습니다.`);
   lines.push('');
   lines.push('[필수 조건]');
-  parsed.mustConditions.forEach((condition) => {
-    lines.push(`- ${condition.label}`);
-  });
+
+  if (parsed.mustConditions.length > 0) {
+    parsed.mustConditions.forEach((condition) => {
+      lines.push(`- ${condition.label}`);
+    });
+  } else {
+    lines.push('- 별도 필수 조건 확인 필요');
+  }
 
   lines.push('');
   lines.push('[선호 조건]');
-  parsed.preferredConditions.forEach((condition) => {
-    lines.push(`- ${condition.label}`);
-  });
+
+  if (parsed.preferredConditions.length > 0) {
+    parsed.preferredConditions.forEach((condition) => {
+      lines.push(`- ${condition.label}`);
+    });
+  } else {
+    lines.push('- 별도 선호 조건 확인 필요');
+  }
 
   lines.push('');
   lines.push('[제외 조건]');
-  parsed.ngConditions.forEach((condition) => {
-    lines.push(`- ${condition.label}`);
-  });
+
+  if (parsed.ngConditions.length > 0) {
+    parsed.ngConditions.forEach((condition) => {
+      lines.push(`- ${condition.label}`);
+    });
+  } else {
+    lines.push('- 별도 제외 조건 확인 필요');
+  }
 
   lines.push('');
   lines.push('[확인 필요]');
@@ -797,13 +831,13 @@ export default function PropertyAiSearch() {
   };
 
   return (
-    <main style={styles.page}>
+    <section style={styles.wrapper}>
       <section style={styles.hero}>
         <div>
           <p style={styles.eyebrow}>Osaka J Internal AI Tool</p>
           <h1 style={styles.title}>AI 매물 검색 어시스턴트</h1>
           <p style={styles.description}>
-            고객 문의 내용을 그대로 붙여넣으면 AI 검색 조건 형태로 정리합니다.
+            고객 문의 내용을 그대로 붙여넣으면 검색 조건 형태로 정리합니다.
             RealnetPro 공식 데이터 연계가 준비되면 이 조건을 기반으로 자동 매물 검색에 연결할 수 있습니다.
           </p>
         </div>
@@ -1019,7 +1053,7 @@ export default function PropertyAiSearch() {
           </div>
         </div>
       </section>
-    </main>
+    </section>
   );
 }
 
@@ -1071,10 +1105,9 @@ function ConditionPanel({
 }
 
 const styles: Record<string, CSSProperties> = {
-  page: {
+  wrapper: {
     minHeight: '100vh',
-    padding: '32px',
-    background: '#f6f3ee',
+    padding: '0',
     color: '#241d18',
     fontFamily:
       'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
@@ -1096,6 +1129,7 @@ const styles: Record<string, CSSProperties> = {
   },
   title: {
     margin: 0,
+    color: '#f8fafc',
     fontSize: '34px',
     letterSpacing: '-0.04em',
     lineHeight: 1.15,
@@ -1103,7 +1137,7 @@ const styles: Record<string, CSSProperties> = {
   description: {
     margin: '12px 0 0',
     maxWidth: '820px',
-    color: '#6b625b',
+    color: '#d4d4d8',
     lineHeight: 1.65,
   },
   statusBox: {
@@ -1112,9 +1146,10 @@ const styles: Record<string, CSSProperties> = {
     alignItems: 'flex-start',
     padding: '16px',
     borderRadius: '18px',
-    background: '#fff',
-    border: '1px solid #eadfd4',
-    boxShadow: '0 12px 30px rgba(91, 66, 45, 0.08)',
+    background: '#18181b',
+    border: '1px solid rgba(255,255,255,0.16)',
+    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.22)',
+    color: '#f8fafc',
   },
   statusDot: {
     width: '11px',
@@ -1132,11 +1167,11 @@ const styles: Record<string, CSSProperties> = {
     alignItems: 'start',
   },
   panel: {
-    background: '#fff',
+    background: '#ffffff',
     border: '1px solid #eadfd4',
     borderRadius: '24px',
     padding: '22px',
-    boxShadow: '0 14px 36px rgba(91, 66, 45, 0.08)',
+    boxShadow: '0 14px 36px rgba(0, 0, 0, 0.18)',
   },
   panelHeader: {
     marginBottom: '16px',
@@ -1152,6 +1187,7 @@ const styles: Record<string, CSSProperties> = {
     margin: 0,
     fontSize: '21px',
     letterSpacing: '-0.03em',
+    color: '#241d18',
   },
   panelSubText: {
     margin: '8px 0 0',
@@ -1261,6 +1297,7 @@ const styles: Record<string, CSSProperties> = {
   conditionTitle: {
     margin: '0 0 14px',
     fontSize: '18px',
+    color: '#241d18',
   },
   conditionList: {
     display: 'grid',
