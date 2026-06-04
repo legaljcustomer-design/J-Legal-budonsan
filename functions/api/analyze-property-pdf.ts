@@ -24,7 +24,7 @@ export const onRequestPost = async (context: any) => {
     return jsonResponse(
       {
         error:
-          'OPENAI_API_KEY 환경변수가 설정되어 있지 않습니다. Cloudflare Pages 환경변수에 OPENAI_API_KEY를 추가해주세요.',
+          'OPENAI_API_KEY 환경변수가 설정되어 있지 않습니다. Cloudflare Pages 환경변수에 OPENAI_API_KEY를 추가한 뒤 재배포해주세요.',
       },
       500,
     );
@@ -54,9 +54,15 @@ export const onRequestPost = async (context: any) => {
       return jsonResponse({ error: 'OpenAI 파일 업로드 결과에서 file_id를 확인하지 못했습니다.' }, 502);
     }
 
-    const model = env.OPENAI_MODEL || 'gpt-5.5';
+    /*
+      OPENAI_MODEL을 Cloudflare 환경변수로 따로 지정하지 않으면 gpt-4.1을 사용합니다.
+      이유:
+      - 이전 기본값 gpt-5.5는 계정/프로젝트 권한에 따라 API에서 거절될 수 있습니다.
+      - 모델 오류가 나면 Cloudflare Variables and Secrets에 OPENAI_MODEL을 다른 사용 가능 모델명으로 지정하세요.
+    */
+    const model = env.OPENAI_MODEL || 'gpt-4.1';
 
-    const response = await fetch('https://api.openai.com/v1/responses', {
+    const openAiResponse = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${env.OPENAI_API_KEY}`,
@@ -82,15 +88,22 @@ export const onRequestPost = async (context: any) => {
       }),
     });
 
-    const responseJson: any = await response.json().catch(() => null);
+    const responseJson: any = await openAiResponse.json().catch(() => null);
 
     await safeDeleteOpenAIFile(fileId, env.OPENAI_API_KEY);
 
-    if (!response.ok) {
+    if (!openAiResponse.ok) {
+      const detail =
+        responseJson?.error?.message ||
+        responseJson?.error?.code ||
+        JSON.stringify(responseJson || {});
+
       return jsonResponse(
         {
-          error: 'OpenAI PDF 분석 요청에 실패했습니다.',
-          detail: responseJson?.error?.message || responseJson,
+          error: `OpenAI PDF 분석 요청에 실패했습니다. 상세 원인: ${detail}`,
+          detail,
+          status: openAiResponse.status,
+          model,
         },
         502,
       );
@@ -104,6 +117,7 @@ export const onRequestPost = async (context: any) => {
         {
           error: 'AI 분석 결과를 JSON으로 해석하지 못했습니다.',
           rawOutput: outputText,
+          model,
         },
         502,
       );
@@ -138,7 +152,8 @@ async function uploadFileToOpenAI(file: File, apiKey: string) {
   const json: any = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(json?.error?.message || 'OpenAI 파일 업로드에 실패했습니다.');
+    const detail = json?.error?.message || JSON.stringify(json || {});
+    throw new Error(`OpenAI 파일 업로드에 실패했습니다. 상세 원인: ${detail}`);
   }
 
   return json;
@@ -288,7 +303,9 @@ function normalizeAnalysis(data: any) {
   const normalizedResults = results.map((item: any) => {
     const rent = toNullableNumber(item.rent);
     const managementFee = toNullableNumber(item.managementFee);
-    const totalCost = toNullableNumber(item.totalCost) ?? (rent !== null && managementFee !== null ? rent + managementFee : null);
+    const totalCost =
+      toNullableNumber(item.totalCost) ??
+      (rent !== null && managementFee !== null ? rent + managementFee : null);
 
     return {
       rank: normalizeRank(item.rank),
