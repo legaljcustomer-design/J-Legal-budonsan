@@ -695,16 +695,21 @@ function ConditionBox({
 
 const styles: Record<string, CSSProperties> = {
   wrapper: {
+    width: '100%',
+    maxWidth: '1180px',
     minHeight: '100vh',
-    padding: '0',
+    margin: '0 auto',
+    padding: '0 16px 40px',
+    boxSizing: 'border-box',
+    overflowX: 'hidden',
     color: '#241d18',
     fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
   hero: {
     display: 'grid',
-    gridTemplateColumns: '1fr 360px',
-    gap: '24px',
-    alignItems: 'end',
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    gap: '18px',
+    alignItems: 'start',
     marginBottom: '24px',
   },
   eyebrow: {
@@ -732,6 +737,7 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     gap: '12px',
     alignItems: 'flex-start',
+    maxWidth: '520px',
     padding: '16px',
     borderRadius: '18px',
     background: '#18181b',
@@ -749,12 +755,16 @@ const styles: Record<string, CSSProperties> = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: 'minmax(0, 1fr)',
     gap: '20px',
     marginBottom: '20px',
     alignItems: 'start',
+    width: '100%',
   },
   panel: {
+    minWidth: 0,
+    width: '100%',
+    boxSizing: 'border-box',
     background: '#ffffff',
     border: '1px solid #eadfd4',
     borderRadius: '24px',
@@ -777,6 +787,7 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: 'space-between',
     gap: '14px',
     alignItems: 'flex-start',
+    flexWrap: 'wrap',
     marginBottom: '16px',
   },
   panelTitle: {
@@ -798,7 +809,8 @@ const styles: Record<string, CSSProperties> = {
   },
   inputTextarea: {
     width: '100%',
-    minHeight: '520px',
+    minHeight: '360px',
+    maxHeight: '520px',
     boxSizing: 'border-box',
     padding: '16px',
     borderRadius: '16px',
@@ -809,6 +821,7 @@ const styles: Record<string, CSSProperties> = {
     lineHeight: 1.65,
     resize: 'vertical',
     outline: 'none',
+    overflowY: 'auto',
   },
   outputTextarea: {
     width: '100%',
@@ -912,9 +925,9 @@ const styles: Record<string, CSSProperties> = {
   },
   uploadBox: {
     display: 'grid',
-    gridTemplateColumns: 'auto 1fr auto',
-    alignItems: 'center',
-    gap: '16px',
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    alignItems: 'start',
+    gap: '12px',
     padding: '18px',
     borderRadius: '18px',
     border: '1px dashed #d3bda8',
@@ -1002,7 +1015,7 @@ const styles: Record<string, CSSProperties> = {
   table: {
     width: '100%',
     borderCollapse: 'collapse',
-    minWidth: '1180px',
+    minWidth: '980px',
     background: '#fff',
     fontSize: '13px',
   },
