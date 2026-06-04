@@ -1,46 +1,26 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 
-type Rank = 'A추천' | 'B후보' | 'C확인필요' | '탈락';
-
-type AnalysisResult = {
-  rank: Rank;
-  score: number;
-  buildingName: string;
-  roomNo: string;
-  address: string;
-  nearestStation: string;
-  lineName: string;
-  walkMinutes: number | null;
-  rent: number | null;
-  managementFee: number | null;
-  totalCost: number | null;
-  layout: string;
-  areaSqm: number | null;
-  floor: number | null;
-  structure: string;
-  builtYear: string;
-  facing: string;
-  gasType: string;
-  equipment: string[];
-  strengths: string[];
-  cautions: string[];
-  checkNeeded: string[];
-  rejectionReasons: string[];
-  rawEvidence: string;
+type ParsedCondition = {
+  label: string;
+  reason: string;
 };
 
-type AnalysisResponse = {
-  summary: {
-    totalRoomsAnalyzed: number;
-    recommendedCount: number;
-    bCandidateCount: number;
-    checkNeededCount: number;
-    rejectedCount: number;
-    pdfQualityMemo: string;
-  };
-  results: AnalysisResult[];
-  customerMessage: string;
-  warnings: string[];
+type ParsedRequest = {
+  customerName: string;
+  genderMemo: string;
+  visaStatus: string;
+  areaMemo: string;
+  budgetUpper: number | null;
+  layouts: string[];
+  minFloor: number | null;
+  maxWalkMinutes: number | null;
+  mustConditions: ParsedCondition[];
+  preferredConditions: ParsedCondition[];
+  ngConditions: ParsedCondition[];
+  checkNeeded: ParsedCondition[];
+  realnetConditions: string[];
+  chatGptPrompt: string;
+  customerConfirmMessage: string;
 };
 
 const sampleInquiry = `이름 : 이기현 (남성추정)
@@ -85,12 +65,49 @@ const sampleInquiry = `이름 : 이기현 (남성추정)
 
 ※ 17. 최대한 많은 매물 리스트를 희망한다고 합니다.`;
 
-function parseBudget(text: string) {
-  const normalized = text
+function normalizeText(text: string) {
+  return text
     .replace(/[：]/g, ':')
     .replace(/[，]/g, ',')
     .replace(/[〜～]/g, '~')
     .toLowerCase();
+}
+
+function extractLineValue(text: string, labels: string[]) {
+  const lines = text.split('\n');
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    for (const label of labels) {
+      const regex = new RegExp(`${label}\\s*[:：]\\s*(.+)`, 'i');
+      const match = trimmed.match(regex);
+
+      if (match?.[1]) {
+        return match[1].trim();
+      }
+    }
+  }
+
+  return '';
+}
+
+function addCondition(target: ParsedCondition[], label: string, reason: string) {
+  if (!target.some((item) => item.label === label)) {
+    target.push({ label, reason });
+  }
+}
+
+function addText(target: string[], value: string) {
+  const trimmed = value.trim();
+
+  if (trimmed && !target.includes(trimmed)) {
+    target.push(trimmed);
+  }
+}
+
+function parseBudget(text: string) {
+  const normalized = normalizeText(text);
 
   const directRangeMatch = normalized.match(/(\d{2,3})[,，]?(\d{3})\s*[~-]\s*(\d{2,3})[,，]?(\d{3})\s*엔?/);
   if (directRangeMatch) {
@@ -110,7 +127,7 @@ function parseBudget(text: string) {
   const manMatch = normalized.match(/(\d+(?:\.\d+)?)\s*만\s*엔?/);
   if (!manMatch) return null;
 
-  const base = Number(manMatch[1]) * 10000;
+  const base = Math.round(Number(manMatch[1]) * 10000);
 
   if (normalized.includes('초~중반') || normalized.includes('초중반')) return base + 5000;
   if (normalized.includes('중반')) return base + 5000;
@@ -122,238 +139,442 @@ function parseBudget(text: string) {
 
 function parseLayouts(text: string) {
   const layouts: string[] = [];
+
   ['1R', '1K', '1DK', '1LDK', '2K', '2DK', '2LDK'].forEach((layout) => {
-    if (new RegExp(layout, 'i').test(text)) layouts.push(layout);
+    if (new RegExp(layout, 'i').test(text)) {
+      addText(layouts, layout);
+    }
   });
 
   if (text.includes('원룸') || text.includes('ワンルーム')) {
-    layouts.push('1R');
+    addText(layouts, '1R');
   }
 
-  return Array.from(new Set(layouts));
+  return layouts;
 }
 
 function parseMinFloor(text: string) {
-  const match = text.match(/(\d+)\s*(층|階)\s*이상/);
+  const normalized = normalizeText(text);
+  const match = normalized.match(/(\d+)\s*(층|階)\s*이상/);
+
   return match?.[1] ? Number(match[1]) : null;
 }
 
 function parseMaxWalkMinutes(text: string) {
-  const rangeMatch = text.match(/도보\s*(\d+)\s*~\s*(\d+)\s*분/);
+  const normalized = normalizeText(text);
+
+  const stationRangeMatch = normalized.match(/역까지\s*도보\s*(\d+)\s*~\s*(\d+)\s*분/);
+  if (stationRangeMatch?.[2]) return Number(stationRangeMatch[2]);
+
+  const rangeMatch = normalized.match(/도보\s*(\d+)\s*~\s*(\d+)\s*분/);
   if (rangeMatch?.[2]) return Number(rangeMatch[2]);
 
-  const stationWalkRangeMatch = text.match(/역까지\s*도보\s*(\d+)\s*~\s*(\d+)\s*분/);
-  if (stationWalkRangeMatch?.[2]) return Number(stationWalkRangeMatch[2]);
-
-  const withinMatch = text.match(/도보\s*(\d+)\s*분\s*이내/);
+  const withinMatch = normalized.match(/도보\s*(\d+)\s*분\s*이내/);
   if (withinMatch?.[1]) return Number(withinMatch[1]);
 
   return null;
 }
 
-function buildConditionPreview(inquiry: string) {
-  const budget = parseBudget(inquiry);
-  const layouts = parseLayouts(inquiry);
-  const minFloor = parseMinFloor(inquiry);
-  const maxWalk = parseMaxWalkMinutes(inquiry);
+function detectCustomerName(text: string) {
+  const rawName = extractLineValue(text, ['이름', '성함', '고객명']);
 
-  const must: string[] = [];
-  const ng: string[] = [];
-  const check: string[] = [];
+  if (!rawName) return '미입력';
 
-  if (budget) must.push(`월세+관리비 ${budget.toLocaleString()}엔 이하`);
-  if (layouts.length) must.push(`${layouts.join(' / ')} 타입`);
-  if (minFloor) must.push(`${minFloor}층 이상`);
-  if (maxWalk) must.push(`역 도보 ${maxWalk}분 이내`);
-  if (inquiry.includes('오토록')) must.push('오토록');
-  if (inquiry.includes('택배함') || inquiry.includes('무인택배')) must.push('택배BOX');
-  if (inquiry.includes('철근콘크리트') || inquiry.toLowerCase().includes('rc')) must.push('RC/SRC/철근콘크리트 구조');
-  if (inquiry.includes('도시가스')) must.push('도시가스');
-
-  if (inquiry.includes('프로판')) ng.push('프로판가스');
-  if (inquiry.includes('북향')) ng.push('북향');
-  if (inquiry.includes('신이마미야')) ng.push('신이마미야 주변');
-  if (inquiry.includes('선로')) ng.push('전철 선로 인접');
-  if (inquiry.includes('시야') || inquiry.includes('고층건물')) ng.push('시야 차단');
-
-  if (inquiry.includes('벌레')) check.push('벌레 리스크');
-  if (inquiry.includes('방음')) check.push('방음');
-  if (inquiry.includes('따뜻')) check.push('겨울철 단열/채광');
-  if (inquiry.includes('24시간')) check.push('24시간 쓰레기');
-  if (inquiry.includes('편의점') || inquiry.includes('마트') || inquiry.includes('약국')) check.push('주변 편의시설');
-
-  return { budget, layouts, minFloor, maxWalk, must, ng, check };
+  return rawName.replace(/\(.+\)/g, '').trim() || '미입력';
 }
 
-function getRankStyle(rank: Rank): CSSProperties {
-  if (rank === 'A추천') return styles.rankA;
-  if (rank === 'B후보') return styles.rankB;
-  if (rank === '탈락') return styles.rankFail;
-  return styles.rankC;
+function detectVisaStatus(text: string) {
+  const normalized = normalizeText(text);
+  const direct = extractLineValue(text, ['재류자격', '비자', '체류자격']);
+
+  if (direct) return direct;
+  if (normalized.includes('워킹홀리데이') || normalized.includes('워홀')) return '워킹홀리데이';
+  if (normalized.includes('유학') || normalized.includes('유학생')) return '유학';
+  if (normalized.includes('취업비자')) return '취업비자';
+  if (normalized.includes('배우자비자') || normalized.includes('배우자 비자')) return '배우자비자';
+
+  return '미입력';
 }
 
-function csvEscape(value: unknown) {
-  return `"${String(value ?? '').replace(/"/g, '""')}"`;
+function parseInquiry(rawInquiry: string): ParsedRequest {
+  const normalized = normalizeText(rawInquiry);
+  const customerName = detectCustomerName(rawInquiry);
+  const visaStatus = detectVisaStatus(rawInquiry);
+  const genderMemo = rawInquiry.includes('남성')
+    ? '남성 추정'
+    : rawInquiry.includes('여성')
+      ? '여성 추정'
+      : '미입력';
+  const areaMemo = extractLineValue(rawInquiry, ['지역', '희망지역', '희망 지역']) || '미입력';
+  const budgetUpper = parseBudget(rawInquiry);
+  const layouts = parseLayouts(rawInquiry);
+  const minFloor = parseMinFloor(rawInquiry);
+  const maxWalkMinutes = parseMaxWalkMinutes(rawInquiry);
+
+  const mustConditions: ParsedCondition[] = [];
+  const preferredConditions: ParsedCondition[] = [];
+  const ngConditions: ParsedCondition[] = [];
+  const checkNeeded: ParsedCondition[] = [];
+  const realnetConditions: string[] = [];
+
+  if (budgetUpper) {
+    addCondition(
+      mustConditions,
+      `월세+관리비 ${budgetUpper.toLocaleString()}엔 이하`,
+      '고객이 예산 상한을 언급했으므로 총액 기준 필수 조건으로 봅니다.',
+    );
+    addText(realnetConditions, `賃料+共益費 기준 ${budgetUpper.toLocaleString()}円 이하 희망`);
+    addText(realnetConditions, '주의: RealnetPro에서 賃料만 검색하면 共益費 포함 총액 초과 매물이 섞일 수 있음');
+  }
+
+  if (layouts.length > 0) {
+    addCondition(
+      mustConditions,
+      `${layouts.join(' / ')} 타입`,
+      '희망 간取り가 명확하므로 필수 조건으로 봅니다.',
+    );
+    addText(realnetConditions, `間取り: ${layouts.join(' / ')}`);
+  }
+
+  if (minFloor) {
+    addCondition(
+      mustConditions,
+      `${minFloor}층 이상`,
+      '고객이 층수를 명확히 언급했으므로 필수 조건으로 봅니다.',
+    );
+    addText(realnetConditions, `所在階: ${minFloor}階以上`);
+  }
+
+  if (maxWalkMinutes) {
+    addCondition(
+      mustConditions,
+      `역 도보 ${maxWalkMinutes}분 이내`,
+      '역까지의 도보 시간이 명확하므로 필수 조건으로 봅니다.',
+    );
+    addText(realnetConditions, `駅徒歩: ${maxWalkMinutes}分以内`);
+  }
+
+  if (normalized.includes('오토록') || normalized.includes('オートロック')) {
+    addCondition(mustConditions, '오토록', '공동현관 오토록을 요구하고 있습니다.');
+    addText(realnetConditions, '設備: オートロック');
+  }
+
+  if (
+    normalized.includes('무인택배') ||
+    normalized.includes('택배함') ||
+    normalized.includes('택배박스') ||
+    normalized.includes('宅配box') ||
+    normalized.includes('宅配ボックス')
+  ) {
+    addCondition(mustConditions, '무인택배함 / 宅配BOX', '택배BOX를 요구하고 있습니다.');
+    addText(realnetConditions, '設備: 宅配BOX');
+  }
+
+  if (
+    normalized.includes('철근콘크리트') ||
+    normalized.includes('rc') ||
+    normalized.includes('src') ||
+    normalized.includes('鉄筋')
+  ) {
+    addCondition(
+      mustConditions,
+      'RC / SRC / 철근콘크리트 구조',
+      '방음과 단열 희망과도 연결되는 주요 조건입니다.',
+    );
+    addText(realnetConditions, '構造: 鉄筋コンクリート造 / 鉄骨鉄筋コンクリート造 우선');
+  }
+
+  if (normalized.includes('도시가스') || normalized.includes('都市ガス')) {
+    addCondition(mustConditions, '도시가스', '도시가스를 희망하고 있습니다.');
+    addText(realnetConditions, '設備/備考: 都市ガス');
+  }
+
+  if (normalized.includes('외국인') || normalized.includes('外国人')) {
+    addText(realnetConditions, 'フリーワード: 外国人');
+  } else if (
+    visaStatus.includes('워킹') ||
+    visaStatus.includes('워홀') ||
+    visaStatus.includes('유학') ||
+    visaStatus.includes('취업')
+  ) {
+    addText(realnetConditions, 'フリーワード: 外国人');
+  }
+
+  if (normalized.includes('프로판') || normalized.includes('プロパン')) {
+    addCondition(ngConditions, '프로판가스', '고객이 프로판가스를 제외했습니다.');
+    addText(realnetConditions, '除外確認: プロパンガス');
+  }
+
+  if (normalized.includes('북향') || normalized.includes('北向')) {
+    addCondition(ngConditions, '북향', '고객이 북향을 제외했습니다.');
+    addText(realnetConditions, '除外確認: 北向');
+  }
+
+  if (normalized.includes('신이마미야')) {
+    addCondition(ngConditions, '신이마미야역 주변', '고객이 명확히 제외한 지역입니다.');
+    addText(realnetConditions, '除外候補: 新今宮 / 動物園前 / 萩之茶屋 / 西成');
+  }
+
+  if (normalized.includes('선로') || normalized.includes('전철')) {
+    addCondition(ngConditions, '전철 선로 인접', '소음 우려로 제외 조건에 가깝습니다.');
+    addCondition(checkNeeded, '지도상 선로 인접 여부', 'PDF만으로 확정하기 어려워 지도 확인이 필요합니다.');
+  }
+
+  if (normalized.includes('시야') || normalized.includes('고층건물') || normalized.includes('차단')) {
+    addCondition(ngConditions, '창밖 시야 차단 심한 매물', '고객이 OUT 조건으로 언급했습니다.');
+    addCondition(checkNeeded, '창밖 시야 / 맞은편 고층건물 여부', '사진, 스트리트뷰, 내견으로 확인해야 합니다.');
+  }
+
+  if (normalized.includes('24시간') && (normalized.includes('분리수거') || normalized.includes('쓰레기'))) {
+    addCondition(preferredConditions, '24시간 쓰레기 배출 / 분리수거 가능', '관리규약 확인이 필요한 선호 조건입니다.');
+    addCondition(checkNeeded, '24시간 쓰레기 배출 가능 여부', '물건 정보에 없으면 관리회사 확인이 필요합니다.');
+  }
+
+  if (normalized.includes('벌레')) {
+    addCondition(preferredConditions, '벌레 리스크가 낮은 건물', '층수, 주변 음식점, 쓰레기장 위치, 건물 관리상태를 함께 봐야 합니다.');
+    addCondition(checkNeeded, '벌레 발생 리스크', '완전 보장은 어렵고 주변 환경 확인이 필요합니다.');
+  }
+
+  if (normalized.includes('방음')) {
+    addCondition(preferredConditions, '방음이 비교적 좋은 매물', 'RC/SRC, 선로·대로변 인접 여부를 함께 봐야 합니다.');
+    addCondition(checkNeeded, '방음 수준', '구조만으로 확정할 수 없어 내견 확인이 필요합니다.');
+  }
+
+  if (normalized.includes('따뜻')) {
+    addCondition(preferredConditions, '겨울에 비교적 따뜻한 방', '향, 층수, 단열, 창 상태를 확인해야 합니다.');
+    addCondition(checkNeeded, '겨울철 단열/채광', '내견과 지도 확인이 필요합니다.');
+  }
+
+  if (normalized.includes('가스레인지') || normalized.includes('화구') || normalized.includes('コンロ')) {
+    addCondition(preferredConditions, '가스레인지 기본 옵션 / 가능하면 2구', '설비란 또는 관리회사 확인이 필요합니다.');
+    addCondition(checkNeeded, '가스레인지 기본 옵션 및 2구 여부', '도면·설비 정보·관리회사 확인이 필요합니다.');
+  }
+
+  if (normalized.includes('치안')) {
+    addCondition(preferredConditions, '치안이 괜찮은 생활권', '야간 동선과 역 주변 분위기 확인이 필요합니다.');
+    addCondition(checkNeeded, '치안 및 야간 귀가 동선', '지도와 현장감 기준으로 확인해야 합니다.');
+  }
+
+  if (normalized.includes('편의점') || normalized.includes('마트') || normalized.includes('약국')) {
+    addCondition(preferredConditions, '편의점 / 마트 / 약국 근처', '생활 편의시설 접근성을 선호합니다.');
+    addCondition(checkNeeded, '주변 편의시설', '지도에서 편의점, 슈퍼, 드럭스토어를 확인해야 합니다.');
+  }
+
+  if (
+    visaStatus.includes('워킹') ||
+    visaStatus.includes('워홀') ||
+    visaStatus.includes('워킹홀리데이')
+  ) {
+    addCondition(
+      checkNeeded,
+      '외국인 계약 가능 여부 / 워홀 1년 심사 가능 여부',
+      '外国人契約可能이어도 워킹홀리데이 1년 체류 심사는 별도 확인이 필요합니다.',
+    );
+  }
+
+  const chatGptPrompt = buildChatGptPrompt({
+    customerName,
+    genderMemo,
+    visaStatus,
+    areaMemo,
+    budgetUpper,
+    layouts,
+    minFloor,
+    maxWalkMinutes,
+    mustConditions,
+    preferredConditions,
+    ngConditions,
+    checkNeeded,
+  });
+
+  const customerConfirmMessage = buildCustomerConfirmMessage({
+    customerName,
+    visaStatus,
+    budgetUpper,
+    layouts,
+    minFloor,
+    maxWalkMinutes,
+    mustConditions,
+    preferredConditions,
+    ngConditions,
+    checkNeeded,
+  });
+
+  return {
+    customerName,
+    genderMemo,
+    visaStatus,
+    areaMemo,
+    budgetUpper,
+    layouts,
+    minFloor,
+    maxWalkMinutes,
+    mustConditions,
+    preferredConditions,
+    ngConditions,
+    checkNeeded,
+    realnetConditions,
+    chatGptPrompt,
+    customerConfirmMessage,
+  };
 }
 
-function buildResultsCsv(results: AnalysisResult[]) {
-  const header = [
-    '추천도',
-    '점수',
-    '매물명',
-    '호실',
-    '총액',
-    '월세',
-    '관리비',
-    '주소',
-    '노선',
-    '역',
-    '도보',
-    '타입',
-    '면적',
-    '층수',
-    '구조',
-    '축년',
-    '향',
-    '가스',
-    '설비',
-    '장점',
-    '주의',
-    '확인필요',
-    '탈락사유',
-    '근거',
-  ];
+function buildConditionLines(conditions: ParsedCondition[]) {
+  if (conditions.length === 0) return '- 특별히 추출된 조건 없음';
 
-  const rows = results.map((result) => [
-    result.rank,
-    result.score,
-    result.buildingName,
-    result.roomNo,
-    result.totalCost,
-    result.rent,
-    result.managementFee,
-    result.address,
-    result.lineName,
-    result.nearestStation,
-    result.walkMinutes,
-    result.layout,
-    result.areaSqm,
-    result.floor,
-    result.structure,
-    result.builtYear,
-    result.facing,
-    result.gasType,
-    result.equipment.join(' / '),
-    result.strengths.join(' / '),
-    result.cautions.join(' / '),
-    result.checkNeeded.join(' / '),
-    result.rejectionReasons.join(' / '),
-    result.rawEvidence,
-  ]);
+  return conditions.map((condition) => `- ${condition.label}`).join('\n');
+}
 
-  return [header, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n');
+function buildChatGptPrompt(parsed: Omit<ParsedRequest, 'realnetConditions' | 'chatGptPrompt' | 'customerConfirmMessage'>) {
+  return `아래 고객 조건과 첨부한 RealnetPro PDF를 기준으로 매물을 분석해주세요.
+
+[중요]
+- PDF는 RealnetPro/リアプロ의 검색 결과 PDF입니다.
+- PDF 안의 매물을 가능한 많이 읽고, 고객 조건에 맞는 순서대로 정리해주세요.
+- 월세는 반드시 "賃料 + 共益費/管理費" 합계 기준으로 판단해주세요.
+- "賃料만 70,000~75,000円"이어도 共益費 포함 총액이 고객 상한을 넘으면 탈락입니다.
+- PDF만으로 판단하기 어려운 항목은 추정하지 말고 "확인 필요"로 분류해주세요.
+
+[고객 기본 정보]
+- 고객명: ${parsed.customerName}
+- 성별/메모: ${parsed.genderMemo}
+- 재류자격: ${parsed.visaStatus}
+- 희망 지역 메모: ${parsed.areaMemo}
+- 월세+관리비 상한: ${parsed.budgetUpper ? `${parsed.budgetUpper.toLocaleString()}엔 이하` : '미확인'}
+- 희망 타입: ${parsed.layouts.length ? parsed.layouts.join(' / ') : '미확인'}
+- 최소 층수: ${parsed.minFloor ? `${parsed.minFloor}층 이상` : '미확인'}
+- 역 도보: ${parsed.maxWalkMinutes ? `${parsed.maxWalkMinutes}분 이내` : '미확인'}
+
+[필수 조건]
+${buildConditionLines(parsed.mustConditions)}
+
+[선호 조건]
+${buildConditionLines(parsed.preferredConditions)}
+
+[NG / 제외 조건]
+${buildConditionLines(parsed.ngConditions)}
+
+[확인 필요 조건]
+${buildConditionLines(parsed.checkNeeded)}
+
+[분석 기준]
+1. 매물별로 아래 항목을 추출해주세요.
+   - 매물명
+   - 호실
+   - 주소
+   - 노선/역/도보분수
+   - 월세
+   - 관리비/共益費
+   - 월세+관리비 총액
+   - 間取り
+   - 면적
+   - 층수
+   - 구조
+   - 축년수
+   - 향
+   - 가스 종류
+   - 오토록
+   - 宅配BOX
+   - 外国人契約可能 여부
+   - 기타 설비/비고
+
+2. 매물을 아래 4단계로 분류해주세요.
+   - A추천: 주요 필수조건을 대부분 충족하고 고객에게 우선 제안 가능
+   - B후보: 핵심 조건은 맞지만 일부 확인 필요
+   - C확인필요: 나쁘지 않지만 확인 항목이 많음
+   - 탈락: 예산 초과, 타입 불일치, 층수 불일치, 프로판가스, 북향, 제외지역 등 명확한 NG
+
+3. 탈락 매물도 중요한 경우에는 탈락 사유를 짧게 정리해주세요.
+
+4. 출력 형식은 아래 순서로 해주세요.
+   1) 전체 요약
+   2) A추천 표
+   3) B후보 표
+   4) C확인필요 표
+   5) 탈락 주요 사유 요약
+   6) 관리회사에 확인해야 할 항목
+   7) 고객에게 보낼 수 있는 안내문 초안
+
+[표 형식]
+추천도 | 매물명/호실 | 월세+관리비 | 역/도보 | 타입/면적 | 층수/향 | 구조/가스 | 장점 | 확인 필요/탈락 사유
+
+위 기준으로 첨부 PDF를 분석해주세요.`;
+}
+
+function buildCustomerConfirmMessage(parsed: Pick<
+  ParsedRequest,
+  | 'customerName'
+  | 'visaStatus'
+  | 'budgetUpper'
+  | 'layouts'
+  | 'minFloor'
+  | 'maxWalkMinutes'
+  | 'mustConditions'
+  | 'preferredConditions'
+  | 'ngConditions'
+  | 'checkNeeded'
+>) {
+  const lines: string[] = [];
+
+  lines.push(`${parsed.customerName} 고객님 조건을 아래와 같이 정리했습니다.`);
+  lines.push('');
+  lines.push('[기본 조건]');
+  lines.push(`- 재류자격: ${parsed.visaStatus}`);
+  lines.push(`- 월세+관리비 상한: ${parsed.budgetUpper ? `${parsed.budgetUpper.toLocaleString()}엔 이하` : '확인 필요'}`);
+  lines.push(`- 희망 타입: ${parsed.layouts.length ? parsed.layouts.join(' / ') : '확인 필요'}`);
+  lines.push(`- 층수: ${parsed.minFloor ? `${parsed.minFloor}층 이상` : '확인 필요'}`);
+  lines.push(`- 역 도보: ${parsed.maxWalkMinutes ? `${parsed.maxWalkMinutes}분 이내` : '확인 필요'}`);
+  lines.push('');
+  lines.push('[필수 조건]');
+  lines.push(buildConditionLines(parsed.mustConditions));
+  lines.push('');
+  lines.push('[선호 조건]');
+  lines.push(buildConditionLines(parsed.preferredConditions));
+  lines.push('');
+  lines.push('[제외 조건]');
+  lines.push(buildConditionLines(parsed.ngConditions));
+  lines.push('');
+  lines.push('[확인 필요]');
+  lines.push(buildConditionLines(parsed.checkNeeded));
+  lines.push('');
+  lines.push('위 조건을 기준으로 우선 필수 조건에 가까운 매물을 먼저 확인하고, PDF만으로 확정이 어려운 항목은 관리회사 확인 후 안내드리겠습니다.');
+
+  return lines.join('\n');
 }
 
 export default function PropertyAiSearch() {
   const [rawInquiry, setRawInquiry] = useState(sampleInquiry);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [copied, setCopied] = useState('');
+  const [copiedLabel, setCopiedLabel] = useState('');
 
-  const preview = useMemo(() => buildConditionPreview(rawInquiry), [rawInquiry]);
-
-  const sortedResults = useMemo(() => {
-    if (!analysis?.results) return [];
-
-    const rankWeight: Record<Rank, number> = {
-      A추천: 4,
-      B후보: 3,
-      C확인필요: 2,
-      탈락: 1,
-    };
-
-    return [...analysis.results].sort((a, b) => {
-      const rankDiff = rankWeight[b.rank] - rankWeight[a.rank];
-      if (rankDiff !== 0) return rankDiff;
-      return b.score - a.score;
-    });
-  }, [analysis]);
-
-  const handleAnalyze = async () => {
-    if (!pdfFile) {
-      setErrorMessage('먼저 PDF 파일을 선택해주세요.');
-      return;
-    }
-
-    setIsAnalyzing(true);
-    setErrorMessage('');
-    setAnalysis(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('pdf', pdfFile);
-      formData.append('inquiry', rawInquiry);
-
-      const response = await fetch('/api/analyze-property-pdf', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(data?.error || `분석 요청 실패: ${response.status}`);
-      }
-
-      setAnalysis(data as AnalysisResponse);
-    } catch (error: any) {
-      setErrorMessage(error?.message || 'PDF 분석 중 오류가 발생했습니다.');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
+  const parsed = useMemo(() => parseInquiry(rawInquiry), [rawInquiry]);
 
   const copyText = async (label: string, text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(label);
-      window.setTimeout(() => setCopied(''), 1800);
+      setCopiedLabel(label);
+      window.setTimeout(() => setCopiedLabel(''), 1800);
     } catch {
       alert('복사에 실패했습니다. 직접 드래그해서 복사해주세요.');
     }
-  };
-
-  const downloadCsv = () => {
-    const csv = buildResultsCsv(sortedResults);
-    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-
-    anchor.href = url;
-    anchor.download = `PDF매물분석_${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-
-    URL.revokeObjectURL(url);
   };
 
   return (
     <section style={styles.wrapper}>
       <section style={styles.hero}>
         <div>
-          <p style={styles.eyebrow}>Osaka J Internal AI Tool</p>
+          <p style={styles.eyebrow}>Osaka J Internal Tool</p>
           <h1 style={styles.title}>AI 매물 검색 어시스턴트</h1>
           <p style={styles.description}>
-            고객 문의 내용을 입력하고 RealnetPro PDF를 업로드하면, 서버 AI가 PDF를 읽어 조건에 가까운 매물을 자동 선별합니다.
+            고객 조건을 정리하고, ChatGPT에 붙여넣을 PDF 분석용 프롬프트를 생성합니다.
+            RealnetPro PDF는 이 ChatGPT 대화창에 직접 업로드해서 분석하는 반자동 방식입니다.
           </p>
         </div>
 
         <div style={styles.statusBox}>
           <span style={styles.statusDot} />
           <div>
-            <strong>서버 AI 분석 모드</strong>
-            <p>브라우저 OCR 대신 서버 API가 PDF를 분석합니다. API 키는 서버 환경변수에만 저장합니다.</p>
+            <strong>반자동 분석 모드</strong>
+            <p>API 비용 없이, 이 화면에서 프롬프트를 만든 뒤 ChatGPT 대화창에 PDF와 함께 붙여넣습니다.</p>
           </div>
         </div>
       </section>
@@ -384,196 +605,71 @@ export default function PropertyAiSearch() {
 
         <div style={styles.panel}>
           <div style={styles.panelHeader}>
-            <h2 style={styles.panelTitle}>2. 조건 미리보기</h2>
-            <p style={styles.panelSubText}>서버 AI 분석 전에 주요 조건을 간단히 확인합니다.</p>
+            <h2 style={styles.panelTitle}>2. 기본 정보 자동 추출</h2>
+            <p style={styles.panelSubText}>고객명, 비자, 예산, 타입, 층수, 역 도보 조건을 자동 정리합니다.</p>
           </div>
 
           <div style={styles.infoGrid}>
-            <InfoItem label="월세+관리비 상한" value={preview.budget ? `${preview.budget.toLocaleString()}엔` : '미확인'} />
-            <InfoItem label="희망 타입" value={preview.layouts.length ? preview.layouts.join(' / ') : '미확인'} />
-            <InfoItem label="최소 층수" value={preview.minFloor ? `${preview.minFloor}층 이상` : '미확인'} />
-            <InfoItem label="역 도보" value={preview.maxWalk ? `${preview.maxWalk}분 이내` : '미확인'} />
-          </div>
-
-          <div style={styles.conditionGridSmall}>
-            <ConditionBox title="필수" items={preview.must} tone="must" />
-            <ConditionBox title="NG" items={preview.ng} tone="ng" />
-            <ConditionBox title="확인 필요" items={preview.check} tone="check" />
+            <InfoItem label="고객명" value={parsed.customerName} />
+            <InfoItem label="성별/메모" value={parsed.genderMemo} />
+            <InfoItem label="재류자격" value={parsed.visaStatus} />
+            <InfoItem label="지역 메모" value={parsed.areaMemo} />
+            <InfoItem
+              label="월세+관리비 상한"
+              value={parsed.budgetUpper ? `${parsed.budgetUpper.toLocaleString()}엔` : '미확인'}
+            />
+            <InfoItem
+              label="희망 타입"
+              value={parsed.layouts.length ? parsed.layouts.join(' / ') : '미확인'}
+            />
+            <InfoItem
+              label="최소 층수"
+              value={parsed.minFloor ? `${parsed.minFloor}층 이상` : '미확인'}
+            />
+            <InfoItem
+              label="역 도보"
+              value={parsed.maxWalkMinutes ? `${parsed.maxWalkMinutes}분 이내` : '미확인'}
+            />
           </div>
         </div>
+      </section>
+
+      <section style={styles.conditionGrid}>
+        <ConditionPanel title="필수 조건" tone="must" conditions={parsed.mustConditions} />
+        <ConditionPanel title="선호 조건" tone="preferred" conditions={parsed.preferredConditions} />
+        <ConditionPanel title="NG 조건" tone="ng" conditions={parsed.ngConditions} />
+        <ConditionPanel title="확인 필요" tone="check" conditions={parsed.checkNeeded} />
       </section>
 
       <section style={styles.panel}>
         <div style={styles.panelHeaderRow}>
           <div>
-            <h2 style={styles.panelTitle}>3. RealnetPro PDF 서버 분석</h2>
+            <h2 style={styles.panelTitle}>3. ChatGPT PDF 분석용 프롬프트</h2>
             <p style={styles.panelSubText}>
-              RealnetPro에서 「検索結果 PDF出力」로 받은 PDF를 업로드하세요. 분석은 서버에서 실행됩니다.
-            </p>
-          </div>
-
-          {analysis && (
-            <div style={styles.buttonRowNoMargin}>
-              <button type="button" style={styles.secondaryButton} onClick={downloadCsv}>
-                CSV 저장
-              </button>
-              <button type="button" style={styles.primaryButton} onClick={() => copyText('message', analysis.customerMessage)}>
-                {copied === 'message' ? '복사 완료' : '추천문 복사'}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div style={styles.uploadBox}>
-          <input
-            id="server-pdf-input"
-            type="file"
-            accept="application/pdf,.pdf"
-            style={styles.hiddenInput}
-            onChange={(event) => {
-              setPdfFile(event.target.files?.[0] || null);
-              setAnalysis(null);
-              setErrorMessage('');
-            }}
-          />
-
-          <button
-            type="button"
-            style={styles.uploadButton}
-            onClick={() => document.getElementById('server-pdf-input')?.click()}
-          >
-            PDF 선택
-          </button>
-
-          <div style={styles.uploadInfo}>
-            <strong>{pdfFile ? pdfFile.name : '선택된 PDF 없음'}</strong>
-            <p style={styles.panelSubText}>
-              82페이지처럼 큰 PDF는 분석에 시간이 걸릴 수 있습니다. 처음에는 같은 조건의 짧은 PDF로 테스트하면 더 빠릅니다.
+              아래 문구를 복사한 뒤, 이 ChatGPT 대화창에 붙여넣고 RealnetPro PDF를 함께 업로드하세요.
             </p>
           </div>
 
           <button
             type="button"
-            style={isAnalyzing ? styles.analyzeButtonDisabled : styles.analyzeButton}
-            disabled={isAnalyzing}
-            onClick={handleAnalyze}
+            style={styles.primaryButton}
+            onClick={() => copyText('prompt', parsed.chatGptPrompt)}
           >
-            {isAnalyzing ? '서버 분석 중...' : '서버 AI 분석 시작'}
+            {copiedLabel === 'prompt' ? '복사 완료' : '프롬프트 복사'}
           </button>
         </div>
 
-        {errorMessage && <div style={styles.errorBox}>{errorMessage}</div>}
+        <textarea style={styles.promptTextarea} value={parsed.chatGptPrompt} readOnly />
 
-        {analysis && (
-          <>
-            <div style={styles.resultSummaryGrid}>
-              <SummaryCard label="분석 호실" value={analysis.summary.totalRoomsAnalyzed} />
-              <SummaryCard label="A추천" value={analysis.summary.recommendedCount} />
-              <SummaryCard label="B후보" value={analysis.summary.bCandidateCount} />
-              <SummaryCard label="확인필요" value={analysis.summary.checkNeededCount} />
-              <SummaryCard label="탈락" value={analysis.summary.rejectedCount} />
-            </div>
-
-            {analysis.summary.pdfQualityMemo && (
-              <div style={styles.noticeBox}>
-                <strong>PDF 판독 메모</strong>
-                <p>{analysis.summary.pdfQualityMemo}</p>
-              </div>
-            )}
-
-            {analysis.warnings?.length > 0 && (
-              <div style={styles.warningBox}>
-                <strong>주의사항</strong>
-                <ul>
-                  {analysis.warnings.map((warning) => (
-                    <li key={warning}>{warning}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div style={styles.tableWrap}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>추천도</th>
-                    <th style={styles.th}>매물</th>
-                    <th style={styles.th}>총액</th>
-                    <th style={styles.th}>역</th>
-                    <th style={styles.th}>타입</th>
-                    <th style={styles.th}>층/향</th>
-                    <th style={styles.th}>장점</th>
-                    <th style={styles.th}>확인/탈락 사유</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedResults.map((result, index) => (
-                    <tr key={`${result.buildingName}-${result.roomNo}-${index}`}>
-                      <td style={styles.td}>
-                        <span style={{ ...styles.rankBadge, ...getRankStyle(result.rank) }}>
-                          {result.rank}
-                          <br />
-                          {result.score}점
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        <strong>{result.buildingName || '매물명 확인'}</strong>
-                        <p style={styles.smallText}>{result.roomNo || '?'}호 · {result.address || '주소 확인'}</p>
-                      </td>
-                      <td style={styles.td}>
-                        <strong>{result.totalCost ? `${result.totalCost.toLocaleString()}엔` : '확인'}</strong>
-                        <p style={styles.smallText}>
-                          {result.rent?.toLocaleString() ?? '?'} + {result.managementFee?.toLocaleString() ?? '?'}
-                        </p>
-                      </td>
-                      <td style={styles.td}>
-                        {result.nearestStation || '확인'}
-                        <p style={styles.smallText}>{result.lineName || ''} · 도보 {result.walkMinutes ?? '?'}분</p>
-                      </td>
-                      <td style={styles.td}>
-                        {result.layout || '확인'}
-                        <p style={styles.smallText}>{result.areaSqm ?? '?'}㎡ · {result.structure || '구조 확인'}</p>
-                      </td>
-                      <td style={styles.td}>
-                        {result.floor ?? '?'}층
-                        <p style={styles.smallText}>{result.facing || '향 확인'}</p>
-                      </td>
-                      <td style={styles.td}>
-                        <ul style={styles.compactList}>
-                          {(result.strengths || []).slice(0, 4).map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      </td>
-                      <td style={styles.td}>
-                        <ul style={styles.compactList}>
-                          {[...(result.rejectionReasons || []), ...(result.checkNeeded || []), ...(result.cautions || [])]
-                            .slice(0, 5)
-                            .map((item) => (
-                              <li key={item}>{item}</li>
-                            ))}
-                        </ul>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div style={styles.panelSubBox}>
-              <div style={styles.panelHeaderRow}>
-                <div>
-                  <h3 style={styles.subTitle}>고객 발송용 추천문</h3>
-                  <p style={styles.panelSubText}>상위 후보 기준으로 자동 생성됩니다.</p>
-                </div>
-                <button type="button" style={styles.secondaryButton} onClick={() => copyText('message2', analysis.customerMessage)}>
-                  {copied === 'message2' ? '복사 완료' : '복사'}
-                </button>
-              </div>
-              <textarea style={styles.outputTextarea} value={analysis.customerMessage} readOnly />
-            </div>
-          </>
-        )}
+        <div style={styles.noticeBox}>
+          <strong>사용 순서</strong>
+          <ol>
+            <li>RealnetPro에서 조건 검색 후 「検索結果 PDF出力」로 PDF를 저장합니다.</li>
+            <li>위 프롬프트를 복사합니다.</li>
+            <li>ChatGPT 대화창에 프롬프트를 붙여넣고 PDF를 업로드합니다.</li>
+            <li>ChatGPT가 A추천/B후보/C확인필요/탈락과 고객 발송문을 정리합니다.</li>
+          </ol>
+        </div>
       </section>
 
       <section style={styles.grid}>
@@ -581,70 +677,60 @@ export default function PropertyAiSearch() {
           <div style={styles.panelHeaderRow}>
             <div>
               <h2 style={styles.panelTitle}>4. RealnetPro 검색 조건 후보</h2>
-              <p style={styles.panelSubText}>PDF 출력 전 RealnetPro에서 입력하면 좋은 조건 후보입니다.</p>
+              <p style={styles.panelSubText}>PDF 출력 전 RealnetPro에서 입력하면 좋은 조건입니다.</p>
             </div>
+
             <button
               type="button"
               style={styles.secondaryButton}
-              onClick={() => copyText('realnet', buildRealnetMemo(rawInquiry))}
+              onClick={() => copyText('realnet', parsed.realnetConditions.join('\n'))}
             >
-              {copied === 'realnet' ? '복사 완료' : '조건 복사'}
+              {copiedLabel === 'realnet' ? '복사 완료' : '조건 복사'}
             </button>
           </div>
-          <textarea style={styles.outputTextareaSmall} value={buildRealnetMemo(rawInquiry)} readOnly />
+
+          <div style={styles.searchList}>
+            {parsed.realnetConditions.length ? (
+              parsed.realnetConditions.map((item) => (
+                <div key={item} style={styles.searchItem}>
+                  {item}
+                </div>
+              ))
+            ) : (
+              <p style={styles.emptyText}>자동 추출된 검색 조건이 없습니다.</p>
+            )}
+          </div>
         </div>
 
         <div style={styles.panel}>
           <div style={styles.panelHeaderRow}>
             <div>
-              <h2 style={styles.panelTitle}>5. API 연결용 JSON</h2>
-              <p style={styles.panelSubText}>서버로 전달되는 고객 조건 구조입니다.</p>
+              <h2 style={styles.panelTitle}>5. 고객 조건 확인용 안내문</h2>
+              <p style={styles.panelSubText}>고객에게 조건 확인용으로 보낼 수 있는 초안입니다.</p>
             </div>
-            <button type="button" style={styles.secondaryButton} onClick={() => copyText('json', buildApiJson(rawInquiry))}>
-              {copied === 'json' ? '복사 완료' : 'JSON 복사'}
+
+            <button
+              type="button"
+              style={styles.secondaryButton}
+              onClick={() => copyText('customer', parsed.customerConfirmMessage)}
+            >
+              {copiedLabel === 'customer' ? '복사 완료' : '안내문 복사'}
             </button>
           </div>
-          <pre style={styles.codeBox}>{buildApiJson(rawInquiry)}</pre>
+
+          <textarea style={styles.outputTextarea} value={parsed.customerConfirmMessage} readOnly />
         </div>
       </section>
+
+      <section style={styles.warningBox}>
+        <strong>정리</strong>
+        <p>
+          이 화면은 더 이상 OpenAI API를 호출하지 않습니다. 따라서 API 비용이 발생하지 않습니다.
+          RealnetPro PDF 분석은 ChatGPT 대화창에서 직접 PDF를 업로드해 진행합니다.
+          기존 서버 함수 <code>functions/api/analyze-property-pdf.ts</code>는 삭제해도 됩니다.
+        </p>
+      </section>
     </section>
-  );
-}
-
-function buildRealnetMemo(inquiry: string) {
-  const preview = buildConditionPreview(inquiry);
-  const lines: string[] = [];
-
-  lines.push('RealnetPro PDF 출력 전 검색 조건 후보');
-  lines.push('');
-
-  if (preview.budget) {
-    lines.push(`賃料+共益費 기준 희망 상한: ${preview.budget.toLocaleString()}円以下`);
-    lines.push('주의: RealnetPro에서 賃料 조건만 넣으면 共益費 포함 총액 초과 매물이 섞일 수 있습니다.');
-  }
-
-  if (preview.layouts.length) lines.push(`間取り: ${preview.layouts.join(' / ')}`);
-  if (preview.minFloor) lines.push(`所在階: ${preview.minFloor}階以上`);
-  if (preview.maxWalk) lines.push(`駅徒歩: ${preview.maxWalk}分以内`);
-  if (inquiry.includes('외국인') || inquiry.includes('外国人')) lines.push('フリーワード: 外国人');
-  if (inquiry.includes('오토록')) lines.push('設備: オートロック');
-  if (inquiry.includes('택배') || inquiry.includes('무인택배')) lines.push('設備: 宅配BOX');
-  if (inquiry.includes('도시가스')) lines.push('設備/備考: 都市ガス');
-  if (inquiry.includes('신이마미야')) lines.push('除外候補: 新今宮 / 動物園前 / 萩之茶屋 / 西成');
-
-  return lines.join('\n');
-}
-
-function buildApiJson(inquiry: string) {
-  const preview = buildConditionPreview(inquiry);
-
-  return JSON.stringify(
-    {
-      inquiry,
-      parsedPreview: preview,
-    },
-    null,
-    2,
   );
 }
 
@@ -657,39 +743,41 @@ function InfoItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div style={styles.summaryCard}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function ConditionBox({
+function ConditionPanel({
   title,
-  items,
   tone,
+  conditions,
 }: {
   title: string;
-  items: string[];
-  tone: 'must' | 'ng' | 'check';
+  tone: 'must' | 'preferred' | 'ng' | 'check';
+  conditions: ParsedCondition[];
 }) {
-  const toneStyle = tone === 'must' ? styles.mustCard : tone === 'ng' ? styles.ngCard : styles.checkCard;
+  const toneStyle =
+    tone === 'must'
+      ? styles.mustCard
+      : tone === 'preferred'
+        ? styles.preferredCard
+        : tone === 'ng'
+          ? styles.ngCard
+          : styles.checkCard;
 
   return (
-    <div style={{ ...styles.conditionBox, ...toneStyle }}>
-      <strong>{title}</strong>
-      {items.length ? (
-        <ul style={styles.miniList}>
-          {items.map((item) => (
-            <li key={item}>{item}</li>
+    <article style={{ ...styles.conditionPanel, ...toneStyle }}>
+      <h2 style={styles.conditionTitle}>{title}</h2>
+
+      {conditions.length ? (
+        <div style={styles.conditionList}>
+          {conditions.map((condition) => (
+            <div key={condition.label} style={styles.conditionItem}>
+              <strong>{condition.label}</strong>
+              <p>{condition.reason}</p>
+            </div>
           ))}
-        </ul>
+        </div>
       ) : (
-        <p style={styles.emptyText}>자동 추출 없음</p>
+        <p style={styles.emptyText}>자동 추출된 조건이 없습니다.</p>
       )}
-    </div>
+    </article>
   );
 }
 
@@ -737,7 +825,7 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     gap: '12px',
     alignItems: 'flex-start',
-    maxWidth: '520px',
+    maxWidth: '560px',
     padding: '16px',
     borderRadius: '18px',
     background: '#18181b',
@@ -749,7 +837,7 @@ const styles: Record<string, CSSProperties> = {
     width: '11px',
     height: '11px',
     borderRadius: '50%',
-    background: '#d89b2b',
+    background: '#22c55e',
     marginTop: '5px',
     flexShrink: 0,
   },
@@ -772,13 +860,6 @@ const styles: Record<string, CSSProperties> = {
     boxShadow: '0 14px 36px rgba(0, 0, 0, 0.18)',
     marginBottom: '20px',
   },
-  panelSubBox: {
-    background: '#fffaf5',
-    border: '1px solid #eadfd4',
-    borderRadius: '18px',
-    padding: '18px',
-    marginTop: '18px',
-  },
   panelHeader: {
     marginBottom: '16px',
   },
@@ -794,11 +875,6 @@ const styles: Record<string, CSSProperties> = {
     margin: 0,
     fontSize: '21px',
     letterSpacing: '-0.03em',
-    color: '#241d18',
-  },
-  subTitle: {
-    margin: 0,
-    fontSize: '17px',
     color: '#241d18',
   },
   panelSubText: {
@@ -823,9 +899,9 @@ const styles: Record<string, CSSProperties> = {
     outline: 'none',
     overflowY: 'auto',
   },
-  outputTextarea: {
+  promptTextarea: {
     width: '100%',
-    minHeight: '280px',
+    minHeight: '520px',
     boxSizing: 'border-box',
     padding: '16px',
     borderRadius: '16px',
@@ -837,9 +913,9 @@ const styles: Record<string, CSSProperties> = {
     resize: 'vertical',
     outline: 'none',
   },
-  outputTextareaSmall: {
+  outputTextarea: {
     width: '100%',
-    minHeight: '220px',
+    minHeight: '360px',
     boxSizing: 'border-box',
     padding: '16px',
     borderRadius: '16px',
@@ -856,12 +932,6 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: 'flex-end',
     gap: '8px',
     marginTop: '14px',
-  },
-  buttonRowNoMargin: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: '8px',
-    flexWrap: 'wrap',
   },
   primaryButton: {
     border: 'none',
@@ -895,7 +965,7 @@ const styles: Record<string, CSSProperties> = {
   },
   infoGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
     gap: '12px',
   },
   infoItem: {
@@ -904,178 +974,78 @@ const styles: Record<string, CSSProperties> = {
     border: '1px solid #eadfd4',
     background: '#fffaf5',
   },
-  conditionGridSmall: {
+  conditionGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr',
-    gap: '12px',
-    marginTop: '14px',
+    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+    gap: '16px',
+    marginBottom: '20px',
   },
-  conditionBox: {
-    padding: '14px',
-    borderRadius: '14px',
-    border: '1px solid #eadfd4',
-  },
-  mustCard: { background: '#eef7f0' },
-  ngCard: { background: '#fff0ed' },
-  checkCard: { background: '#fff8dc' },
-  miniList: {
-    margin: '8px 0 0',
-    paddingLeft: '18px',
-    lineHeight: 1.6,
-  },
-  uploadBox: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 1fr)',
-    alignItems: 'start',
-    gap: '12px',
+  conditionPanel: {
+    borderRadius: '22px',
     padding: '18px',
-    borderRadius: '18px',
-    border: '1px dashed #d3bda8',
-    background: '#fffaf5',
-  },
-  uploadInfo: {
-    minWidth: 0,
-  },
-  uploadButton: {
-    border: 'none',
-    borderRadius: '999px',
-    padding: '13px 18px',
-    background: '#0f172a',
-    color: '#fff',
-    fontWeight: 900,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-  },
-  analyzeButton: {
-    border: 'none',
-    borderRadius: '999px',
-    padding: '13px 18px',
-    background: '#8b5a2b',
-    color: '#fff',
-    fontWeight: 900,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-  },
-  analyzeButtonDisabled: {
-    border: 'none',
-    borderRadius: '999px',
-    padding: '13px 18px',
-    background: '#94a3b8',
-    color: '#fff',
-    fontWeight: 900,
-    cursor: 'not-allowed',
-    whiteSpace: 'nowrap',
-  },
-  hiddenInput: {
-    display: 'none',
-  },
-  errorBox: {
-    marginTop: '16px',
-    padding: '14px',
-    borderRadius: '14px',
-    background: '#fff0ed',
-    border: '1px solid #e0b4a8',
-    color: '#a33c24',
-    fontWeight: 800,
-  },
-  resultSummaryGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-    gap: '12px',
-    marginTop: '18px',
-  },
-  summaryCard: {
-    padding: '14px',
-    borderRadius: '16px',
     border: '1px solid #eadfd4',
-    background: '#fffdfb',
+    minHeight: '240px',
+  },
+  mustCard: {
+    background: '#eef7f0',
+  },
+  preferredCard: {
+    background: '#eef3ff',
+  },
+  ngCard: {
+    background: '#fff0ed',
+  },
+  checkCard: {
+    background: '#fff8dc',
+  },
+  conditionTitle: {
+    margin: '0 0 14px',
+    fontSize: '18px',
+    color: '#241d18',
+  },
+  conditionList: {
+    display: 'grid',
+    gap: '10px',
+  },
+  conditionItem: {
+    padding: '12px',
+    borderRadius: '14px',
+    background: 'rgba(255, 255, 255, 0.72)',
+    border: '1px solid rgba(120, 90, 60, 0.12)',
+  },
+  searchList: {
+    display: 'grid',
+    gap: '10px',
+  },
+  searchItem: {
+    padding: '13px',
+    borderRadius: '14px',
+    border: '1px solid #eadfd4',
+    background: '#fffaf5',
+    fontSize: '14px',
+    fontWeight: 700,
+    color: '#51463d',
   },
   noticeBox: {
     marginTop: '16px',
-    padding: '14px',
-    borderRadius: '14px',
-    background: '#eef3ff',
-    border: '1px solid #c7d7ff',
-    lineHeight: 1.6,
-  },
-  warningBox: {
-    marginTop: '16px',
-    padding: '14px',
-    borderRadius: '14px',
-    background: '#fff8dc',
-    border: '1px solid #ead2a8',
-    lineHeight: 1.6,
-  },
-  tableWrap: {
-    overflowX: 'auto',
-    marginTop: '18px',
-    borderRadius: '16px',
-    border: '1px solid #eadfd4',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    minWidth: '980px',
-    background: '#fff',
-    fontSize: '13px',
-  },
-  th: {
-    padding: '12px',
-    borderBottom: '1px solid #eadfd4',
-    background: '#f8f4ef',
-    color: '#51463d',
-    textAlign: 'left',
-    fontWeight: 900,
-    whiteSpace: 'nowrap',
-  },
-  td: {
-    padding: '12px',
-    borderBottom: '1px solid #f0e6dc',
-    verticalAlign: 'top',
-    color: '#241d18',
-  },
-  rankBadge: {
-    display: 'inline-block',
-    minWidth: '74px',
-    textAlign: 'center',
-    borderRadius: '999px',
-    padding: '7px 10px',
-    fontSize: '12px',
-    fontWeight: 900,
-    lineHeight: 1.35,
-  },
-  rankA: { background: '#e9f7ed', color: '#197b38' },
-  rankB: { background: '#eef3ff', color: '#3157a5' },
-  rankC: { background: '#fff6d7', color: '#8a6200' },
-  rankFail: { background: '#fff0ed', color: '#b13b28' },
-  smallText: {
-    margin: '5px 0 0',
-    color: '#776b61',
-    fontSize: '12px',
-    lineHeight: 1.45,
-  },
-  compactList: {
-    margin: 0,
-    paddingLeft: '18px',
-    display: 'grid',
-    gap: '4px',
-  },
-  codeBox: {
-    minHeight: '340px',
-    maxHeight: '520px',
-    overflow: 'auto',
-    margin: 0,
     padding: '16px',
     borderRadius: '16px',
-    border: '1px solid #ded2c7',
-    background: '#241d18',
-    color: '#fff8ec',
-    fontSize: '13px',
-    lineHeight: 1.55,
+    border: '1px solid #c7d7ff',
+    background: '#eef3ff',
+    lineHeight: 1.7,
+  },
+  warningBox: {
+    padding: '16px',
+    borderRadius: '16px',
+    border: '1px solid #ead2a8',
+    background: '#fff8dc',
+    lineHeight: 1.7,
+    color: '#241d18',
   },
   emptyText: {
-    margin: '8px 0 0',
+    margin: 0,
     color: '#8a7b70',
     lineHeight: 1.6,
   },
 };
+
