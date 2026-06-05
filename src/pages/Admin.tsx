@@ -26,6 +26,7 @@ import { Link } from 'react-router-dom';
 import { createGithubService, GithubService } from '../services/githubService';
 import ImageManager from '../components/admin/ImageManager';
 import PropertyAiSearch from './PropertyAiSearch';
+import PropertyEstimateTool from './PropertyEstimateTool';
 
 const normalizeImageSrc = (src: string | undefined) => {
   if (!src) return '';
@@ -172,6 +173,10 @@ const ADMIN_READABLE_CSS = `
     background-color: #fffdfb !important;
     color: #241d18 !important;
   }
+
+  .admin-readable .admin-estimate-tool-light h1 {
+    color: #f8fafc !important;
+  }
 `;
 
 interface StorageData {
@@ -180,7 +185,7 @@ interface StorageData {
   repo: string;
 }
 
-type TabType = 'overview' | 'properties' | 'reviews' | 'osakaInfo' | 'siteConfig' | 'aiPropertySearch';
+type TabType = 'overview' | 'properties' | 'reviews' | 'osakaInfo' | 'siteConfig' | 'aiPropertySearch' | 'propertyEstimateTool';
 
 export default function Admin() {
   const [authData, setAuthData] = useState<StorageData | null>(null);
@@ -1150,6 +1155,7 @@ export default function Admin() {
                { id: 'osakaInfo', icon: Info, label: 'Osaka Info' },
                { id: 'siteConfig', icon: Settings, label: 'Site Settings' },
                { id: 'aiPropertySearch', icon: Database, label: 'AI 매물 검색' },
+               { id: 'propertyEstimateTool', icon: CheckCircle2, label: '추천 매물 자료 생성' },
              ].map((tab) => (
                 <button 
                   key={tab.id}
@@ -1220,7 +1226,7 @@ export default function Admin() {
           )}
         </div>
 
-        <div className={activeTab === 'aiPropertySearch' ? 'max-w-none mx-auto' : 'max-w-5xl mx-auto'}>
+        <div className={activeTab === 'aiPropertySearch' || activeTab === 'propertyEstimateTool' ? 'max-w-none mx-auto' : 'max-w-5xl mx-auto'}>
           {activeTab === 'overview' && (
              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <header className="mb-16">
@@ -1258,6 +1264,11 @@ export default function Admin() {
             {activeTab === 'aiPropertySearch' && (
               <div className="admin-ai-search-light">
                 <PropertyAiSearch />
+              </div>
+            )}
+            {activeTab === 'propertyEstimateTool' && (
+              <div className="admin-ai-search-light admin-estimate-tool-light">
+                <PropertyEstimateTool />
               </div>
             )}
           </div>
