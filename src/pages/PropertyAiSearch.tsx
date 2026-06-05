@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+ㅁimport { useMemo, useState, type CSSProperties } from 'react';
 
 type ParsedCondition = {
   label: string;
@@ -843,14 +843,6 @@ export default function PropertyAiSearch() {
         </div>
       </section>
 
-      <section style={styles.warningBox}>
-        <strong>정리</strong>
-        <p>
-          이 화면은 더 이상 OpenAI API를 호출하지 않습니다. 따라서 API 비용이 발생하지 않습니다.
-          RealnetPro PDF 분석은 ChatGPT 대화창에서 직접 PDF를 업로드해 진행합니다.
-          기존 서버 함수 <code>functions/api/analyze-property-pdf.ts</code>는 삭제해도 됩니다.
-        </p>
-      </section>
     </section>
   );
 }
@@ -1154,14 +1146,6 @@ const styles: Record<string, CSSProperties> = {
     border: '1px solid #c7d7ff',
     background: '#eef3ff',
     lineHeight: 1.7,
-  },
-  warningBox: {
-    padding: '16px',
-    borderRadius: '16px',
-    border: '1px solid #ead2a8',
-    background: '#fff8dc',
-    lineHeight: 1.7,
-    color: '#241d18',
   },
   emptyText: {
     margin: 0,
