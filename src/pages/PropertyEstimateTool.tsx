@@ -1,8 +1,21 @@
 import { useMemo, useState, type CSSProperties } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+const PDFJS_VERSION = '4.10.38';
+const PDFJS_MODULE_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.mjs`;
+const PDFJS_WORKER_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.mjs`;
+
+let pdfJsModulePromise: Promise<any> | null = null;
+
+async function loadPdfJs() {
+  if (!pdfJsModulePromise) {
+    pdfJsModulePromise = import(/* @vite-ignore */ PDFJS_MODULE_URL).then((module: any) => {
+      module.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+      return module;
+    });
+  }
+
+  return pdfJsModulePromise;
+}
 
 type InitialRentMode = 'oneMonth' | 'prorated' | 'proratedPlusNextMonth';
 
@@ -413,6 +426,7 @@ function parsePropertyPdfText(rawText: string): PdfExtractResult {
 }
 
 async function extractTextFromPdf(file: File) {
+  const pdfjsLib = await loadPdfJs();
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
   const pageTexts: string[] = [];
