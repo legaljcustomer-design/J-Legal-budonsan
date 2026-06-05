@@ -3,8 +3,10 @@ import { useMemo, useState, type CSSProperties } from 'react';
 const PDFJS_VERSION = '4.10.38';
 const PDFJS_MODULE_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.mjs`;
 const PDFJS_WORKER_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.mjs`;
+const TESSERACT_MODULE_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js';
 
 let pdfJsModulePromise: Promise<any> | null = null;
+let tesseractModulePromise: Promise<any> | null = null;
 
 async function loadPdfJs() {
   if (!pdfJsModulePromise) {
@@ -15,6 +17,14 @@ async function loadPdfJs() {
   }
 
   return pdfJsModulePromise;
+}
+
+async function loadTesseract() {
+  if (!tesseractModulePromise) {
+    tesseractModulePromise = import(/* @vite-ignore */ TESSERACT_MODULE_URL);
+  }
+
+  return tesseractModulePromise;
 }
 
 type InitialRentMode = 'oneMonth' | 'prorated' | 'proratedPlusNextMonth';
@@ -640,25 +650,87 @@ function formatPdfTextItems(items: any[]) {
     .join('\n');
 }
 
-async function extractTextFromPdf(file: File) {
+function hasUsefulPdfText(text: string) {
+  const compact = text.replace(/--- PAGE \d+ \/ \d+ ---/g, '').replace(/\s+/g, '');
+
+  return compact.length >= 30;
+}
+
+async function renderPageToCanvas(page: any) {
+  const viewport = page.getViewport({ scale: 2.2 });
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+
+  if (!context) throw new Error('Canvas를 생성하지 못했습니다.');
+
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+
+  await page.render({
+    canvasContext: context,
+    viewport,
+  }).promise;
+
+  return canvas;
+}
+
+async function createJapaneseOcrWorker() {
+  const tesseract = await loadTesseract();
+
+  return tesseract.createWorker('jpn+eng', 1, {
+    workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
+    corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5',
+    langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+  });
+}
+
+async function extractTextFromPdf(file: File, onProgress?: (message: string) => void) {
   const pdfjsLib = await loadPdfJs();
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
   const pageTexts: string[] = [];
+  let ocrWorker: any = null;
+  let ocrUsed = false;
 
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber);
-    const content = await page.getTextContent();
-    const text = formatPdfTextItems(content.items as any[]);
-    pageTexts.push(`--- PAGE ${pageNumber} / ${pdf.numPages} ---\n${text}`);
+  try {
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      onProgress?.(`PDF ${pageNumber}/${pdf.numPages}페이지 텍스트를 확인하는 중입니다...`);
+
+      const page = await pdf.getPage(pageNumber);
+      const content = await page.getTextContent();
+      let text = formatPdfTextItems(content.items as any[]);
+
+      if (!hasUsefulPdfText(text)) {
+        ocrUsed = true;
+      }
+      if (!hasUsefulPdfText(text)) {
+        onProgress?.(
+          `PDF ${pageNumber}/${pdf.numPages}페이지가 이미지형으로 보입니다. OCR로 글자를 인식하는 중입니다. 처음 실행은 시간이 걸릴 수 있습니다...`,
+        );
+
+        if (!ocrWorker) {
+          ocrWorker = await createJapaneseOcrWorker();
+        }
+
+        const canvas = await renderPageToCanvas(page);
+        const result = await ocrWorker.recognize(canvas);
+        text = result?.data?.text || '';
+      }
+
+      pageTexts.push(`--- PAGE ${pageNumber} / ${pdf.numPages} ---\n${text}`);
+    }
+  } finally {
+    if (ocrWorker) {
+      await ocrWorker.terminate();
+    }
   }
 
   return {
     text: pageTexts.join('\n\n'),
     pageCount: pdf.numPages,
+    ocrUsed,
   };
 }
-
 function getMoveInProration(moveInDate: string, monthlyAmount: number) {
   if (!moveInDate || monthlyAmount <= 0) {
     return {
@@ -976,7 +1048,7 @@ export default function PropertyEstimateTool() {
     setPdfExtractedData(null);
 
     try {
-      const { text, pageCount } = await extractTextFromPdf(file);
+      const { text, pageCount, ocrUsed } = await extractTextFromPdf(file, setPdfStatus);
       const parsed = parsePropertyPdfText(text);
 
       setPdfExtractedText(text.slice(0, 8000));
@@ -985,7 +1057,9 @@ export default function PropertyEstimateTool() {
       setPdfExtractedData(parsed);
 
       setPdfStatus(
-        `PDF ${pageCount}페이지를 읽고 자동 추출 후보를 만들었습니다. 아래 추출 후보를 확인한 뒤 “추출값 입력폼에 반영” 버튼을 눌러주세요.`,
+        ocrUsed
+          ? `PDF ${pageCount}페이지를 OCR로 읽고 자동 추출 후보를 만들었습니다. OCR 결과는 오인식 가능성이 있으므로 원본 PDF와 반드시 대조해주세요.`
+          : `PDF ${pageCount}페이지를 읽고 자동 추출 후보를 만들었습니다. 아래 추출 후보를 확인한 뒤 “추출값 입력폼에 반영” 버튼을 눌러주세요.`,
       );
     } catch (error: any) {
       console.error(error);
@@ -1059,7 +1133,7 @@ export default function PropertyEstimateTool() {
         <h1 style={styles.title}>추천 매물 자료 생성</h1>
         <p style={styles.description}>
           관리회사 공식 PDF를 보면서 주요 금액을 입력하면 초기비용 개산 견적서와 고객용 매물 소개자료를 생성합니다.
-          이번 단계에서는 일할계산, 보증회사 비용 자동계산, 중개수수료 자동계산을 추가했습니다.
+          텍스트형 PDF는 직접 읽고, 이미지형 PDF는 OCR 보조로 읽어 자동 추출 후보를 만듭니다.
         </p>
       </section>
 
