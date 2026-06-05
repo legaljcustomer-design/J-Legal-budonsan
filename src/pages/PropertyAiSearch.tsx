@@ -1,4 +1,4 @@
-ㅁimport { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 
 type ParsedCondition = {
   label: string;
