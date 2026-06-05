@@ -41,7 +41,13 @@ const sampleInquiry = `고객명 :
 
 최소 층수 :
 
-역에서 집까지 도보 N분 :`;
+역에서 집까지 도보 N분 :
+
+선호 조건 :
+
+NG 조건 :
+
+확인 필요 :`;
 
 function normalizeText(text: string) {
   return text
@@ -82,6 +88,80 @@ function addText(target: string[], value: string) {
   if (trimmed && !target.includes(trimmed)) {
     target.push(trimmed);
   }
+}
+
+function splitSectionLines(value: string) {
+  return value
+    .split('\n')
+    .map((line) =>
+      line
+        .replace(/^[\s•\-*・①-⑳0-9.）)]+/, '')
+        .trim(),
+    )
+    .filter(Boolean);
+}
+
+function extractSectionValue(text: string, labels: string[]) {
+  const lines = text.split('\n');
+  const stopLabelPattern =
+    /^(고객명|이름|국적|성별|재류자격|비자|지역|희망지역|구체적인 동네|구체적 동네|월세|월세 및 관리비 상한선|희망 집타입|방타입|최소 층수|역에서 집까지|역 도보|도보|필수 조건|필수조건|선호 조건|선호조건|희망 조건|희망조건|NG 조건|NG조건|제외 조건|제외조건|확인 필요|확인필요|기타희망사항|기타 희망사항)\s*[:：]/i;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+
+    for (const label of labels) {
+      const regex = new RegExp(`^${label}\\s*[:：]\\s*(.*)$`, 'i');
+      const match = line.match(regex);
+
+      if (match) {
+        const collected: string[] = [];
+        if (match[1]?.trim()) collected.push(match[1].trim());
+
+        for (let nextIndex = index + 1; nextIndex < lines.length; nextIndex += 1) {
+          const nextLine = lines[nextIndex].trim();
+
+          if (stopLabelPattern.test(nextLine)) break;
+          collected.push(nextLine);
+        }
+
+        return collected.join('\n').trim();
+      }
+    }
+  }
+
+  return '';
+}
+
+function addSectionConditions(
+  target: ParsedCondition[],
+  sectionText: string,
+  defaultReason: string,
+) {
+  splitSectionLines(sectionText).forEach((line) => {
+    addCondition(target, line, defaultReason);
+  });
+}
+
+function includesAny(text: string, keywords: string[]) {
+  return keywords.some((keyword) => text.includes(keyword));
+}
+
+function isPlaceholderLine(value: string) {
+  const normalized = normalizeText(value);
+
+  return (
+    !normalized ||
+    normalized.includes('생략가능') ||
+    normalized.includes('대한민국, 한국 등') ||
+    normalized.includes('워킹홀리데이, 유학') ||
+    normalized.includes('도쿄, 오사카') ||
+    normalized.includes('oo구') ||
+    normalized.includes('o엔') ||
+    normalized.includes('1r, 1k') ||
+    normalized.includes('n분') ||
+    normalized.includes('유/무') ||
+    normalized.includes('기재 가능')
+  );
 }
 
 function parseBudget(text: string) {
@@ -250,12 +330,23 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
   const layouts = parseLayouts(rawInquiry);
   const minFloor = parseMinFloor(rawInquiry);
   const maxWalkMinutes = parseMaxWalkMinutes(rawInquiry);
+  const mustSection = extractSectionValue(rawInquiry, ['필수 조건', '필수조건']);
+  const preferredSection = extractSectionValue(rawInquiry, ['선호 조건', '선호조건', '희망 조건', '희망조건']);
+  const ngSection = extractSectionValue(rawInquiry, ['NG 조건', 'NG조건', '제외 조건', '제외조건']);
+  const checkSection = extractSectionValue(rawInquiry, ['확인 필요', '확인필요']);
+  const extraHopeSection = extractSectionValue(rawInquiry, ['기타희망사항', '기타 희망사항']);
 
   const mustConditions: ParsedCondition[] = [];
   const preferredConditions: ParsedCondition[] = [];
   const ngConditions: ParsedCondition[] = [];
   const checkNeeded: ParsedCondition[] = [];
   const realnetConditions: string[] = [];
+
+  addSectionConditions(mustConditions, mustSection, '고객이 필수 조건으로 직접 입력한 항목입니다.');
+  addSectionConditions(preferredConditions, preferredSection, '고객이 선호 조건으로 직접 입력한 항목입니다.');
+  addSectionConditions(ngConditions, ngSection, '고객이 제외 또는 NG 조건으로 직접 입력한 항목입니다.');
+  addSectionConditions(checkNeeded, checkSection, '계약 전 확인이 필요한 항목으로 고객이 직접 입력한 내용입니다.');
+  addSectionConditions(preferredConditions, extraHopeSection, '기타 희망사항에 입력된 고객 선호 조건입니다.');
 
   if (budgetUpper) {
     addCondition(
@@ -416,6 +507,102 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
     addCondition(checkNeeded, '주변 편의시설', '지도에서 편의점, 슈퍼, 드럭스토어를 확인해야 합니다.');
   }
 
+  const preferenceSource = normalizeText([preferredSection, extraHopeSection, rawInquiry].join('\n'));
+  const ngSource = normalizeText([ngSection, rawInquiry].join('\n'));
+  const checkSource = normalizeText([checkSection, rawInquiry].join('\n'));
+
+  if (
+    includesAny(preferenceSource, ['남향', '南向', '동향', '東向', '서향', '西向', '동남향', '東南向', '남서향', '南西向']) &&
+    !isPlaceholderLine(preferredSection || extraHopeSection)
+  ) {
+    addCondition(preferredConditions, '희망 방향 조건', '고객이 선호하는 방 방향을 언급했습니다. PDF의 向き 항목 확인이 필요합니다.');
+    addCondition(checkNeeded, '방향/채광 확인', '선호 방향과 실제 向き가 일치하는지 확인해야 합니다.');
+  }
+
+  if (
+    includesAny(preferenceSource, ['자전거', '駐輪', '주차장', '駐車場']) &&
+    !isPlaceholderLine(preferredSection || extraHopeSection)
+  ) {
+    addCondition(preferredConditions, '자전거 주차장 / 주차 관련 조건', '고객이 자전거 주차장 또는 주차 관련 조건을 언급했습니다.');
+    addCondition(checkNeeded, '駐輪場/駐車場 이용 가능 여부와 비용', 'PDF 또는 관리회사 확인이 필요합니다.');
+  }
+
+  if (
+    includesAny(preferenceSource, ['무인택배함', '택배함', '택배박스', '宅配box', '宅配ボックス']) &&
+    !isPlaceholderLine(preferredSection || extraHopeSection)
+  ) {
+    addCondition(preferredConditions, '무인택배함 / 宅配BOX', '고객이 택배BOX를 선호 조건으로 언급했습니다.');
+    addText(realnetConditions, '設備: 宅配BOX');
+  }
+
+  if (
+    includesAny(preferenceSource, ['24시간', '쓰레기', '분리수거', 'ごみ', 'ゴミ']) &&
+    !isPlaceholderLine(preferredSection || extraHopeSection)
+  ) {
+    addCondition(preferredConditions, '24시간 쓰레기 배출 / 분리수거 가능', '고객이 쓰레기 배출 관련 조건을 언급했습니다.');
+    addCondition(checkNeeded, '24시간 쓰레기 배출 가능 여부', '専用ごみ置場 표기만으로 24시간 배출 가능 여부는 확정할 수 없습니다.');
+  }
+
+  if (
+    includesAny(preferenceSource, ['도시가스', '都市ガス']) &&
+    !includesAny(preferenceSource, ['도시가스 / 프로판가스', '도시가스/프로판가스'])
+  ) {
+    addCondition(preferredConditions, '도시가스', '고객이 도시가스를 선호 조건으로 언급했습니다.');
+    addText(realnetConditions, '設備/備考: 都市ガス');
+  }
+
+  if (
+    includesAny(preferenceSource, ['프로판가스', 'プロパン']) &&
+    includesAny(preferenceSource, ['가능', 'ok', '상관없음'])
+  ) {
+    addCondition(preferredConditions, '프로판가스 가능', '고객이 프로판가스도 가능하다고 입력했습니다.');
+  }
+
+  if (
+    includesAny(ngSource, ['북향', '北向']) &&
+    !isPlaceholderLine(ngSection)
+  ) {
+    addCondition(ngConditions, '북향', '고객이 북향을 제외 또는 NG 조건으로 입력했습니다.');
+    addText(realnetConditions, '除外確認: 北向');
+  }
+
+  if (
+    includesAny(ngSource, ['프로판', 'プロパン']) &&
+    !isPlaceholderLine(ngSection)
+  ) {
+    addCondition(ngConditions, '프로판가스', '고객이 프로판가스를 제외 또는 NG 조건으로 입력했습니다.');
+    addText(realnetConditions, '除外確認: プロパンガス');
+  }
+
+  if (
+    includesAny(ngSource, ['1층', '一階', '1階']) &&
+    !isPlaceholderLine(ngSection)
+  ) {
+    addCondition(ngConditions, '1층 매물', '고객이 1층을 제외 또는 NG 조건으로 입력했습니다.');
+  }
+
+  if (
+    includesAny(ngSource, ['목조', '木造']) &&
+    !isPlaceholderLine(ngSection)
+  ) {
+    addCondition(ngConditions, '木造 / 목조 건물', '고객이 목조 건물을 제외 또는 NG 조건으로 입력했습니다.');
+  }
+
+  if (
+    includesAny(ngSource, ['선로', '線路', '대도로', '큰길', '소음']) &&
+    !isPlaceholderLine(ngSection)
+  ) {
+    addCondition(ngConditions, '소음 우려 위치', '고객이 선로/대로변/소음 관련 제외 조건을 입력했습니다.');
+    addCondition(checkNeeded, '지도상 선로·대로변 인접 여부', '지도와 현장 확인이 필요합니다.');
+  }
+
+  if (
+    includesAny(checkSource, ['외국인', '外国人', '보증회사', '保証会社', '워홀', '유학생', '심사']) &&
+    !isPlaceholderLine(checkSection)
+  ) {
+    addCondition(checkNeeded, '외국인/재류자격 심사 가능 여부', '관리회사 또는 보증회사 확인이 필요합니다.');
+  }
+
   if (
     visaStatus.includes('워킹') ||
     visaStatus.includes('워홀') ||
@@ -524,6 +711,12 @@ ${buildConditionLines(parsed.ngConditions)}
 
 [확인 필요 조건]
 ${buildConditionLines(parsed.checkNeeded)}
+
+[입력 분류 주의]
+- 필수 조건은 반드시 충족해야 하는 조건입니다.
+- 선호 조건은 충족하면 가점이지만, 미충족만으로 바로 탈락시키지 마세요.
+- NG / 제외 조건은 해당되면 원칙적으로 탈락 또는 강한 주의로 분류하세요.
+- 확인 필요 조건은 PDF에 명확한 근거가 없으면 반드시 관리회사 확인사항으로 남기세요.
 
 [1차 필터: 하드 탈락 조건]
 아래에 해당하면 원칙적으로 추천하지 말고 "탈락"으로 분류하세요.
