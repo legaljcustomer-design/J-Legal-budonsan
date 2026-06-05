@@ -8,8 +8,10 @@ type ParsedCondition = {
 type ParsedRequest = {
   customerName: string;
   genderMemo: string;
+  nationality: string;
   visaStatus: string;
   areaMemo: string;
+  specificAreaMemo: string;
   budgetUpper: number | null;
   layouts: string[];
   minFloor: number | null;
@@ -23,47 +25,29 @@ type ParsedRequest = {
   customerConfirmMessage: string;
 };
 
-const sampleInquiry = `이름 : 이기현 (남성추정)
+const sampleInquiry = `이름 : (생략가능)
 
-재류자격 : 워킹홀리데이 1년
+국적 : (대한민국, 한국 등)
 
-지역 : 오사카 (구체적인 동네를 희망하는 것은 아니지만, 신이마미야역 근처로는 절대 XXX , 그 위쪽동네로 희망)
+재류자격 : (워킹홀리데이, 유학, 취업비자, 배우자비자 등등)
 
-월세 + 관리비 상한선 : 7만 엔 초~중반까지 OK
+희망지역 : (도쿄, 오사카, 고베, 교토 등등)
 
-1. 1R 또는 1K 타입 맨션 (7조 정도)
+구체적인 동네 : (OO구)
 
-2. 3층 이상 희망
+월세 : (O엔 ~ O엔까지 기재)
 
-3. 집에 벌레 많이 안나오길 희망
+방타입 : (1R, 1K, 1DK, 1LDK, 2LDK 등)
 
-4. 분리수거 24시간 가능한 곳
-
-5. 1층 공동현관문이 오토록이어야함
-
-6. 무인택배함 있는 곳이어야함
-
-7. 철근콘크리트로 된 건물
-
-8. 방음이 잘됐음 좋겠음
-
-9. 겨울에도 따뜻한 방이면 좋겠음
-
-10. 가스레인지가 기본옵션에 있길 희망하고, 있다면 2구 화구 희망
-
-11. 치안이 괜찮은 동네
-
-12. 집에서 → 역까지 도보 5~10분 이내
-
-13. 주변에 전철 선로가 없고, 집앞에 고층건물이 있어서 시야가 차단되는 곳은 OUT
-
-14. 북향집 절대 XXX
-
-15. 집근처에 편의점 , 마트 , 약국이 있으면 감사합니다.
-
-16. 프로판가스 XXX / 도시가스 희망
-
-※ 17. 최대한 많은 매물 리스트를 희망한다고 합니다.`;
+기타희망사항 :
+• 남향 / 북향 / 동향 / 서향 등
+• 24시간 쓰레기 배출장소 유/무 등
+• 3층이상 / 4층이상 / 5층이상 등
+• 철근콘크리트 소재 맨션 등
+• 무인택배함 유/무
+• 자전거 주차장 유/무
+• 도시가스 / 프로판가스
+그 외 고객님 요구사항 기재 가능 OK`;
 
 function normalizeText(text: string) {
   return text
@@ -107,21 +91,27 @@ function addText(target: string[], value: string) {
 }
 
 function parseBudget(text: string) {
-  const normalized = normalizeText(text);
+  const normalized = normalizeText(text)
+    .replace(/\s+/g, ' ')
+    .replace(/円/g, '엔');
 
-  const directRangeMatch = normalized.match(/(\d{2,3})[,，]?(\d{3})\s*[~-]\s*(\d{2,3})[,，]?(\d{3})\s*엔?/);
-  if (directRangeMatch) {
-    return Number(`${directRangeMatch[3]}${directRangeMatch[4]}`);
+  const yenRangeMatch = normalized.match(
+    /(\d{1,3}(?:,\d{3})+|\d{4,6})\s*엔?\s*[~-]\s*(\d{1,3}(?:,\d{3})+|\d{4,6})\s*엔?/,
+  );
+  if (yenRangeMatch?.[2]) {
+    return Number(yenRangeMatch[2].replace(/,/g, ''));
   }
 
-  const directYenMatch = normalized.match(/(\d{2,3})[,，]?(\d{3})\s*엔?/);
-  if (directYenMatch) {
-    return Number(`${directYenMatch[1]}${directYenMatch[2]}`);
+  const manRangeMatch = normalized.match(
+    /(\d+(?:\.\d+)?)\s*(?:만\s*)?엔?\s*[~-]\s*(\d+(?:\.\d+)?)\s*만\s*엔?/,
+  );
+  if (manRangeMatch?.[2]) {
+    return Math.round(Number(manRangeMatch[2]) * 10000);
   }
 
-  const rangeManMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:만\s*)?[~-]\s*(\d+(?:\.\d+)?)\s*만\s*엔?/);
-  if (rangeManMatch?.[2]) {
-    return Math.round(Number(rangeManMatch[2]) * 10000);
+  const directYenMatch = normalized.match(/(\d{1,3}(?:,\d{3})+|\d{4,6})\s*엔/);
+  if (directYenMatch?.[1]) {
+    return Number(directYenMatch[1].replace(/,/g, ''));
   }
 
   const manMatch = normalized.match(/(\d+(?:\.\d+)?)\s*만\s*엔?/);
@@ -183,6 +173,20 @@ function detectCustomerName(text: string) {
   return rawName.replace(/\(.+\)/g, '').trim() || '미입력';
 }
 
+function detectNationality(text: string) {
+  const direct = extractLineValue(text, ['국적', 'Nationality', 'nationality']);
+
+  if (direct) return direct;
+
+  const normalized = normalizeText(text);
+
+  if (normalized.includes('대한민국') || normalized.includes('한국') || normalized.includes('korea')) {
+    return '대한민국';
+  }
+
+  return '미입력';
+}
+
 function detectVisaStatus(text: string) {
   const normalized = normalizeText(text);
   const direct = extractLineValue(text, ['재류자격', '비자', '체류자격']);
@@ -199,6 +203,7 @@ function detectVisaStatus(text: string) {
 function parseInquiry(rawInquiry: string): ParsedRequest {
   const normalized = normalizeText(rawInquiry);
   const customerName = detectCustomerName(rawInquiry);
+  const nationality = detectNationality(rawInquiry);
   const visaStatus = detectVisaStatus(rawInquiry);
   const genderMemo = rawInquiry.includes('남성')
     ? '남성 추정'
@@ -206,6 +211,7 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
       ? '여성 추정'
       : '미입력';
   const areaMemo = extractLineValue(rawInquiry, ['지역', '희망지역', '희망 지역']) || '미입력';
+  const specificAreaMemo = extractLineValue(rawInquiry, ['구체적인 동네', '구체적 동네', '희망동네', '동네']) || '미입력';
   const budgetUpper = parseBudget(rawInquiry);
   const layouts = parseLayouts(rawInquiry);
   const minFloor = parseMinFloor(rawInquiry);
@@ -260,11 +266,16 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
   }
 
   if (
-    normalized.includes('무인택배') ||
-    normalized.includes('택배함') ||
-    normalized.includes('택배박스') ||
-    normalized.includes('宅配box') ||
-    normalized.includes('宅配ボックス')
+    !normalized.includes('무인택배함 유/무') &&
+    !normalized.includes('택배함 유/무') &&
+    !normalized.includes('宅配box 유/무') &&
+    (
+      normalized.includes('무인택배') ||
+      normalized.includes('택배함') ||
+      normalized.includes('택배박스') ||
+      normalized.includes('宅配box') ||
+      normalized.includes('宅配ボックス')
+    )
   ) {
     addCondition(mustConditions, '무인택배함 / 宅配BOX', '택배BOX를 요구하고 있습니다.');
     addText(realnetConditions, '設備: 宅配BOX');
@@ -272,6 +283,7 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
 
   if (
     normalized.includes('철근콘크리트') ||
+    normalized.includes('철근콘트리트') ||
     normalized.includes('rc') ||
     normalized.includes('src') ||
     normalized.includes('鉄筋')
@@ -284,7 +296,10 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
     addText(realnetConditions, '構造: 鉄筋コンクリート造 / 鉄骨鉄筋コンクリート造 우선');
   }
 
-  if (normalized.includes('도시가스') || normalized.includes('都市ガス')) {
+  if (
+    (normalized.includes('도시가스') || normalized.includes('都市ガス')) &&
+    !normalized.includes('도시가스 / 프로판가스')
+  ) {
     addCondition(mustConditions, '도시가스', '도시가스를 희망하고 있습니다.');
     addText(realnetConditions, '設備/備考: 都市ガス');
   }
@@ -300,12 +315,19 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
     addText(realnetConditions, 'フリーワード: 外国人');
   }
 
-  if (normalized.includes('프로판') || normalized.includes('プロパン')) {
+  if (
+    (normalized.includes('프로판') || normalized.includes('プロパン')) &&
+    !normalized.includes('도시가스 / 프로판가스') &&
+    (normalized.includes('프로판가스 xxx') || normalized.includes('프로판가스 제외') || normalized.includes('프로판 제외') || normalized.includes('プロパン不可'))
+  ) {
     addCondition(ngConditions, '프로판가스', '고객이 프로판가스를 제외했습니다.');
     addText(realnetConditions, '除外確認: プロパンガス');
   }
 
-  if (normalized.includes('북향') || normalized.includes('北向')) {
+  if (
+    (normalized.includes('북향') || normalized.includes('北向')) &&
+    (normalized.includes('북향 제외') || normalized.includes('북향집 절대') || normalized.includes('북향 xxx') || normalized.includes('北向不可'))
+  ) {
     addCondition(ngConditions, '북향', '고객이 북향을 제외했습니다.');
     addText(realnetConditions, '除外確認: 北向');
   }
@@ -325,7 +347,7 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
     addCondition(checkNeeded, '창밖 시야 / 맞은편 고층건물 여부', '사진, 스트리트뷰, 내견으로 확인해야 합니다.');
   }
 
-  if (normalized.includes('24시간') && (normalized.includes('분리수거') || normalized.includes('쓰레기'))) {
+  if (normalized.includes('24시간') && (normalized.includes('분리수거') || normalized.includes('쓰레기')) && !normalized.includes('유/무')) {
     addCondition(preferredConditions, '24시간 쓰레기 배출 / 분리수거 가능', '관리규약 확인이 필요한 선호 조건입니다.');
     addCondition(checkNeeded, '24시간 쓰레기 배출 가능 여부', '물건 정보에 없으면 관리회사 확인이 필요합니다.');
   }
@@ -375,8 +397,10 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
   const chatGptPrompt = buildChatGptPrompt({
     customerName,
     genderMemo,
+    nationality,
     visaStatus,
     areaMemo,
+    specificAreaMemo,
     budgetUpper,
     layouts,
     minFloor,
@@ -403,8 +427,10 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
   return {
     customerName,
     genderMemo,
+    nationality,
     visaStatus,
     areaMemo,
+    specificAreaMemo,
     budgetUpper,
     layouts,
     minFloor,
@@ -444,8 +470,10 @@ function buildChatGptPrompt(parsed: Omit<ParsedRequest, 'realnetConditions' | 'c
 [고객 기본 정보]
 - 고객명: ${parsed.customerName}
 - 성별/메모: ${parsed.genderMemo}
+- 국적: ${parsed.nationality}
 - 재류자격: ${parsed.visaStatus}
 - 희망 지역 메모: ${parsed.areaMemo}
+- 구체적인 동네 메모: ${parsed.specificAreaMemo}
 - 월세+관리비 상한: ${parsed.budgetUpper ? `${parsed.budgetUpper.toLocaleString()}엔 이하` : '미확인'}
 - 희망 타입: ${parsed.layouts.length ? parsed.layouts.join(' / ') : '미확인'}
 - 최소 층수: ${parsed.minFloor ? `${parsed.minFloor}층 이상` : '미확인'}
@@ -625,7 +653,9 @@ C확인필요:
 function buildCustomerConfirmMessage(parsed: Pick<
   ParsedRequest,
   | 'customerName'
+  | 'nationality'
   | 'visaStatus'
+  | 'specificAreaMemo'
   | 'budgetUpper'
   | 'layouts'
   | 'minFloor'
@@ -640,7 +670,9 @@ function buildCustomerConfirmMessage(parsed: Pick<
   lines.push(`${parsed.customerName} 고객님 조건을 아래와 같이 정리했습니다.`);
   lines.push('');
   lines.push('[기본 조건]');
+  lines.push(`- 국적: ${parsed.nationality}`);
   lines.push(`- 재류자격: ${parsed.visaStatus}`);
+  lines.push(`- 구체적인 동네: ${parsed.specificAreaMemo}`);
   lines.push(`- 월세+관리비 상한: ${parsed.budgetUpper ? `${parsed.budgetUpper.toLocaleString()}엔 이하` : '확인 필요'}`);
   lines.push(`- 희망 타입: ${parsed.layouts.length ? parsed.layouts.join(' / ') : '확인 필요'}`);
   lines.push(`- 층수: ${parsed.minFloor ? `${parsed.minFloor}층 이상` : '확인 필요'}`);
@@ -727,14 +759,16 @@ export default function PropertyAiSearch() {
         <div style={styles.panel}>
           <div style={styles.panelHeader}>
             <h2 style={styles.panelTitle}>2. 기본 정보 자동 추출</h2>
-            <p style={styles.panelSubText}>고객명, 비자, 예산, 타입, 층수, 역 도보 조건을 자동 정리합니다.</p>
+            <p style={styles.panelSubText}>고객명, 국적, 비자, 지역, 예산, 타입, 층수, 역 도보 조건을 자동 정리합니다.</p>
           </div>
 
           <div style={styles.infoGrid}>
             <InfoItem label="고객명" value={parsed.customerName} />
             <InfoItem label="성별/메모" value={parsed.genderMemo} />
+            <InfoItem label="국적" value={parsed.nationality} />
             <InfoItem label="재류자격" value={parsed.visaStatus} />
             <InfoItem label="지역 메모" value={parsed.areaMemo} />
+            <InfoItem label="구체적인 동네" value={parsed.specificAreaMemo} />
             <InfoItem
               label="월세+관리비 상한"
               value={parsed.budgetUpper ? `${parsed.budgetUpper.toLocaleString()}엔` : '미확인'}
