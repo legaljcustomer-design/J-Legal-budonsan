@@ -2,6 +2,13 @@ import { useMemo, useState, type CSSProperties } from 'react';
 
 type InitialRentMode = 'oneMonth' | 'prorated' | 'proratedPlusNextMonth';
 
+type CustomFee = {
+  id: string;
+  label: string;
+  amount: number;
+  memo: string;
+};
+
 type EstimateItem = {
   id: string;
   label: string;
@@ -40,6 +47,8 @@ type PropertyForm = {
   otherFee: number;
   monthlyOtherName: string;
   monthlyOtherFee: number;
+  customInitialFees: CustomFee[];
+  customMonthlyFees: CustomFee[];
   estimateMemo: string;
 };
 
@@ -73,6 +82,8 @@ const defaultForm: PropertyForm = {
   otherFee: 0,
   monthlyOtherName: '기타 월액',
   monthlyOtherFee: 0,
+  customInitialFees: [],
+  customMonthlyFees: [],
   estimateMemo:
     '본 견적은 현재 확인 가능한 자료를 기준으로 작성한 개산 견적입니다. 관리회사 심사 결과, 입주일, 보증회사 조건, 계약 조건에 따라 금액이 변동될 수 있습니다.',
 };
@@ -107,6 +118,8 @@ const sampleForm: PropertyForm = {
   otherFee: 0,
   monthlyOtherName: '기타 월액',
   monthlyOtherFee: 0,
+  customInitialFees: [],
+  customMonthlyFees: [],
   estimateMemo:
     '본 견적은 현재 확인 가능한 자료를 기준으로 작성한 개산 견적입니다. 관리회사 심사 결과, 입주일, 보증회사 조건, 계약 조건에 따라 금액이 변동될 수 있습니다.',
 };
@@ -119,6 +132,26 @@ function yen(value: number) {
 function numberValue(value: string) {
   const numeric = Number(value.replace(/[^\d]/g, ''));
   return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function sumFees(fees: CustomFee[]) {
+  return fees.reduce((sum, fee) => sum + fee.amount, 0);
+}
+
+function buildMonthlyFeeLines(form: PropertyForm) {
+  const lines: string[] = [];
+
+  if (form.monthlyOtherFee > 0) {
+    lines.push(`- ${form.monthlyOtherName || '기타 월액'}: ${yen(form.monthlyOtherFee)}`);
+  }
+
+  form.customMonthlyFees
+    .filter((fee) => fee.amount > 0)
+    .forEach((fee) => {
+      lines.push(`- ${fee.label || '추가 월액'}: ${yen(fee.amount)}`);
+    });
+
+  return lines.length ? `${lines.join('\n')}\n` : '';
 }
 
 function getMoveInProration(moveInDate: string, monthlyAmount: number) {
@@ -239,6 +272,20 @@ function buildItems(form: PropertyForm): EstimateItem[] {
     { id: 'contractAdminFee', label: '契約事務手数料 / 계약사무수수료', amount: form.contractAdminFee, memo: '관리회사 조건 확인', taxable: true },
     { id: 'agencyFee', label: '仲介手数料 / 중개수수료', amount: form.agencyFee, memo: '세금 포함 기준으로 입력 권장', taxable: true },
     { id: 'otherFee', label: form.otherFeeName || '기타 비용', amount: form.otherFee, memo: '기타 확인 비용', taxable: false },
+    ...form.customMonthlyFees.map((fee) => ({
+      id: `customMonthly-${fee.id}`,
+      label: fee.label || '추가 월액',
+      amount: fee.amount,
+      memo: fee.memo || '월액 비용',
+      taxable: false,
+    })),
+    ...form.customInitialFees.map((fee) => ({
+      id: `customInitial-${fee.id}`,
+      label: fee.label || '추가 초기비용',
+      amount: fee.amount,
+      memo: fee.memo || '추가 비용',
+      taxable: false,
+    })),
   ].filter((item) => item.amount > 0);
 }
 
@@ -259,7 +306,7 @@ function buildCustomerMessage(form: PropertyForm, total: number, monthlyTotal: n
 [월액 비용]
 - 월세: ${yen(form.rent)}
 - 관리비/공익비: ${yen(form.managementFee)}
-${form.monthlyOtherFee > 0 ? `- ${form.monthlyOtherName}: ${yen(form.monthlyOtherFee)}\n` : ''}- 월액 합계: ${yen(monthlyTotal)}
+${buildMonthlyFeeLines(form)}- 월액 합계: ${yen(monthlyTotal)}
 
 [초기비용 개산]
 - 초기비용 합계: ${yen(total)}
@@ -288,7 +335,7 @@ function buildPropertyIntro(form: PropertyForm) {
 [비용]
 - 월세: ${yen(form.rent)}
 - 관리비/공익비: ${yen(form.managementFee)}
-- 월액 합계: ${yen(form.rent + form.managementFee + form.monthlyOtherFee)}
+- 월액 합계: ${yen(form.rent + form.managementFee + form.monthlyOtherFee + sumFees(form.customMonthlyFees))}
 
 [추천 포인트]
 - 고객 조건에 맞는지 확인 후 기재하세요.
@@ -310,7 +357,7 @@ export default function PropertyEstimateTool() {
 
   const items = useMemo(() => buildItems(form), [form]);
   const initialTotal = useMemo(() => items.reduce((sum, item) => sum + item.amount, 0), [items]);
-  const monthlyTotal = form.rent + form.managementFee + form.monthlyOtherFee;
+  const monthlyTotal = form.rent + form.managementFee + form.monthlyOtherFee + sumFees(form.customMonthlyFees);
   const proration = useMemo(() => getMoveInProration(form.moveInDate, form.rent + form.managementFee), [form.moveInDate, form.rent, form.managementFee]);
   const customerMessage = useMemo(() => buildCustomerMessage(form, initialTotal, monthlyTotal), [form, initialTotal, monthlyTotal]);
   const propertyIntro = useMemo(() => buildPropertyIntro(form), [form]);
@@ -344,7 +391,7 @@ export default function PropertyEstimateTool() {
   };
 
   const applyGuaranteeFee = (rate: number) => {
-    const base = form.rent + form.managementFee + form.monthlyOtherFee;
+    const base = form.rent + form.managementFee + form.monthlyOtherFee + sumFees(form.customMonthlyFees);
     setForm((current) => ({
       ...current,
       guaranteeCompanyFee: Math.round(base * rate),
@@ -357,6 +404,51 @@ export default function PropertyEstimateTool() {
       ...current,
       agencyFee: Math.round(form.rent * rate * taxRate),
     }));
+  };
+
+  const addCustomFee = (kind: 'initial' | 'monthly') => {
+    const newFee: CustomFee = {
+      id: `${kind}-${Date.now()}`,
+      label: kind === 'initial' ? '추가 초기비용' : '추가 월액비용',
+      amount: 0,
+      memo: '',
+    };
+
+    setForm((current) => ({
+      ...current,
+      customInitialFees: kind === 'initial' ? [...current.customInitialFees, newFee] : current.customInitialFees,
+      customMonthlyFees: kind === 'monthly' ? [...current.customMonthlyFees, newFee] : current.customMonthlyFees,
+    }));
+  };
+
+  const updateCustomFee = (kind: 'initial' | 'monthly', id: string, key: keyof CustomFee, value: string) => {
+    setForm((current) => {
+      const targetKey = kind === 'initial' ? 'customInitialFees' : 'customMonthlyFees';
+      const nextFees = current[targetKey].map((fee) => {
+        if (fee.id !== id) return fee;
+
+        return {
+          ...fee,
+          [key]: key === 'amount' ? numberValue(value) : value,
+        };
+      });
+
+      return {
+        ...current,
+        [targetKey]: nextFees,
+      };
+    });
+  };
+
+  const removeCustomFee = (kind: 'initial' | 'monthly', id: string) => {
+    setForm((current) => {
+      const targetKey = kind === 'initial' ? 'customInitialFees' : 'customMonthlyFees';
+
+      return {
+        ...current,
+        [targetKey]: current[targetKey].filter((fee) => fee.id !== id),
+      };
+    });
   };
 
   const copyText = async (label: string, text: string) => {
@@ -441,7 +533,33 @@ export default function PropertyEstimateTool() {
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.panelTitle}>3. 자동 계산 보조</h2>
+        <h2 style={styles.panelTitle}>3. 추가 비용 항목</h2>
+
+        <div style={styles.customFeeGrid}>
+          <CustomFeeList
+            title="추가 초기비용"
+            description="항균시공비, 소독비, 서류작성비 등 고정 항목에 없는 비용을 추가합니다."
+            fees={form.customInitialFees}
+            kind="initial"
+            onAdd={() => addCustomFee('initial')}
+            onUpdate={updateCustomFee}
+            onRemove={removeCustomFee}
+          />
+
+          <CustomFeeList
+            title="추가 월액비용"
+            description="수도비, 인터넷비, 월액 보증료 등 매월 발생하는 비용을 추가합니다."
+            fees={form.customMonthlyFees}
+            kind="monthly"
+            onAdd={() => addCustomFee('monthly')}
+            onUpdate={updateCustomFee}
+            onRemove={removeCustomFee}
+          />
+        </div>
+      </section>
+
+      <section style={styles.panel}>
+        <h2 style={styles.panelTitle}>4. 자동 계산 보조</h2>
 
         <div style={styles.helperGrid}>
           <div style={styles.helperCard}>
@@ -594,13 +712,13 @@ export default function PropertyEstimateTool() {
 
       <section style={styles.grid}>
         <OutputPanel
-          title="4. 고객 발송용 견적 안내문"
+          title="5. 고객 발송용 견적 안내문"
           value={customerMessage}
           copied={copied === 'customer'}
           onCopy={() => copyText('customer', customerMessage)}
         />
         <OutputPanel
-          title="5. 고객용 매물 소개자료 초안"
+          title="6. 고객용 매물 소개자료 초안"
           value={propertyIntro}
           copied={copied === 'intro'}
           onCopy={() => copyText('intro', propertyIntro)}
@@ -669,6 +787,82 @@ function InfoLine({ label, value }: { label: string; value: string }) {
     <div style={styles.infoLine}>
       <span>{label}</span>
       <strong>{value}</strong>
+    </div>
+  );
+}
+
+function CustomFeeList({
+  title,
+  description,
+  fees,
+  kind,
+  onAdd,
+  onUpdate,
+  onRemove,
+}: {
+  title: string;
+  description: string;
+  fees: CustomFee[];
+  kind: 'initial' | 'monthly';
+  onAdd: () => void;
+  onUpdate: (kind: 'initial' | 'monthly', id: string, key: keyof CustomFee, value: string) => void;
+  onRemove: (kind: 'initial' | 'monthly', id: string) => void;
+}) {
+  return (
+    <div style={styles.customFeeCard}>
+      <div style={styles.customFeeHeader}>
+        <div>
+          <h3 style={styles.helperTitle}>{title}</h3>
+          <p style={styles.helperText}>{description}</p>
+        </div>
+        <button type="button" style={styles.secondaryButton} onClick={onAdd}>
+          항목 추가
+        </button>
+      </div>
+
+      {fees.length ? (
+        <div style={styles.customFeeList}>
+          {fees.map((fee) => (
+            <div key={fee.id} style={styles.customFeeRow}>
+              <label style={styles.label}>
+                <span>항목명</span>
+                <input
+                  style={styles.input}
+                  value={fee.label}
+                  onChange={(event) => onUpdate(kind, fee.id, 'label', event.target.value)}
+                />
+              </label>
+
+              <label style={styles.label}>
+                <span>금액</span>
+                <input
+                  style={styles.input}
+                  inputMode="numeric"
+                  value={fee.amount ? fee.amount.toLocaleString() : ''}
+                  placeholder="0"
+                  onChange={(event) => onUpdate(kind, fee.id, 'amount', event.target.value)}
+                />
+              </label>
+
+              <label style={styles.label}>
+                <span>메모</span>
+                <input
+                  style={styles.input}
+                  value={fee.memo}
+                  onChange={(event) => onUpdate(kind, fee.id, 'memo', event.target.value)}
+                  placeholder="예: 필수 여부 확인"
+                />
+              </label>
+
+              <button type="button" style={styles.deleteButton} onClick={() => onRemove(kind, fee.id)}>
+                삭제
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p style={styles.emptyText}>추가된 항목이 없습니다.</p>
+      )}
     </div>
   );
 }
@@ -886,6 +1080,54 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '8px',
+  },
+  customFeeGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '14px',
+  },
+  customFeeCard: {
+    padding: '16px',
+    border: '1px solid #eadfd4',
+    borderRadius: '18px',
+    background: '#fffaf5',
+  },
+  customFeeHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: '12px',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    marginBottom: '12px',
+  },
+  customFeeList: {
+    display: 'grid',
+    gap: '12px',
+  },
+  customFeeRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 150px 1fr auto',
+    gap: '10px',
+    alignItems: 'end',
+    padding: '12px',
+    borderRadius: '14px',
+    border: '1px solid #eadfd4',
+    background: '#fff',
+  },
+  deleteButton: {
+    border: '1px solid #e0b4a8',
+    borderRadius: '999px',
+    padding: '10px 14px',
+    background: '#fff6f3',
+    color: '#a33c24',
+    fontWeight: 900,
+    cursor: 'pointer',
+  },
+  emptyText: {
+    margin: 0,
+    color: '#8a7b70',
+    fontSize: '13px',
+    lineHeight: 1.6,
   },
   printHeader: {
     display: 'flex',
