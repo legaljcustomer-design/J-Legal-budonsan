@@ -648,6 +648,7 @@ export default function PropertyEstimateTool() {
   const [pdfStatus, setPdfStatus] = useState('');
   const [pdfExtractedText, setPdfExtractedText] = useState('');
   const [pdfPageCount, setPdfPageCount] = useState(0);
+  const [pdfExtractedData, setPdfExtractedData] = useState<PdfExtractResult | null>(null);
 
   const items = useMemo(() => buildItems(form), [form]);
   const initialTotal = useMemo(() => items.reduce((sum, item) => sum + item.amount, 0), [items]);
@@ -757,6 +758,7 @@ export default function PropertyEstimateTool() {
     setPdfStatus('PDF 텍스트를 읽는 중입니다...');
     setPdfExtractedText('');
     setPdfPageCount(0);
+    setPdfExtractedData(null);
 
     try {
       const { text, pageCount } = await extractTextFromPdf(file);
@@ -765,38 +767,10 @@ export default function PropertyEstimateTool() {
       setPdfExtractedText(text.slice(0, 8000));
       setPdfPageCount(pageCount);
 
-      setForm((current) => ({
-        ...current,
-        propertyName: parsed.propertyName || current.propertyName,
-        roomNo: parsed.roomNo || current.roomNo,
-        address: parsed.address || current.address,
-        nearestStation: parsed.nearestStation || current.nearestStation,
-        layout: parsed.layout || current.layout,
-        area: parsed.area || current.area,
-        structure: parsed.structure || current.structure,
-        builtYear: parsed.builtYear || current.builtYear,
-        floor: parsed.floor || current.floor,
-        direction: parsed.direction || current.direction,
-        rent: parsed.rent ?? current.rent,
-        managementFee: parsed.managementFee ?? current.managementFee,
-        deposit: parsed.deposit ?? current.deposit,
-        keyMoney: parsed.keyMoney ?? current.keyMoney,
-        guaranteeDeposit: parsed.guaranteeDeposit ?? current.guaranteeDeposit,
-        guaranteeCompanyFee: parsed.guaranteeCompanyFee ?? current.guaranteeCompanyFee,
-        fireInsurance: parsed.fireInsurance ?? current.fireInsurance,
-        keyExchange: parsed.keyExchange ?? current.keyExchange,
-        cleaningFee: parsed.cleaningFee ?? current.cleaningFee,
-        supportFee: parsed.supportFee ?? current.supportFee,
-        contractAdminFee: parsed.contractAdminFee ?? current.contractAdminFee,
-        monthlyOtherName: parsed.monthlyOtherName || current.monthlyOtherName,
-        monthlyOtherFee: parsed.monthlyOtherFee ?? current.monthlyOtherFee,
-        otherFeeName: parsed.otherFeeName || current.otherFeeName,
-        otherFee: parsed.otherFee ?? current.otherFee,
-        estimateMemo: parsed.estimateMemo || current.estimateMemo,
-      }));
+      setPdfExtractedData(parsed);
 
       setPdfStatus(
-        `PDF ${pageCount}페이지를 읽고 자동 입력을 시도했습니다. 자동 추출값은 반드시 원본 PDF와 대조 확인해주세요.`,
+        `PDF ${pageCount}페이지를 읽고 자동 추출 후보를 만들었습니다. 아래 추출 후보를 확인한 뒤 “추출값 입력폼에 반영” 버튼을 눌러주세요.`,
       );
     } catch (error: any) {
       console.error(error);
@@ -804,6 +778,47 @@ export default function PropertyEstimateTool() {
         `PDF를 읽지 못했습니다. 이미지 기반 PDF이거나 텍스트 추출이 제한된 파일일 수 있습니다. 상세: ${error?.message || '알 수 없는 오류'}`,
       );
     }
+  };
+
+  const applyPdfExtractedData = () => {
+    if (!pdfExtractedData) {
+      alert('반영할 PDF 추출값이 없습니다.');
+      return;
+    }
+
+    const parsed = pdfExtractedData;
+
+    setForm((current) => ({
+      ...current,
+      propertyName: parsed.propertyName || current.propertyName,
+      roomNo: parsed.roomNo || current.roomNo,
+      address: parsed.address || current.address,
+      nearestStation: parsed.nearestStation || current.nearestStation,
+      layout: parsed.layout || current.layout,
+      area: parsed.area || current.area,
+      structure: parsed.structure || current.structure,
+      builtYear: parsed.builtYear || current.builtYear,
+      floor: parsed.floor || current.floor,
+      direction: parsed.direction || current.direction,
+      rent: parsed.rent ?? current.rent,
+      managementFee: parsed.managementFee ?? current.managementFee,
+      deposit: parsed.deposit ?? current.deposit,
+      keyMoney: parsed.keyMoney ?? current.keyMoney,
+      guaranteeDeposit: parsed.guaranteeDeposit ?? current.guaranteeDeposit,
+      guaranteeCompanyFee: parsed.guaranteeCompanyFee ?? current.guaranteeCompanyFee,
+      fireInsurance: parsed.fireInsurance ?? current.fireInsurance,
+      keyExchange: parsed.keyExchange ?? current.keyExchange,
+      cleaningFee: parsed.cleaningFee ?? current.cleaningFee,
+      supportFee: parsed.supportFee ?? current.supportFee,
+      contractAdminFee: parsed.contractAdminFee ?? current.contractAdminFee,
+      monthlyOtherName: parsed.monthlyOtherName || current.monthlyOtherName,
+      monthlyOtherFee: parsed.monthlyOtherFee ?? current.monthlyOtherFee,
+      otherFeeName: parsed.otherFeeName || current.otherFeeName,
+      otherFee: parsed.otherFee ?? current.otherFee,
+      estimateMemo: parsed.estimateMemo || current.estimateMemo,
+    }));
+
+    setPdfStatus('추출값을 입력폼에 반영했습니다. 금액은 반드시 원본 PDF와 대조 확인해주세요.');
   };
 
   const copyText = async (label: string, text: string) => {
@@ -868,6 +883,58 @@ export default function PropertyEstimateTool() {
           <p>{pdfStatus || 'PDF를 첨부하면 자동 추출 결과가 여기에 표시됩니다.'}</p>
           {pdfPageCount > 0 && <span>{pdfPageCount}페이지 감지</span>}
         </div>
+
+        {pdfExtractedData && (
+          <div style={styles.pdfCandidateBox}>
+            <div style={styles.panelHeaderRow}>
+              <div>
+                <h3 style={styles.helperTitle}>PDF 자동 추출 후보</h3>
+                <p style={styles.panelSubText}>
+                  바로 입력폼을 덮어쓰지 않고, 추출 후보를 먼저 보여줍니다. 원본 PDF와 비교 후 반영하세요.
+                </p>
+              </div>
+              <button type="button" style={styles.primaryButton} onClick={applyPdfExtractedData}>
+                추출값 입력폼에 반영
+              </button>
+            </div>
+
+            <div style={styles.candidateGrid}>
+              <CandidateItem label="매물명" value={pdfExtractedData.propertyName} />
+              <CandidateItem label="호실" value={pdfExtractedData.roomNo} />
+              <CandidateItem label="주소" value={pdfExtractedData.address} />
+              <CandidateItem label="교통" value={pdfExtractedData.nearestStation} />
+              <CandidateItem label="타입" value={pdfExtractedData.layout} />
+              <CandidateItem label="면적" value={pdfExtractedData.area} />
+              <CandidateItem label="구조" value={pdfExtractedData.structure} />
+              <CandidateItem label="축년" value={pdfExtractedData.builtYear} />
+              <CandidateItem label="층수" value={pdfExtractedData.floor} />
+              <CandidateItem label="향" value={pdfExtractedData.direction} />
+              <CandidateItem label="월세" value={pdfExtractedData.rent !== undefined ? yen(pdfExtractedData.rent) : ''} />
+              <CandidateItem
+                label="관리비"
+                value={pdfExtractedData.managementFee !== undefined ? yen(pdfExtractedData.managementFee) : ''}
+              />
+              <CandidateItem label="敷金" value={pdfExtractedData.deposit !== undefined ? yen(pdfExtractedData.deposit) : ''} />
+              <CandidateItem label="礼金" value={pdfExtractedData.keyMoney !== undefined ? yen(pdfExtractedData.keyMoney) : ''} />
+              <CandidateItem
+                label="保証会社"
+                value={pdfExtractedData.guaranteeCompanyFee !== undefined ? yen(pdfExtractedData.guaranteeCompanyFee) : ''}
+              />
+              <CandidateItem
+                label="火災保険"
+                value={pdfExtractedData.fireInsurance !== undefined ? yen(pdfExtractedData.fireInsurance) : ''}
+              />
+              <CandidateItem
+                label="鍵交換代"
+                value={pdfExtractedData.keyExchange !== undefined ? yen(pdfExtractedData.keyExchange) : ''}
+              />
+              <CandidateItem
+                label="清掃費"
+                value={pdfExtractedData.cleaningFee !== undefined ? yen(pdfExtractedData.cleaningFee) : ''}
+              />
+            </div>
+          </div>
+        )}
 
         {pdfExtractedText && (
           <details style={styles.pdfPreviewBox}>
@@ -1265,6 +1332,15 @@ function InfoLine({ label, value }: { label: string; value: string }) {
   );
 }
 
+function CandidateItem({ label, value }: { label: string; value?: string }) {
+  return (
+    <div style={styles.candidateItem}>
+      <span>{label}</span>
+      <strong>{value || '미추출'}</strong>
+    </div>
+  );
+}
+
 function CustomFeeList({
   title,
   description,
@@ -1584,6 +1660,28 @@ const styles: Record<string, CSSProperties> = {
     overflow: 'auto',
     fontSize: '12px',
     lineHeight: 1.5,
+  },
+  pdfCandidateBox: {
+    marginTop: '12px',
+    border: '1px solid #eadfd4',
+    borderRadius: '16px',
+    padding: '16px',
+    background: '#fffaf5',
+  },
+  candidateGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    gap: '10px',
+  },
+  candidateItem: {
+    display: 'grid',
+    gap: '5px',
+    padding: '11px',
+    borderRadius: '13px',
+    border: '1px solid #eadfd4',
+    background: '#ffffff',
+    color: '#241d18',
+    fontSize: '12px',
   },
   panelHeaderRow: {
     display: 'flex',
