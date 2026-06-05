@@ -1,4 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react';
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 type InitialRentMode = 'oneMonth' | 'prorated' | 'proratedPlusNextMonth';
 
@@ -7,6 +11,36 @@ type CustomFee = {
   label: string;
   amount: number;
   memo: string;
+};
+
+type PdfExtractResult = {
+  propertyName?: string;
+  roomNo?: string;
+  address?: string;
+  nearestStation?: string;
+  layout?: string;
+  area?: string;
+  structure?: string;
+  builtYear?: string;
+  floor?: string;
+  direction?: string;
+  rent?: number;
+  managementFee?: number;
+  deposit?: number;
+  keyMoney?: number;
+  guaranteeDeposit?: number;
+  guaranteeCompanyFee?: number;
+  fireInsurance?: number;
+  keyExchange?: number;
+  cleaningFee?: number;
+  supportFee?: number;
+  contractAdminFee?: number;
+  monthlyOtherFee?: number;
+  monthlyOtherName?: string;
+  otherFee?: number;
+  otherFeeName?: string;
+  estimateMemo?: string;
+  detectedMemo: string[];
 };
 
 type EstimateItem = {
@@ -152,6 +186,248 @@ function buildMonthlyFeeLines(form: PropertyForm) {
     });
 
   return lines.length ? `${lines.join('\n')}\n` : '';
+}
+
+function normalizePdfText(text: string) {
+  return text
+    .replace(/\r/g, '\n')
+    .replace(/　/g, ' ')
+    .replace(/[|｜]/g, ' ')
+    .replace(/[：]/g, ':')
+    .replace(/[〜～]/g, '~')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function compactText(text: string) {
+  return normalizePdfText(text).replace(/\s+/g, ' ');
+}
+
+function parseYenValue(value: string | undefined) {
+  if (!value) return null;
+  if (/なし|無し|無|free|無料/i.test(value)) return 0;
+
+  const matched = value.match(/(\d{1,3}(?:,\d{3})+|\d{4,8})/);
+  if (!matched?.[1]) return null;
+
+  return Number(matched[1].replace(/,/g, ''));
+}
+
+function parseMonthValue(value: string | undefined, rent: number) {
+  if (!value) return null;
+  if (/なし|無し|無|0/.test(value)) return 0;
+
+  const monthMatch = value.match(/(\d+(?:\.\d+)?)\s*(?:ヶ月|か月|カ月|ヵ月)/);
+  if (monthMatch?.[1]) {
+    return Math.round(Number(monthMatch[1]) * rent);
+  }
+
+  return parseYenValue(value);
+}
+
+function findFirstMatch(text: string, regexes: RegExp[]) {
+  for (const regex of regexes) {
+    const match = text.match(regex);
+    if (match?.[1]) return match[1].trim();
+  }
+
+  return '';
+}
+
+function findLabeledAmount(text: string, labels: string[], rent = 0) {
+  const compact = compactText(text);
+
+  for (const label of labels) {
+    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const yenMatch = compact.match(new RegExp(`${escaped}[^\\dな無０0]{0,30}(\\d{1,3}(?:,\\d{3})+|\\d{4,8})\\s*円`));
+    const yen = parseYenValue(yenMatch?.[1]);
+    if (yen !== null) return yen;
+
+    const noneMatch = compact.match(new RegExp(`${escaped}[^\\dな無０0]{0,30}(なし|無し|無|0)`));
+    if (noneMatch?.[1]) return 0;
+
+    const monthMatch = compact.match(new RegExp(`${escaped}[^\\d]{0,30}(\\d+(?:\\.\\d+)?)\\s*(?:ヶ月|か月|カ月|ヵ月)`));
+    const month = parseMonthValue(monthMatch?.[1] ? `${monthMatch[1]}ヶ月` : '', rent);
+    if (month !== null) return month;
+  }
+
+  return null;
+}
+
+function findFeeByKeywords(text: string, keywords: string[]) {
+  const compact = compactText(text);
+
+  for (const keyword of keywords) {
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = compact.match(new RegExp(`${escaped}[^\\d]{0,40}(\\d{1,3}(?:,\\d{3})+|\\d{4,8})\\s*円`));
+    const value = parseYenValue(match?.[1]);
+    if (value !== null) return value;
+  }
+
+  return null;
+}
+
+function parsePropertyPdfText(rawText: string): PdfExtractResult {
+  const normalized = normalizePdfText(rawText);
+  const compact = compactText(rawText);
+  const lines = normalized
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const memo: string[] = [];
+
+  const addressLineIndex = lines.findIndex((line) => /(大阪|京都|兵庫|神戸|堺|吹田|東大阪|豊中|尼崎|西宮).*(徒歩|\/|／)/.test(line));
+  const addressLine = addressLineIndex >= 0 ? lines[addressLineIndex] : '';
+  const splitAddress = addressLine.split(/[／/]/).map((part) => part.trim()).filter(Boolean);
+
+  const roomBlockMatch = compact.match(
+    /(1R|1K|1DK|1LDK|2K|2DK|2LDK|3LDK)\s+(\d+(?:\.\d+)?)㎡\s+(\d{1,3}(?:,\d{3})+|\d{4,8})円\s+(?:(\d{1,3}(?:,\d{3})+|\d{4,8})円|(なし|無し|無|0))/,
+  );
+
+  const labeledRent = findLabeledAmount(normalized, ['賃料', '家賃']);
+  const rent = labeledRent ?? parseYenValue(roomBlockMatch?.[3]);
+  const managementFee =
+    findLabeledAmount(normalized, ['共益費', '管理費', '共益費・管理費']) ??
+    parseYenValue(roomBlockMatch?.[4] || roomBlockMatch?.[5]);
+
+  const result: PdfExtractResult = {
+    detectedMemo: memo,
+  };
+
+  const propertyNameByLabel = findFirstMatch(normalized, [
+    /物件名\s*[:：]?\s*([^\n]+)/,
+    /建物名\s*[:：]?\s*([^\n]+)/,
+    /マンション名\s*[:：]?\s*([^\n]+)/,
+  ]);
+
+  const propertyNameByAddress = addressLineIndex > 0 ? lines[addressLineIndex - 1] : '';
+
+  result.propertyName = propertyNameByLabel || propertyNameByAddress || '';
+  result.address = splitAddress[0] || findFirstMatch(normalized, [/所在地\s*[:：]?\s*([^\n]+)/, /住所\s*[:：]?\s*([^\n]+)/]);
+  result.nearestStation =
+    splitAddress.slice(1).join(' / ') ||
+    findFirstMatch(normalized, [/交通\s*[:：]?\s*([^\n]+)/, /最寄(?:駅)?\s*[:：]?\s*([^\n]+)/]);
+
+  result.roomNo = findFirstMatch(normalized, [
+    /号室(?:名)?\s*[:：]?\s*([0-9A-Za-z\-]+)/,
+    /([0-9A-Za-z\-]+)\s*号室/,
+    /\n([0-9]{3,4})\n（\d+階部分）/,
+  ]);
+
+  result.layout = roomBlockMatch?.[1] || findFirstMatch(compact, [/(1R|1K|1DK|1LDK|2K|2DK|2LDK|3LDK)/]);
+  const areaValue = roomBlockMatch?.[2] || findFirstMatch(compact, [/(\d+(?:\.\d+)?)\s*㎡/]);
+  result.area = areaValue ? `${areaValue}㎡` : '';
+
+  result.structure = findFirstMatch(compact, [
+    /(鉄骨鉄筋コンクリート造)/,
+    /(鉄筋コンクリート造)/,
+    /(軽量鉄骨造)/,
+    /(鉄骨造)/,
+    /(木造)/,
+  ]);
+
+  result.builtYear = findFirstMatch(compact, [/(\d{4}年\d{1,2}月築)/, /(築\d+年)/, /(新築)/]);
+  result.floor = findFirstMatch(compact, [/（(\d+階部分)）/, /所在階\s*[:：]?\s*(\d+階)/]);
+  result.direction = findFirstMatch(compact, [
+    /(北東向|東北向|北西向|西北向|南東向|東南向|南西向|西南向|南向|北向|東向|西向)/,
+  ]);
+
+  if (rent !== null) result.rent = rent;
+  if (managementFee !== null) result.managementFee = managementFee;
+
+  if (result.rent) {
+    const deposit = findLabeledAmount(normalized, ['敷金'], result.rent);
+    const keyMoney = findLabeledAmount(normalized, ['礼金'], result.rent);
+    const guaranteeDeposit = findLabeledAmount(normalized, ['保証金'], result.rent);
+
+    if (deposit !== null) result.deposit = deposit;
+    if (keyMoney !== null) result.keyMoney = keyMoney;
+    if (guaranteeDeposit !== null) result.guaranteeDeposit = guaranteeDeposit;
+  }
+
+  const guaranteeCompanyFee =
+    findFeeByKeywords(normalized, ['初回保証料', '保証会社', '保証料']) ??
+    (() => {
+      const percentMatch = compact.match(/初回保証料[^0-9]{0,30}(\d{1,3})\s*%/);
+      if (percentMatch?.[1] && result.rent !== undefined) {
+        return Math.round(((result.rent || 0) + (result.managementFee || 0)) * (Number(percentMatch[1]) / 100));
+      }
+      return null;
+    })();
+
+  const fireInsurance = findFeeByKeywords(normalized, ['火災保険', '保険料', '保険']);
+  const keyExchange = findFeeByKeywords(normalized, ['鍵交換', 'カギ交換', 'キー交換']);
+  const cleaningFee = findFeeByKeywords(normalized, ['クリーニング', '清掃費', '退去時清掃']);
+  const supportFee = findFeeByKeywords(normalized, ['24時間サポート', '安心サポート', '駆けつけ']);
+  const contractAdminFee = findFeeByKeywords(normalized, ['契約事務手数料', '事務手数料', '書類作成']);
+
+  if (guaranteeCompanyFee !== null) result.guaranteeCompanyFee = guaranteeCompanyFee;
+  if (fireInsurance !== null) result.fireInsurance = fireInsurance;
+  if (keyExchange !== null) result.keyExchange = keyExchange;
+  if (cleaningFee !== null) result.cleaningFee = cleaningFee;
+  if (supportFee !== null) result.supportFee = supportFee;
+  if (contractAdminFee !== null) result.contractAdminFee = contractAdminFee;
+
+  if (/水道代|水道料/.test(compact)) {
+    const waterFee = findFeeByKeywords(normalized, ['水道代', '水道料']);
+    if (waterFee !== null) {
+      result.monthlyOtherName = '水道代 / 수도비';
+      result.monthlyOtherFee = waterFee;
+    }
+  }
+
+  if (/インターネット|ネット/.test(compact)) {
+    memo.push('인터넷 비용 포함/별도 여부 확인 필요');
+  }
+
+  if (/外国人契約可能/.test(compact)) {
+    memo.push('外国人契約可能 표기 있음');
+  }
+
+  if (/短期解約|違約金/.test(compact)) {
+    memo.push('단기해약 위약금 조건 확인 필요');
+  }
+
+  if (/ペット/.test(compact)) {
+    memo.push('반려동물 관련 조건 있음. 고객 조건과 별도 확인 필요');
+  }
+
+  if (!result.rent || result.managementFee === undefined) {
+    memo.push('월세/관리비 자동 추출이 불완전합니다. PDF 원본 금액을 직접 확인해주세요.');
+  }
+
+  if (!result.propertyName) {
+    memo.push('매물명 자동 추출이 불완전합니다.');
+  }
+
+  result.estimateMemo = [
+    '본 견적은 PDF 자동 추출 결과를 바탕으로 한 개산 견적입니다.',
+    '자동 추출값은 관리회사 원본 PDF와 반드시 대조 확인해주세요.',
+    ...memo,
+  ].join('\n');
+
+  return result;
+}
+
+async function extractTextFromPdf(file: File) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+  const pageTexts: string[] = [];
+
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const content = await page.getTextContent();
+    const text = content.items.map((item: any) => ('str' in item ? item.str : '')).join(' ');
+    pageTexts.push(`--- PAGE ${pageNumber} / ${pdf.numPages} ---\n${text}`);
+  }
+
+  return {
+    text: pageTexts.join('\n\n'),
+    pageCount: pdf.numPages,
+  };
 }
 
 function getMoveInProration(moveInDate: string, monthlyAmount: number) {
@@ -354,6 +630,10 @@ function buildPropertyIntro(form: PropertyForm) {
 export default function PropertyEstimateTool() {
   const [form, setForm] = useState<PropertyForm>(defaultForm);
   const [copied, setCopied] = useState('');
+  const [pdfFileName, setPdfFileName] = useState('');
+  const [pdfStatus, setPdfStatus] = useState('');
+  const [pdfExtractedText, setPdfExtractedText] = useState('');
+  const [pdfPageCount, setPdfPageCount] = useState(0);
 
   const items = useMemo(() => buildItems(form), [form]);
   const initialTotal = useMemo(() => items.reduce((sum, item) => sum + item.amount, 0), [items]);
@@ -451,6 +731,67 @@ export default function PropertyEstimateTool() {
     });
   };
 
+  const handlePdfFile = async (file: File | undefined) => {
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      alert('PDF 파일만 첨부할 수 있습니다.');
+      return;
+    }
+
+    setPdfFileName(file.name);
+    setPdfStatus('PDF 텍스트를 읽는 중입니다...');
+    setPdfExtractedText('');
+    setPdfPageCount(0);
+
+    try {
+      const { text, pageCount } = await extractTextFromPdf(file);
+      const parsed = parsePropertyPdfText(text);
+
+      setPdfExtractedText(text.slice(0, 8000));
+      setPdfPageCount(pageCount);
+
+      setForm((current) => ({
+        ...current,
+        propertyName: parsed.propertyName || current.propertyName,
+        roomNo: parsed.roomNo || current.roomNo,
+        address: parsed.address || current.address,
+        nearestStation: parsed.nearestStation || current.nearestStation,
+        layout: parsed.layout || current.layout,
+        area: parsed.area || current.area,
+        structure: parsed.structure || current.structure,
+        builtYear: parsed.builtYear || current.builtYear,
+        floor: parsed.floor || current.floor,
+        direction: parsed.direction || current.direction,
+        rent: parsed.rent ?? current.rent,
+        managementFee: parsed.managementFee ?? current.managementFee,
+        deposit: parsed.deposit ?? current.deposit,
+        keyMoney: parsed.keyMoney ?? current.keyMoney,
+        guaranteeDeposit: parsed.guaranteeDeposit ?? current.guaranteeDeposit,
+        guaranteeCompanyFee: parsed.guaranteeCompanyFee ?? current.guaranteeCompanyFee,
+        fireInsurance: parsed.fireInsurance ?? current.fireInsurance,
+        keyExchange: parsed.keyExchange ?? current.keyExchange,
+        cleaningFee: parsed.cleaningFee ?? current.cleaningFee,
+        supportFee: parsed.supportFee ?? current.supportFee,
+        contractAdminFee: parsed.contractAdminFee ?? current.contractAdminFee,
+        monthlyOtherName: parsed.monthlyOtherName || current.monthlyOtherName,
+        monthlyOtherFee: parsed.monthlyOtherFee ?? current.monthlyOtherFee,
+        otherFeeName: parsed.otherFeeName || current.otherFeeName,
+        otherFee: parsed.otherFee ?? current.otherFee,
+        estimateMemo: parsed.estimateMemo || current.estimateMemo,
+      }));
+
+      setPdfStatus(
+        `PDF ${pageCount}페이지를 읽고 자동 입력을 시도했습니다. 자동 추출값은 반드시 원본 PDF와 대조 확인해주세요.`,
+      );
+    } catch (error: any) {
+      console.error(error);
+      setPdfStatus(
+        `PDF를 읽지 못했습니다. 이미지 기반 PDF이거나 텍스트 추출이 제한된 파일일 수 있습니다. 상세: ${error?.message || '알 수 없는 오류'}`,
+      );
+    }
+  };
+
   const copyText = async (label: string, text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -488,9 +829,43 @@ export default function PropertyEstimateTool() {
         </button>
       </section>
 
+      <section style={styles.panel}>
+        <div style={styles.panelHeaderRow}>
+          <div>
+            <h2 style={styles.panelTitle}>1. 관리회사 PDF 첨부 / 자동 입력</h2>
+            <p style={styles.panelSubText}>
+              RealnetPro에서 내려받은 매물 전용 PDF를 첨부하면, 읽을 수 있는 텍스트를 기준으로 매물정보와 비용 항목을 자동 입력합니다.
+            </p>
+          </div>
+
+          <label style={styles.uploadButton}>
+            PDF 첨부
+            <input
+              type="file"
+              accept="application/pdf,.pdf"
+              style={{ display: 'none' }}
+              onChange={(event) => handlePdfFile(event.target.files?.[0])}
+            />
+          </label>
+        </div>
+
+        <div style={styles.pdfStatusBox}>
+          <strong>{pdfFileName || '첨부된 PDF 없음'}</strong>
+          <p>{pdfStatus || 'PDF를 첨부하면 자동 추출 결과가 여기에 표시됩니다.'}</p>
+          {pdfPageCount > 0 && <span>{pdfPageCount}페이지 감지</span>}
+        </div>
+
+        {pdfExtractedText && (
+          <details style={styles.pdfPreviewBox}>
+            <summary>추출된 PDF 텍스트 일부 보기</summary>
+            <pre>{pdfExtractedText}</pre>
+          </details>
+        )}
+      </section>
+
       <section style={styles.grid}>
         <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>1. 고객 / 매물 기본정보</h2>
+          <h2 style={styles.panelTitle}>2. 고객 / 매물 기본정보</h2>
 
           <div style={styles.formGrid}>
             <TextInput label="고객명" value={form.customerName} onChange={(value) => update('customerName', value)} />
@@ -509,7 +884,7 @@ export default function PropertyEstimateTool() {
         </div>
 
         <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>2. 비용 입력</h2>
+          <h2 style={styles.panelTitle}>3. 비용 입력</h2>
 
           <div style={styles.formGrid}>
             <MoneyInput label="월세 / 賃料" value={form.rent} onChange={(value) => update('rent', value)} />
@@ -533,7 +908,7 @@ export default function PropertyEstimateTool() {
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.panelTitle}>3. 추가 비용 항목</h2>
+        <h2 style={styles.panelTitle}>4. 추가 비용 항목</h2>
 
         <div style={styles.customFeeGrid}>
           <CustomFeeList
@@ -559,7 +934,7 @@ export default function PropertyEstimateTool() {
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.panelTitle}>4. 자동 계산 보조</h2>
+        <h2 style={styles.panelTitle}>5. 자동 계산 보조</h2>
 
         <div style={styles.helperGrid}>
           <div style={styles.helperCard}>
@@ -785,13 +1160,13 @@ export default function PropertyEstimateTool() {
 
       <section style={styles.grid}>
         <OutputPanel
-          title="5. 고객 발송용 견적 안내문"
+          title="6. 고객 발송용 견적 안내문"
           value={customerMessage}
           copied={copied === 'customer'}
           onCopy={() => copyText('customer', customerMessage)}
         />
         <OutputPanel
-          title="6. 고객용 매물 소개자료 초안"
+          title="7. 고객용 매물 소개자료 초안"
           value={propertyIntro}
           copied={copied === 'intro'}
           onCopy={() => copyText('intro', propertyIntro)}
@@ -1159,6 +1534,42 @@ const styles: Record<string, CSSProperties> = {
     fontSize: '20px',
     color: '#241d18',
     letterSpacing: '-0.03em',
+  },
+  panelSubText: {
+    margin: '6px 0 0',
+    color: '#7b716a',
+    fontSize: '13px',
+    lineHeight: 1.6,
+  },
+  uploadButton: {
+    border: 'none',
+    borderRadius: '999px',
+    padding: '10px 16px',
+    background: '#8b5a2b',
+    color: '#fff',
+    fontWeight: 900,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  },
+  pdfStatusBox: {
+    padding: '14px 16px',
+    borderRadius: '16px',
+    border: '1px solid #eadfd4',
+    background: '#fffaf5',
+    color: '#241d18',
+    lineHeight: 1.6,
+  },
+  pdfPreviewBox: {
+    marginTop: '12px',
+    border: '1px solid #eadfd4',
+    borderRadius: '16px',
+    padding: '14px',
+    background: '#fffdfb',
+    color: '#51463d',
+    maxHeight: '260px',
+    overflow: 'auto',
+    fontSize: '12px',
+    lineHeight: 1.5,
   },
   panelHeaderRow: {
     display: 'flex',
