@@ -967,16 +967,52 @@ function buildPropertyIntro(form: PropertyForm) {
 }
 
 
-function buildChatGptJsonExtractionPrompt() {
-  return `첨부한 RealnetPro/リアプロ 매물 전용 PDF에서 아래 항목을 추출해서 JSON만 출력해주세요.
+function buildChatGptJsonExtractionPrompt(pdfFileName = '', memo = '') {
+  return `당신은 일본 임대 매물 전용 PDF를 실무 기준으로 읽고, 초기비용 견적서 작성용 JSON을 만드는 부동산 업무 보조자입니다.
 
-[중요]
-- PDF에 없는 값은 빈 문자열 또는 0으로 넣어주세요.
-- 금액은 콤마 없이 숫자만 넣어주세요.
-- 월액 비용과 계약시 추가비용은 배열로 넣어주세요.
-- 설명 문장 없이 JSON만 출력해주세요.
+[작업 대상]
+- 첨부 PDF: ${pdfFileName || '관리회사/RealnetPro 매물 전용 PDF'}
+${memo ? `- 관리자 메모: ${memo}` : ''}
 
-[JSON 형식]
+[가장 중요한 원칙]
+1. 반드시 첨부 PDF에 적힌 정보만 근거로 추출하세요.
+2. PDF에 없는 항목은 추정하지 말고 빈 문자열 또는 0으로 남기세요.
+3. 금액은 반드시 숫자만 입력하세요. 예: 63,630円 → 63630
+4. 更新料, 更新手数料처럼 갱신 시점 비용은 초기비용에 넣지 말고 estimateMemo에만 적으세요.
+5. 月額 비용은 customMonthlyFees에 넣으세요.
+6. 契約時 비용은 기본 항목에 해당하면 기본 항목에 넣고, 기본 항목이 없으면 customInitialFees에 넣으세요.
+7. 保証会社 初回保証料가 비율만 있고 금액이 없으면 0으로 두고 estimateMemo에 확인 필요라고 적으세요.
+8. 火災保険이 월액인지 2년 일시납인지 애매하면 estimateMemo에 확인 필요라고 적으세요.
+9. 출력은 설명 없이 JSON만 작성하세요.
+10. JSON 앞뒤에 코드블록 기호 \`\`\` 를 붙이지 마세요.
+
+[항목 매핑 기준]
+- 物件名 → propertyName
+- 号室名 → roomNo
+- 所在地 → address
+- 交通 → nearestStation
+- 間取タイプ → layout
+- 専有面積 → area
+- 建築構造 → structure
+- 築年 → builtYear
+- 号室名 안의 階部分 또는 所在階 → floor
+- 開口部方位 → direction
+- 現況/入居時期 → moveInDate
+- 賃料 → rent
+- 共益費・管理費 → managementFee
+- 敷金 → deposit
+- 礼金 → keyMoney
+- 保証金 → guaranteeDeposit
+- 保証会社 初回保証料 → guaranteeCompanyFee
+- 火災保険 / 保険料 → fireInsurance 또는 월액이면 customMonthlyFees
+- カギ代 / 鍵交換代 → keyExchange
+- ルームクリーニング代 / 退去時清掃費 / 清掃費 → cleaningFee
+- 24時間サポート / 安心サポート → supportFee 또는 월액이면 customMonthlyFees
+- 契約事務手数料 → contractAdminFee
+- スマサポコンシェル入会金, 消毒代, 抗菌施工費 등 계약시 추가비용 → customInitialFees
+- スマサポコンシェル（月額）, 水道代, 町会費, 月額保証料 등 매월 비용 → customMonthlyFees
+
+[반드시 출력할 JSON 형식]
 {
   "propertyName": "",
   "roomNo": "",
@@ -1019,20 +1055,16 @@ function buildChatGptJsonExtractionPrompt() {
   "estimateMemo": ""
 }
 
-[예시 판단]
-- 賃料 → rent
-- 共益費・管理費 → managementFee
-- 敷金 → deposit
-- 礼金 → keyMoney
-- 保証金 → guaranteeDeposit
-- 火災保険 / 保険料 → fireInsurance 또는 월액이면 customMonthlyFees
-- カギ代 / 鍵交換代 → keyExchange
-- ルームクリーニング代 / 清掃費 → cleaningFee
-- スマサポコンシェル入会金 등 계약시 비용 → customInitialFees
-- スマサポコンシェル（月額）/ 水道代 등 월액 비용 → customMonthlyFees
-- 更新料 / 更新手数料는 갱신시 비용이므로 estimateMemo에만 적고 초기비용에는 넣지 마세요.
+[estimateMemo에 반드시 적을 것]
+- 外国人契約可能 여부
+- 保証会社利用必須 여부
+- 初回保証料 금액 미기재 시 확인 필요
+- 短期解約違約金이 있으면 내용 요약
+- 更新料/更新手数料가 있으면 갱신시 비용으로 별도 기재
+- PDF상 현황과 입주가능일
+- 기타 계약 전 확인해야 할 내용
 
-위 기준으로 첨부 PDF를 읽고 JSON만 출력해주세요.`;
+첨부한 PDF를 읽고 위 형식의 JSON만 출력해주세요.`;
 }
 
 function parsePastedJson(text: string) {
@@ -1067,8 +1099,8 @@ export default function PropertyEstimateTool() {
   const [pdfExtractedText, setPdfExtractedText] = useState('');
   const [pdfPageCount, setPdfPageCount] = useState(0);
   const [pdfExtractedData, setPdfExtractedData] = useState<PdfExtractResult | null>(null);
-  const [ocrTextInput, setOcrTextInput] = useState('');
-  const [ocrTextStatus, setOcrTextStatus] = useState('');
+  const [selectedPdfName, setSelectedPdfName] = useState('');
+  const [promptMemo, setPromptMemo] = useState('');
   const [jsonInput, setJsonInput] = useState('');
   const [jsonStatus, setJsonStatus] = useState('');
 
@@ -1078,6 +1110,10 @@ export default function PropertyEstimateTool() {
   const proration = useMemo(() => getMoveInProration(form.moveInDate, form.rent + form.managementFee), [form.moveInDate, form.rent, form.managementFee]);
   const customerMessage = useMemo(() => buildCustomerMessage(form, initialTotal, monthlyTotal), [form, initialTotal, monthlyTotal]);
   const propertyIntro = useMemo(() => buildPropertyIntro(form), [form]);
+  const generatedJsonPrompt = useMemo(
+    () => buildChatGptJsonExtractionPrompt(selectedPdfName, promptMemo),
+    [selectedPdfName, promptMemo],
+  );
 
   const update = (key: keyof PropertyForm, value: string) => {
     const numericKeys: Array<keyof PropertyForm> = [
@@ -1247,38 +1283,6 @@ export default function PropertyEstimateTool() {
     setPdfStatus('추출값을 입력폼에 반영했습니다. 금액은 반드시 원본 PDF와 대조 확인해주세요.');
   };
 
-  const analyzeOcrText = () => {
-    const sourceText = ocrTextInput.trim();
-
-    if (!sourceText) {
-      setOcrTextStatus('Google Docs에서 변환한 텍스트를 먼저 붙여넣어주세요.');
-      return;
-    }
-
-    try {
-      const parsed = parsePropertyPdfText(sourceText);
-      const hasAnyValue = Boolean(
-        parsed.propertyName ||
-          parsed.roomNo ||
-          parsed.address ||
-          parsed.rent !== undefined ||
-          parsed.managementFee !== undefined,
-      );
-
-      setPdfExtractedData(parsed);
-
-      if (hasAnyValue) {
-        setOcrTextStatus('텍스트 분석 후보를 만들었습니다. 아래 후보값을 원본 자료와 비교한 뒤 입력폼에 반영하세요.');
-      } else {
-        setOcrTextStatus(
-          '텍스트는 분석했지만 주요 항목을 찾지 못했습니다. Google Docs OCR 결과 전체를 복사했는지 확인해주세요.',
-        );
-      }
-    } catch (error: any) {
-      setOcrTextStatus(`텍스트 분석 중 오류가 발생했습니다. 상세: ${error?.message || '알 수 없는 오류'}`);
-    }
-  };
-
   const applyPastedJson = () => {
     try {
       const parsed = parsePastedJson(jsonInput);
@@ -1345,7 +1349,7 @@ export default function PropertyEstimateTool() {
         <p style={styles.eyebrow}>Osaka J Internal Tool</p>
         <h1 style={styles.title}>추천 매물 자료 생성</h1>
         <p style={styles.description}>
-          Google Docs OCR 텍스트 또는 ChatGPT JSON을 붙여넣어 매물정보와 비용 항목을 자동 입력하고, 초기비용 개산 견적서와 고객용 매물 소개자료를 생성합니다.
+          ChatGPT에 보낼 PDF 분석 프롬프트를 메모처럼 보관하고, ChatGPT가 출력한 JSON을 붙여넣어 초기비용 개산 견적서와 고객용 매물 소개자료를 생성합니다.
         </p>
       </section>
 
@@ -1364,101 +1368,54 @@ export default function PropertyEstimateTool() {
       <section style={styles.panel}>
         <div style={styles.panelHeaderRow}>
           <div>
-            <h2 style={styles.panelTitle}>1. Google Docs OCR 텍스트 붙여넣기</h2>
+            <h2 style={styles.panelTitle}>1. ChatGPT 작업 프롬프트 메모</h2>
             <p style={styles.panelSubText}>
-              RealnetPro 매물 PDF를 Google Drive에 업로드한 뒤 Google 문서로 열고, 변환된 텍스트 전체를 여기에 붙여넣어 분석합니다.
+              아래 프롬프트를 복사해서 이 ChatGPT 대화창에 매물 전용 PDF와 함께 보내면, 견적서 입력용 JSON을 받을 수 있습니다.
             </p>
           </div>
+          <button type="button" style={styles.secondaryButton} onClick={() => copyText('jsonPrompt', generatedJsonPrompt)}>
+            프롬프트 전체 복사
+          </button>
         </div>
 
         <div style={styles.guideBox}>
-          <strong>무료 사용 순서</strong>
+          <strong>실무 사용 순서</strong>
           <p>
-            PDF를 Google Drive에 업로드 → 우클릭 → Google 문서로 열기 → 변환된 텍스트 전체 복사 → 아래 칸에 붙여넣기
+            ① RealnetPro 매물 전용 PDF 다운로드 → ② 아래 프롬프트 복사 → ③ ChatGPT 대화창에 PDF 업로드 + 프롬프트 붙여넣기 → ④ JSON 결과 복사 → ⑤ 2번 칸에 붙여넣기 → ⑥ 初期費用概算書 출력
           </p>
         </div>
 
-        <textarea
-          style={styles.ocrTextarea}
-          value={ocrTextInput}
-          onChange={(event) => setOcrTextInput(event.target.value)}
-          placeholder="Google Docs OCR로 변환된 매물 자료 텍스트를 여기에 붙여넣으세요."
-        />
+        <div style={styles.promptGrid}>
+          <label style={styles.label}>
+            <span>분석할 PDF 파일 선택 / 파일명 메모</span>
+            <input
+              style={styles.input}
+              type="file"
+              accept="application/pdf,.pdf"
+              onChange={(event) => setSelectedPdfName(event.target.files?.[0]?.name || '')}
+            />
+          </label>
 
-        <div style={styles.jsonActionRow}>
-          <button type="button" style={styles.primaryButton} onClick={analyzeOcrText}>
-            텍스트 분석 후보 만들기
-          </button>
-          <span>{ocrTextStatus || '텍스트를 붙여넣고 분석하면 추출 후보가 표시됩니다.'}</span>
+          <label style={styles.label}>
+            <span>선택된 파일명</span>
+            <input style={styles.input} value={selectedPdfName || '선택된 PDF 없음'} readOnly />
+          </label>
         </div>
 
-        {pdfExtractedData && (
-          <div style={styles.pdfCandidateBox}>
-            <div style={styles.panelHeaderRow}>
-              <div>
-                <h3 style={styles.helperTitle}>텍스트 자동 추출 후보</h3>
-                <p style={styles.panelSubText}>
-                  Google OCR 텍스트에서 찾은 후보값입니다. 원본 PDF와 비교 후 반영하세요.
-                </p>
-              </div>
-              <button type="button" style={styles.primaryButton} onClick={applyPdfExtractedData}>
-                추출값 입력폼에 반영
-              </button>
-            </div>
+        <label style={{ ...styles.label, marginTop: '12px' }}>
+          <span>프롬프트에 추가할 메모 / 고객 조건 / 주의사항</span>
+          <textarea
+            style={styles.memoInput}
+            value={promptMemo}
+            onChange={(event) => setPromptMemo(event.target.value)}
+            placeholder="예: 김인화 고객님 후보 매물. 보증회사 초회비용, 월액 비용, 계약시 비용, 계약시 청구/월액 청구 여부를 특히 정확히 추출해주세요."
+          />
+        </label>
 
-            <div style={styles.candidateGrid}>
-              <CandidateItem label="매물명" value={pdfExtractedData.propertyName} />
-              <CandidateItem label="호실" value={pdfExtractedData.roomNo} />
-              <CandidateItem label="주소" value={pdfExtractedData.address} />
-              <CandidateItem label="교통" value={pdfExtractedData.nearestStation} />
-              <CandidateItem label="타입" value={pdfExtractedData.layout} />
-              <CandidateItem label="면적" value={pdfExtractedData.area} />
-              <CandidateItem label="구조" value={pdfExtractedData.structure} />
-              <CandidateItem label="축년" value={pdfExtractedData.builtYear} />
-              <CandidateItem label="층수" value={pdfExtractedData.floor} />
-              <CandidateItem label="향" value={pdfExtractedData.direction} />
-              <CandidateItem label="월세" value={pdfExtractedData.rent !== undefined ? yen(pdfExtractedData.rent) : ''} />
-              <CandidateItem
-                label="관리비"
-                value={pdfExtractedData.managementFee !== undefined ? yen(pdfExtractedData.managementFee) : ''}
-              />
-              <CandidateItem label="敷金" value={pdfExtractedData.deposit !== undefined ? yen(pdfExtractedData.deposit) : ''} />
-              <CandidateItem label="礼金" value={pdfExtractedData.keyMoney !== undefined ? yen(pdfExtractedData.keyMoney) : ''} />
-              <CandidateItem
-                label="保証会社"
-                value={pdfExtractedData.guaranteeCompanyFee !== undefined ? yen(pdfExtractedData.guaranteeCompanyFee) : ''}
-              />
-              <CandidateItem
-                label="火災保険"
-                value={pdfExtractedData.fireInsurance !== undefined ? yen(pdfExtractedData.fireInsurance) : ''}
-              />
-              <CandidateItem
-                label="鍵交換代"
-                value={pdfExtractedData.keyExchange !== undefined ? yen(pdfExtractedData.keyExchange) : ''}
-              />
-              <CandidateItem
-                label="清掃費"
-                value={pdfExtractedData.cleaningFee !== undefined ? yen(pdfExtractedData.cleaningFee) : ''}
-              />
-              <CandidateItem
-                label="추가 초기비용"
-                value={
-                  pdfExtractedData.customInitialFees?.length
-                    ? pdfExtractedData.customInitialFees.map((fee) => `${fee.label} ${yen(fee.amount)}`).join(' / ')
-                    : ''
-                }
-              />
-              <CandidateItem
-                label="추가 월액비용"
-                value={
-                  pdfExtractedData.customMonthlyFees?.length
-                    ? pdfExtractedData.customMonthlyFees.map((fee) => `${fee.label} ${yen(fee.amount)}`).join(' / ')
-                    : ''
-                }
-              />
-            </div>
-          </div>
-        )}
+        <label style={{ ...styles.label, marginTop: '12px' }}>
+          <span>복사해서 ChatGPT에 보낼 프롬프트</span>
+          <textarea style={styles.promptPreviewTextarea} value={generatedJsonPrompt} readOnly />
+        </label>
       </section>
 
       <section style={styles.panel}>
@@ -1466,12 +1423,9 @@ export default function PropertyEstimateTool() {
           <div>
             <h2 style={styles.panelTitle}>2. ChatGPT JSON 붙여넣기</h2>
             <p style={styles.panelSubText}>
-              Google OCR 텍스트 분석이 부족할 때만 사용합니다. ChatGPT에서 PDF를 분석해 JSON을 받은 뒤 이곳에 붙여넣습니다.
+              1번 프롬프트로 받은 JSON을 여기에 붙여넣으면 매물정보와 초기비용 항목이 입력폼에 자동 반영됩니다.
             </p>
           </div>
-          <button type="button" style={styles.secondaryButton} onClick={() => copyText('jsonPrompt', buildChatGptJsonExtractionPrompt())}>
-            ChatGPT 추출 프롬프트 복사
-          </button>
         </div>
 
         <textarea
@@ -2523,9 +2477,9 @@ const styles: Record<string, CSSProperties> = {
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
     fontSize: '13px',
   },
-  ocrTextarea: {
+  promptPreviewTextarea: {
     width: '100%',
-    minHeight: '260px',
+    minHeight: '340px',
     boxSizing: 'border-box',
     border: '1px solid #ded2c7',
     borderRadius: '13px',
@@ -2534,7 +2488,25 @@ const styles: Record<string, CSSProperties> = {
     resize: 'vertical',
     color: '#241d18',
     background: '#fffdfb',
-    fontSize: '13px',
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    fontSize: '12px',
+  },
+  promptGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '12px',
+  },
+  memoInput: {
+    width: '100%',
+    minHeight: '90px',
+    boxSizing: 'border-box',
+    border: '1px solid #ded2c7',
+    borderRadius: '13px',
+    padding: '12px',
+    lineHeight: 1.6,
+    resize: 'vertical',
+    color: '#241d18',
+    background: '#fffdfb',
   },
   guideBox: {
     padding: '14px 16px',
@@ -2544,7 +2516,7 @@ const styles: Record<string, CSSProperties> = {
     color: '#5b4432',
     lineHeight: 1.65,
     fontSize: '13px',
-    marginBottom: '12px',
+    marginTop: '12px',
   },
   jsonActionRow: {
     display: 'flex',
