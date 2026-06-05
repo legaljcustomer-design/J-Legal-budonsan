@@ -145,7 +145,37 @@ function parseMinFloor(text: string) {
 }
 
 function parseMaxWalkMinutes(text: string) {
-  const normalized = normalizeText(text);
+  const normalized = normalizeText(text)
+    .replace(/\s+/g, ' ')
+    .replace(/n분/g, '분')
+    .replace(/Ｎ分/gi, '分');
+
+  const directLineValue = extractLineValue(text, [
+    '역에서 집까지 도보 N분',
+    '역에서 집까지 도보',
+    '역에서 집까지',
+    '역 도보',
+    '도보',
+    '역까지 도보',
+  ]);
+
+  if (directLineValue) {
+    const rangeInValue = directLineValue.match(/(\d+)\s*~\s*(\d+)\s*분?/);
+    if (rangeInValue?.[2]) return Number(rangeInValue[2]);
+
+    const numberInValue = directLineValue.match(/(\d+)\s*분?/);
+    if (numberInValue?.[1]) return Number(numberInValue[1]);
+  }
+
+  const labeledRangeMatch = normalized.match(
+    /역에서\s*집까지\s*도보\s*(?:n\s*분)?\s*[:：]?\s*(\d+)\s*~\s*(\d+)\s*분?/,
+  );
+  if (labeledRangeMatch?.[2]) return Number(labeledRangeMatch[2]);
+
+  const labeledSingleMatch = normalized.match(
+    /역에서\s*집까지\s*도보\s*(?:n\s*분)?\s*[:：]?\s*(\d+)\s*분?/,
+  );
+  if (labeledSingleMatch?.[1]) return Number(labeledSingleMatch[1]);
 
   const stationRangeMatch = normalized.match(/역까지\s*도보\s*(\d+)\s*~\s*(\d+)\s*분/);
   if (stationRangeMatch?.[2]) return Number(stationRangeMatch[2]);
@@ -155,6 +185,9 @@ function parseMaxWalkMinutes(text: string) {
 
   const withinMatch = normalized.match(/도보\s*(\d+)\s*분\s*이내/);
   if (withinMatch?.[1]) return Number(withinMatch[1]);
+
+  const simpleWalkMatch = normalized.match(/도보\s*(\d+)\s*분/);
+  if (simpleWalkMatch?.[1]) return Number(simpleWalkMatch[1]);
 
   return null;
 }
