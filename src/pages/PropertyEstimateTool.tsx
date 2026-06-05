@@ -3,10 +3,10 @@ import { useMemo, useState, type CSSProperties } from 'react';
 const PDFJS_VERSION = '4.10.38';
 const PDFJS_MODULE_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.mjs`;
 const PDFJS_WORKER_URL = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.mjs`;
-const TESSERACT_MODULE_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js';
+const TESSERACT_SCRIPT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 
 let pdfJsModulePromise: Promise<any> | null = null;
-let tesseractModulePromise: Promise<any> | null = null;
+let tesseractLoadPromise: Promise<any> | null = null;
 
 async function loadPdfJs() {
   if (!pdfJsModulePromise) {
@@ -20,11 +20,45 @@ async function loadPdfJs() {
 }
 
 async function loadTesseract() {
-  if (!tesseractModulePromise) {
-    tesseractModulePromise = import(/* @vite-ignore */ TESSERACT_MODULE_URL);
+  const existing = (window as any).Tesseract;
+
+  if (existing?.createWorker) {
+    return existing;
   }
 
-  return tesseractModulePromise;
+  if (!tesseractLoadPromise) {
+    tesseractLoadPromise = new Promise((resolve, reject) => {
+      const alreadyAdded = document.querySelector(`script[src="${TESSERACT_SCRIPT_URL}"]`);
+
+      if (alreadyAdded) {
+        alreadyAdded.addEventListener('load', () => {
+          const loaded = (window as any).Tesseract;
+
+          if (loaded?.createWorker) resolve(loaded);
+          else reject(new Error('Tesseract OCR 라이브러리를 불러왔지만 createWorker를 찾지 못했습니다.'));
+        });
+        alreadyAdded.addEventListener('error', () => reject(new Error('Tesseract OCR 라이브러리 로드 실패')));
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = TESSERACT_SCRIPT_URL;
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+
+      script.onload = () => {
+        const loaded = (window as any).Tesseract;
+
+        if (loaded?.createWorker) resolve(loaded);
+        else reject(new Error('Tesseract OCR 라이브러리를 불러왔지만 createWorker를 찾지 못했습니다.'));
+      };
+
+      script.onerror = () => reject(new Error('Tesseract OCR 라이브러리 로드 실패'));
+      document.head.appendChild(script);
+    });
+  }
+
+  return tesseractLoadPromise;
 }
 
 type InitialRentMode = 'oneMonth' | 'prorated' | 'proratedPlusNextMonth';
@@ -676,6 +710,10 @@ async function renderPageToCanvas(page: any) {
 
 async function createJapaneseOcrWorker() {
   const tesseract = await loadTesseract();
+
+  if (!tesseract?.createWorker) {
+    throw new Error('Tesseract OCR createWorker 함수를 찾지 못했습니다.');
+  }
 
   return tesseract.createWorker('jpn+eng', 1, {
     workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
