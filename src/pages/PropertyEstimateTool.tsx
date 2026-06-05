@@ -966,6 +966,99 @@ function buildPropertyIntro(form: PropertyForm) {
 `;
 }
 
+
+function buildChatGptJsonExtractionPrompt() {
+  return `첨부한 RealnetPro/リアプロ 매물 전용 PDF에서 아래 항목을 추출해서 JSON만 출력해주세요.
+
+[중요]
+- PDF에 없는 값은 빈 문자열 또는 0으로 넣어주세요.
+- 금액은 콤마 없이 숫자만 넣어주세요.
+- 월액 비용과 계약시 추가비용은 배열로 넣어주세요.
+- 설명 문장 없이 JSON만 출력해주세요.
+
+[JSON 형식]
+{
+  "propertyName": "",
+  "roomNo": "",
+  "address": "",
+  "nearestStation": "",
+  "layout": "",
+  "area": "",
+  "structure": "",
+  "builtYear": "",
+  "floor": "",
+  "direction": "",
+  "moveInDate": "",
+  "rent": 0,
+  "managementFee": 0,
+  "deposit": 0,
+  "keyMoney": 0,
+  "guaranteeDeposit": 0,
+  "guaranteeCompanyFee": 0,
+  "fireInsurance": 0,
+  "keyExchange": 0,
+  "cleaningFee": 0,
+  "supportFee": 0,
+  "contractAdminFee": 0,
+  "otherFeeName": "",
+  "otherFee": 0,
+  "customInitialFees": [
+    {
+      "label": "",
+      "amount": 0,
+      "memo": ""
+    }
+  ],
+  "customMonthlyFees": [
+    {
+      "label": "",
+      "amount": 0,
+      "memo": ""
+    }
+  ],
+  "estimateMemo": ""
+}
+
+[예시 판단]
+- 賃料 → rent
+- 共益費・管理費 → managementFee
+- 敷金 → deposit
+- 礼金 → keyMoney
+- 保証金 → guaranteeDeposit
+- 火災保険 / 保険料 → fireInsurance 또는 월액이면 customMonthlyFees
+- カギ代 / 鍵交換代 → keyExchange
+- ルームクリーニング代 / 清掃費 → cleaningFee
+- スマサポコンシェル入会金 등 계약시 비용 → customInitialFees
+- スマサポコンシェル（月額）/ 水道代 등 월액 비용 → customMonthlyFees
+- 更新料 / 更新手数料는 갱신시 비용이므로 estimateMemo에만 적고 초기비용에는 넣지 마세요.
+
+위 기준으로 첨부 PDF를 읽고 JSON만 출력해주세요.`;
+}
+
+function parsePastedJson(text: string) {
+  const trimmed = text.trim();
+  const withoutFence = trimmed
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```$/i, '')
+    .trim();
+
+  return JSON.parse(withoutFence);
+}
+
+function normalizeCustomFees(fees: any[] | undefined, prefix: string): CustomFee[] {
+  if (!Array.isArray(fees)) return [];
+
+  return fees
+    .map((fee, index) => ({
+      id: `${prefix}-${Date.now()}-${index}`,
+      label: String(fee?.label || ''),
+      amount: typeof fee?.amount === 'number' ? fee.amount : numberValue(String(fee?.amount || '0')),
+      memo: String(fee?.memo || ''),
+    }))
+    .filter((fee) => fee.label || fee.amount > 0 || fee.memo);
+}
+
 export default function PropertyEstimateTool() {
   const [form, setForm] = useState<PropertyForm>(defaultForm);
   const [copied, setCopied] = useState('');
@@ -974,6 +1067,8 @@ export default function PropertyEstimateTool() {
   const [pdfExtractedText, setPdfExtractedText] = useState('');
   const [pdfPageCount, setPdfPageCount] = useState(0);
   const [pdfExtractedData, setPdfExtractedData] = useState<PdfExtractResult | null>(null);
+  const [jsonInput, setJsonInput] = useState('');
+  const [jsonStatus, setJsonStatus] = useState('');
 
   const items = useMemo(() => buildItems(form), [form]);
   const initialTotal = useMemo(() => items.reduce((sum, item) => sum + item.amount, 0), [items]);
@@ -1150,6 +1245,52 @@ export default function PropertyEstimateTool() {
     setPdfStatus('추출값을 입력폼에 반영했습니다. 금액은 반드시 원본 PDF와 대조 확인해주세요.');
   };
 
+  const applyPastedJson = () => {
+    try {
+      const parsed = parsePastedJson(jsonInput);
+
+      setForm((current) => ({
+        ...current,
+        propertyName: parsed.propertyName || current.propertyName,
+        roomNo: parsed.roomNo || current.roomNo,
+        address: parsed.address || current.address,
+        nearestStation: parsed.nearestStation || current.nearestStation,
+        layout: parsed.layout || current.layout,
+        area: parsed.area || current.area,
+        structure: parsed.structure || current.structure,
+        builtYear: parsed.builtYear || current.builtYear,
+        floor: parsed.floor || current.floor,
+        direction: parsed.direction || current.direction,
+        moveInDate: parsed.moveInDate || current.moveInDate,
+        rent: parsed.rent !== undefined ? numberValue(String(parsed.rent)) : current.rent,
+        managementFee: parsed.managementFee !== undefined ? numberValue(String(parsed.managementFee)) : current.managementFee,
+        deposit: parsed.deposit !== undefined ? numberValue(String(parsed.deposit)) : current.deposit,
+        keyMoney: parsed.keyMoney !== undefined ? numberValue(String(parsed.keyMoney)) : current.keyMoney,
+        guaranteeDeposit:
+          parsed.guaranteeDeposit !== undefined ? numberValue(String(parsed.guaranteeDeposit)) : current.guaranteeDeposit,
+        guaranteeCompanyFee:
+          parsed.guaranteeCompanyFee !== undefined
+            ? numberValue(String(parsed.guaranteeCompanyFee))
+            : current.guaranteeCompanyFee,
+        fireInsurance: parsed.fireInsurance !== undefined ? numberValue(String(parsed.fireInsurance)) : current.fireInsurance,
+        keyExchange: parsed.keyExchange !== undefined ? numberValue(String(parsed.keyExchange)) : current.keyExchange,
+        cleaningFee: parsed.cleaningFee !== undefined ? numberValue(String(parsed.cleaningFee)) : current.cleaningFee,
+        supportFee: parsed.supportFee !== undefined ? numberValue(String(parsed.supportFee)) : current.supportFee,
+        contractAdminFee:
+          parsed.contractAdminFee !== undefined ? numberValue(String(parsed.contractAdminFee)) : current.contractAdminFee,
+        otherFeeName: parsed.otherFeeName || current.otherFeeName,
+        otherFee: parsed.otherFee !== undefined ? numberValue(String(parsed.otherFee)) : current.otherFee,
+        customInitialFees: normalizeCustomFees(parsed.customInitialFees, 'json-initial'),
+        customMonthlyFees: normalizeCustomFees(parsed.customMonthlyFees, 'json-monthly'),
+        estimateMemo: parsed.estimateMemo || current.estimateMemo,
+      }));
+
+      setJsonStatus('JSON 내용을 입력폼에 반영했습니다. 금액은 원본 PDF와 대조 확인해주세요.');
+    } catch (error: any) {
+      setJsonStatus(`JSON 반영에 실패했습니다. 형식이 올바른지 확인해주세요. 상세: ${error?.message || '알 수 없는 오류'}`);
+    }
+  };
+
   const copyText = async (label: string, text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -1289,9 +1430,37 @@ export default function PropertyEstimateTool() {
         )}
       </section>
 
+      <section style={styles.panel}>
+        <div style={styles.panelHeaderRow}>
+          <div>
+            <h2 style={styles.panelTitle}>2. ChatGPT 추출 JSON 붙여넣기</h2>
+            <p style={styles.panelSubText}>
+              관리자 페이지 OCR이 깨지는 PDF는 이 ChatGPT 대화창에서 PDF를 분석한 뒤, JSON 결과를 여기에 붙여넣어 입력폼에 반영합니다.
+            </p>
+          </div>
+          <button type="button" style={styles.secondaryButton} onClick={() => copyText('jsonPrompt', buildChatGptJsonExtractionPrompt())}>
+            ChatGPT 추출 프롬프트 복사
+          </button>
+        </div>
+
+        <textarea
+          style={styles.jsonTextarea}
+          value={jsonInput}
+          onChange={(event) => setJsonInput(event.target.value)}
+          placeholder="ChatGPT가 출력한 JSON을 여기에 붙여넣으세요."
+        />
+
+        <div style={styles.jsonActionRow}>
+          <button type="button" style={styles.primaryButton} onClick={applyPastedJson}>
+            JSON 입력폼에 반영
+          </button>
+          <span>{jsonStatus || 'JSON을 붙여넣고 반영 버튼을 누르면 매물정보와 비용 항목이 자동 입력됩니다.'}</span>
+        </div>
+      </section>
+
       <section style={styles.grid}>
         <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>2. 고객 / 매물 기본정보</h2>
+          <h2 style={styles.panelTitle}>3. 고객 / 매물 기본정보</h2>
 
           <div style={styles.formGrid}>
             <TextInput label="고객명" value={form.customerName} onChange={(value) => update('customerName', value)} />
@@ -1310,7 +1479,7 @@ export default function PropertyEstimateTool() {
         </div>
 
         <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>3. 비용 입력</h2>
+          <h2 style={styles.panelTitle}>4. 비용 입력</h2>
 
           <div style={styles.formGrid}>
             <MoneyInput label="월세 / 賃料" value={form.rent} onChange={(value) => update('rent', value)} />
@@ -1334,7 +1503,7 @@ export default function PropertyEstimateTool() {
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.panelTitle}>4. 추가 비용 항목</h2>
+        <h2 style={styles.panelTitle}>5. 추가 비용 항목</h2>
 
         <div style={styles.customFeeGrid}>
           <CustomFeeList
@@ -1360,7 +1529,7 @@ export default function PropertyEstimateTool() {
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.panelTitle}>5. 자동 계산 보조</h2>
+        <h2 style={styles.panelTitle}>6. 자동 계산 보조</h2>
 
         <div style={styles.helperGrid}>
           <div style={styles.helperCard}>
@@ -1586,13 +1755,13 @@ export default function PropertyEstimateTool() {
 
       <section style={styles.grid}>
         <OutputPanel
-          title="6. 고객 발송용 견적 안내문"
+          title="7. 고객 발송용 견적 안내문"
           value={customerMessage}
           copied={copied === 'customer'}
           onCopy={() => copyText('customer', customerMessage)}
         />
         <OutputPanel
-          title="7. 고객용 매물 소개자료 초안"
+          title="8. 고객용 매물 소개자료 초안"
           value={propertyIntro}
           copied={copied === 'intro'}
           onCopy={() => copyText('intro', propertyIntro)}
@@ -2308,5 +2477,29 @@ const styles: Record<string, CSSProperties> = {
     resize: 'vertical',
     color: '#241d18',
     background: '#fffdfb',
+  },
+  jsonTextarea: {
+    width: '100%',
+    minHeight: '220px',
+    boxSizing: 'border-box',
+    border: '1px solid #ded2c7',
+    borderRadius: '13px',
+    padding: '14px',
+    lineHeight: 1.65,
+    resize: 'vertical',
+    color: '#241d18',
+    background: '#fffdfb',
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    fontSize: '13px',
+  },
+  jsonActionRow: {
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: '12px',
+    color: '#6f6258',
+    fontSize: '13px',
+    lineHeight: 1.6,
   },
 };
