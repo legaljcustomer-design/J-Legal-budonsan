@@ -25,29 +25,23 @@ type ParsedRequest = {
   customerConfirmMessage: string;
 };
 
-const sampleInquiry = `이름 : (생략가능)
+const sampleInquiry = `고객명 :
 
-국적 : (대한민국, 한국 등)
+국적 :
 
-재류자격 : (워킹홀리데이, 유학, 취업비자, 배우자비자 등등)
+성별 :
 
-희망지역 : (도쿄, 오사카, 고베, 교토 등등)
+지역 :
 
-구체적인 동네 : (OO구)
+구체적인 동네 :
 
-월세 : (O엔 ~ O엔까지 기재)
+월세 및 관리비 상한선 :
 
-방타입 : (1R, 1K, 1DK, 1LDK, 2LDK 등)
+희망 집타입 :
 
-기타희망사항 :
-• 남향 / 북향 / 동향 / 서향 등
-• 24시간 쓰레기 배출장소 유/무 등
-• 3층이상 / 4층이상 / 5층이상 등
-• 철근콘크리트 소재 맨션 등
-• 무인택배함 유/무
-• 자전거 주차장 유/무
-• 도시가스 / 프로판가스
-그 외 고객님 요구사항 기재 가능 OK`;
+최소 층수 :
+
+역에서 집까지 도보 N분 :`;
 
 function normalizeText(text: string) {
   return text
@@ -166,11 +160,22 @@ function parseMaxWalkMinutes(text: string) {
 }
 
 function detectCustomerName(text: string) {
-  const rawName = extractLineValue(text, ['이름', '성함', '고객명']);
+  const rawName = extractLineValue(text, ['고객명', '이름', '성함']);
 
   if (!rawName) return '미입력';
 
   return rawName.replace(/\(.+\)/g, '').trim() || '미입력';
+}
+
+function detectGenderMemo(text: string) {
+  const direct = extractLineValue(text, ['성별', '성별/메모', '성별 메모']);
+
+  if (direct) return direct;
+
+  if (text.includes('남성')) return '남성 추정';
+  if (text.includes('여성')) return '여성 추정';
+
+  return '미입력';
 }
 
 function detectNationality(text: string) {
@@ -205,11 +210,7 @@ function parseInquiry(rawInquiry: string): ParsedRequest {
   const customerName = detectCustomerName(rawInquiry);
   const nationality = detectNationality(rawInquiry);
   const visaStatus = detectVisaStatus(rawInquiry);
-  const genderMemo = rawInquiry.includes('남성')
-    ? '남성 추정'
-    : rawInquiry.includes('여성')
-      ? '여성 추정'
-      : '미입력';
+  const genderMemo = detectGenderMemo(rawInquiry);
   const areaMemo = extractLineValue(rawInquiry, ['지역', '희망지역', '희망 지역']) || '미입력';
   const specificAreaMemo = extractLineValue(rawInquiry, ['구체적인 동네', '구체적 동네', '희망동네', '동네']) || '미입력';
   const budgetUpper = parseBudget(rawInquiry);
