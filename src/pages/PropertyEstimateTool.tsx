@@ -646,68 +646,141 @@ export default function PropertyEstimateTool() {
         </div>
       </section>
 
-      <section style={styles.panel} className="estimate-print-area">
-        <div style={styles.printHeader}>
+      <section style={styles.estimatePaper} className="estimate-print-area">
+        <div style={styles.documentTopLine} />
+
+        <div style={styles.documentHeader}>
           <div>
-            <p style={styles.eyebrowDark}>初期費用概算書</p>
-            <h2 style={styles.estimateTitle}>초기비용 개산 견적서</h2>
+            <p style={styles.documentBrand}>OSAKA J REAL ESTATE</p>
+            <h2 style={styles.documentTitle}>初期費用概算書</h2>
+            <p style={styles.documentSubtitle}>초기비용 개산 견적서</p>
           </div>
-          <div style={styles.printMeta}>
-            <p>작성일: {new Date().toLocaleDateString('ja-JP')}</p>
-            <p>Osaka J Real Estate</p>
+
+          <div style={styles.documentMetaBox}>
+            <div style={styles.documentMetaItem}>
+              <span>작성일</span>
+              <strong>{new Date().toLocaleDateString('ja-JP')}</strong>
+            </div>
+            <div style={styles.documentMetaItem}>
+              <span>구분</span>
+              <strong>概算 / Estimate</strong>
+            </div>
           </div>
         </div>
 
-        <div style={styles.propertyBox}>
-          <InfoLine label="고객명" value={form.customerName || '-'} />
-          <InfoLine label="매물명" value={[form.propertyName, form.roomNo ? `${form.roomNo}호` : ''].filter(Boolean).join(' ') || '-'} />
-          <InfoLine label="주소" value={form.address || '-'} />
-          <InfoLine label="교통" value={form.nearestStation || '-'} />
-          <InfoLine label="타입/면적" value={[form.layout, form.area].filter(Boolean).join(' / ') || '-'} />
-          <InfoLine label="구조/축년" value={[form.structure, form.builtYear].filter(Boolean).join(' / ') || '-'} />
-          <InfoLine label="층수/향" value={[form.floor, form.direction].filter(Boolean).join(' / ') || '-'} />
-          <InfoLine label="입주 예정일" value={form.moveInDate || '-'} />
+        <div style={styles.noticePrintBox}>
+          본 견적서는 현재 확인 가능한 관리회사 자료와 입력값을 기준으로 작성한 개산 견적입니다.
+          최종 금액은 입주일, 보증회사 심사 결과, 관리회사 조건, 옵션 가입 여부에 따라 변동될 수 있습니다.
         </div>
 
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>항목</th>
-                <th style={styles.thRight}>금액</th>
-                <th style={styles.th}>메모</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length ? (
-                items.map((item) => (
-                  <tr key={item.id}>
-                    <td style={styles.td}>{item.label}</td>
-                    <td style={styles.tdRight}>{yen(item.amount)}</td>
-                    <td style={styles.td}>{item.memo}</td>
-                  </tr>
-                ))
-              ) : (
+        <div style={styles.documentSection}>
+          <div style={styles.sectionTitleRow}>
+            <span>01</span>
+            <h3>매물 기본정보</h3>
+          </div>
+
+          <div style={styles.propertyBox}>
+            <InfoLine label="고객명" value={form.customerName || '-'} />
+            <InfoLine label="매물명" value={[form.propertyName, form.roomNo ? `${form.roomNo}호` : ''].filter(Boolean).join(' ') || '-'} />
+            <InfoLine label="주소" value={form.address || '-'} />
+            <InfoLine label="교통" value={form.nearestStation || '-'} />
+            <InfoLine label="타입/면적" value={[form.layout, form.area].filter(Boolean).join(' / ') || '-'} />
+            <InfoLine label="구조/축년" value={[form.structure, form.builtYear].filter(Boolean).join(' / ') || '-'} />
+            <InfoLine label="층수/향" value={[form.floor, form.direction].filter(Boolean).join(' / ') || '-'} />
+            <InfoLine label="입주 예정일" value={form.moveInDate || '-'} />
+          </div>
+        </div>
+
+        <div style={styles.documentSection}>
+          <div style={styles.sectionTitleRow}>
+            <span>02</span>
+            <h3>월액 비용</h3>
+          </div>
+
+          <div style={styles.monthlyCards}>
+            <div style={styles.monthlyCard}>
+              <span>賃料 / 월세</span>
+              <strong>{yen(form.rent)}</strong>
+            </div>
+            <div style={styles.monthlyCard}>
+              <span>共益費 / 관리비</span>
+              <strong>{yen(form.managementFee)}</strong>
+            </div>
+            <div style={styles.monthlyCardStrong}>
+              <span>月額合計 / 월액 합계</span>
+              <strong>{yen(monthlyTotal)}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style={styles.documentSection}>
+          <div style={styles.sectionTitleRow}>
+            <span>03</span>
+            <h3>초기비용 상세</h3>
+          </div>
+
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
                 <tr>
-                  <td style={styles.td} colSpan={3}>
-                    입력된 비용 항목이 없습니다.
-                  </td>
+                  <th style={styles.th}>항목</th>
+                  <th style={styles.thRight}>금액</th>
+                  <th style={styles.th}>메모</th>
                 </tr>
-              )}
-              <tr>
-                <td style={styles.totalTd}>초기비용 개산 합계</td>
-                <td style={styles.totalTdRight}>{yen(initialTotal)}</td>
-                <td style={styles.totalTd}>최종 금액은 관리회사 확인 후 확정</td>
-              </tr>
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.length ? (
+                  items.map((item) => (
+                    <tr key={item.id}>
+                      <td style={styles.td}>{item.label}</td>
+                      <td style={styles.tdRight}>{yen(item.amount)}</td>
+                      <td style={styles.td}>{item.memo}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td style={styles.td} colSpan={3}>
+                      입력된 비용 항목이 없습니다.
+                    </td>
+                  </tr>
+                )}
+                <tr>
+                  <td style={styles.totalTd}>초기비용 개산 합계</td>
+                  <td style={styles.totalTdRight}>{yen(initialTotal)}</td>
+                  <td style={styles.totalTd}>최종 금액은 관리회사 확인 후 확정</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <textarea
-          style={styles.memoTextarea}
-          value={form.estimateMemo}
-          onChange={(event) => update('estimateMemo', event.target.value)}
-        />
+        <div style={styles.documentTotalBox}>
+          <div>
+            <span>月額合計</span>
+            <strong>{yen(monthlyTotal)}</strong>
+          </div>
+          <div>
+            <span>初期費用概算合計</span>
+            <strong>{yen(initialTotal)}</strong>
+          </div>
+        </div>
+
+        <div style={styles.documentSection}>
+          <div style={styles.sectionTitleRow}>
+            <span>04</span>
+            <h3>비고</h3>
+          </div>
+          <textarea
+            style={styles.memoTextarea}
+            value={form.estimateMemo}
+            onChange={(event) => update('estimateMemo', event.target.value)}
+          />
+        </div>
+
+        <div style={styles.documentFooter}>
+          <p>Osaka J Real Estate</p>
+          <p>※ 본 견적서는 고객 안내용 개산자료이며, 계약 확정서가 아닙니다.</p>
+        </div>
       </section>
 
       <section style={styles.grid}>
@@ -727,6 +800,11 @@ export default function PropertyEstimateTool() {
 
       <style>
         {`@media print {
+          @page {
+            size: A4;
+            margin: 12mm;
+          }
+
           body * {
             visibility: hidden;
           }
@@ -742,6 +820,13 @@ export default function PropertyEstimateTool() {
             width: 100%;
             box-shadow: none !important;
             border: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+          }
+
+          .estimate-print-area textarea {
+            border: none !important;
+            resize: none !important;
           }
         }`}
       </style>
@@ -954,6 +1039,120 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: '22px',
     padding: '20px',
     boxShadow: '0 14px 36px rgba(0, 0, 0, 0.16)',
+  },
+  estimatePaper: {
+    width: '100%',
+    boxSizing: 'border-box',
+    background: '#ffffff',
+    border: '1px solid #eadfd4',
+    borderRadius: '22px',
+    padding: '28px',
+    boxShadow: '0 14px 36px rgba(0, 0, 0, 0.16)',
+    marginBottom: '18px',
+  },
+  documentTopLine: {
+    height: '6px',
+    borderRadius: '999px',
+    background: 'linear-gradient(90deg, #8b5a2b, #d8b16a, #8b5a2b)',
+    marginBottom: '22px',
+  },
+  documentHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: '18px',
+    alignItems: 'flex-start',
+    marginBottom: '18px',
+  },
+  documentBrand: {
+    margin: '0 0 8px',
+    color: '#8b5a2b',
+    fontSize: '12px',
+    fontWeight: 900,
+    letterSpacing: '0.14em',
+  },
+  documentTitle: {
+    margin: 0,
+    color: '#241d18',
+    fontSize: '32px',
+    letterSpacing: '-0.04em',
+    lineHeight: 1.1,
+  },
+  documentSubtitle: {
+    margin: '7px 0 0',
+    color: '#6f6258',
+    fontSize: '14px',
+    fontWeight: 800,
+  },
+  documentMetaBox: {
+    minWidth: '210px',
+    border: '1px solid #eadfd4',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    background: '#fffaf5',
+  },
+  documentMetaItem: {
+    display: 'grid',
+    gap: '4px',
+    padding: '11px 13px',
+    borderBottom: '1px solid #eadfd4',
+    color: '#5b4432',
+    fontSize: '12px',
+  },
+  noticePrintBox: {
+    padding: '14px 16px',
+    borderRadius: '16px',
+    border: '1px solid #eadfd4',
+    background: '#fff8dc',
+    color: '#5b4432',
+    lineHeight: 1.65,
+    fontSize: '13px',
+    marginBottom: '20px',
+  },
+  documentSection: {
+    marginBottom: '22px',
+  },
+  sectionTitleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginBottom: '12px',
+    borderBottom: '1px solid #eadfd4',
+    paddingBottom: '8px',
+  },
+  monthlyCards: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    gap: '12px',
+  },
+  monthlyCard: {
+    border: '1px solid #eadfd4',
+    borderRadius: '16px',
+    padding: '15px',
+    background: '#fffaf5',
+  },
+  monthlyCardStrong: {
+    border: '1px solid #8b5a2b',
+    borderRadius: '16px',
+    padding: '15px',
+    background: '#8b5a2b',
+    color: '#ffffff',
+  },
+  documentTotalBox: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '12px',
+    margin: '22px 0',
+  },
+  documentFooter: {
+    borderTop: '1px solid #eadfd4',
+    marginTop: '24px',
+    paddingTop: '12px',
+    color: '#7b716a',
+    fontSize: '12px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: '12px',
+    flexWrap: 'wrap',
   },
   panelTitle: {
     margin: '0 0 16px',
