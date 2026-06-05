@@ -52,6 +52,8 @@ type PdfExtractResult = {
   monthlyOtherName?: string;
   otherFee?: number;
   otherFeeName?: string;
+  customInitialFees?: CustomFee[];
+  customMonthlyFees?: CustomFee[];
   estimateMemo?: string;
   detectedMemo: string[];
 };
@@ -282,6 +284,42 @@ function findFeeByKeywords(text: string, keywords: string[]) {
   return null;
 }
 
+function findLabeledText(text: string, label: string, nextLabels: string[]) {
+  const normalized = normalizePdfText(text);
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedNext = nextLabels.map((next) => next.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+
+  const regex = new RegExp(`${escapedLabel}\\s*[:：]?\\s*([\\s\\S]*?)(?=\\n(?:${escapedNext})\\s*[:：]?|\\n--- PAGE|$)`);
+  const match = normalized.match(regex);
+
+  return match?.[1]?.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim() || '';
+}
+
+function cleanRoomNo(value: string) {
+  return value.replace(/（.*?）/g, '').replace(/\(.*?\)/g, '').trim();
+}
+
+function parseDirectYenAfterLabel(text: string, label: string) {
+  const value = findLabeledText(text, label, [
+    '共益費・管理費',
+    '敷金',
+    '礼金',
+    '保証金',
+    '償却・敷引',
+    '更新料',
+    '契約期間',
+    '町内会費',
+    '駐車場',
+    '備 考',
+    '設 備',
+    '条　件',
+    '取引態様',
+    '特記事項',
+  ]);
+
+  return parseYenValue(value);
+}
+
 function parsePropertyPdfText(rawText: string): PdfExtractResult {
   const normalized = normalizePdfText(rawText);
   const compact = compactText(rawText);
@@ -309,6 +347,143 @@ function parsePropertyPdfText(rawText: string): PdfExtractResult {
   const result: PdfExtractResult = {
     detectedMemo: memo,
   };
+
+  const detailLabels = [
+    '物件名',
+    '号室名',
+    '所在地',
+    '交通',
+    '建築構造',
+    '間取タイプ',
+    '専有面積',
+    '開口部方位',
+    '築年',
+    '現況/入居時期',
+    '賃料',
+    '共益費・管理費',
+    '敷金',
+    '礼金',
+    '保証金',
+    '更新料',
+    '契約期間',
+    '町内会費',
+    '駐車場',
+    '備 考',
+    '設 備',
+    '条　件',
+    '取引態様',
+    '特記事項',
+  ];
+
+  const directPropertyName = findLabeledText(normalized, '物件名', detailLabels);
+  const directRoomNo = findLabeledText(normalized, '号室名', detailLabels);
+  const directAddress = findLabeledText(normalized, '所在地', detailLabels).replace(/〒\d{3}-?\d{4}.*/, '').trim();
+  const directTraffic = findLabeledText(normalized, '交通', detailLabels);
+  const directStructure = findLabeledText(normalized, '建築構造', detailLabels);
+  const directLayout = findLabeledText(normalized, '間取タイプ', detailLabels);
+  const directArea = findLabeledText(normalized, '専有面積', detailLabels);
+  const directDirection = findLabeledText(normalized, '開口部方位', detailLabels);
+  const directBuiltYear = findLabeledText(normalized, '築年', detailLabels);
+  const directStatus = findLabeledText(normalized, '現況/入居時期', detailLabels);
+  const directSpecial = findLabeledText(normalized, '特記事項', ['取引態様', 'Powered by', '--- PAGE']);
+  const directEquipment = findLabeledText(normalized, '設 備', ['条　件', '取引態様', '特記事項']);
+  const directCondition = findLabeledText(normalized, '条　件', ['取引態様', '特記事項']);
+
+  if (directPropertyName || directRoomNo || directAddress) {
+    result.propertyName = directPropertyName || '';
+    result.roomNo = cleanRoomNo(directRoomNo);
+    result.address = directAddress || '';
+    result.nearestStation = directTraffic || '';
+    result.layout = directLayout.match(/(1R|1K|1DK|1LDK|2K|2DK|2LDK|3LDK)/)?.[1] || directLayout || '';
+    result.area = directArea.match(/(\d+(?:\.\d+)?)\s*㎡/)?.[0] || directArea || '';
+    result.structure = directStructure || '';
+    result.builtYear = directBuiltYear || '';
+    result.floor = directRoomNo.match(/（([^）]*階部分)）/)?.[1] || '';
+    result.direction = directDirection || '';
+
+    const directRent = parseDirectYenAfterLabel(normalized, '賃料');
+    const directManagementFee = parseDirectYenAfterLabel(normalized, '共益費・管理費');
+    const directDeposit = parseMonthValue(findLabeledText(normalized, '敷金', detailLabels), directRent || 0);
+    const directKeyMoney = parseMonthValue(findLabeledText(normalized, '礼金', detailLabels), directRent || 0);
+    const directGuaranteeDeposit = parseMonthValue(findLabeledText(normalized, '保証金', detailLabels), directRent || 0);
+
+    if (directRent !== null) result.rent = directRent;
+    if (directManagementFee !== null) result.managementFee = directManagementFee;
+    if (directDeposit !== null) result.deposit = directDeposit;
+    if (directKeyMoney !== null) result.keyMoney = directKeyMoney;
+    if (directGuaranteeDeposit !== null) result.guaranteeDeposit = directGuaranteeDeposit;
+
+    const customInitialFees: CustomFee[] = [];
+    const customMonthlyFees: CustomFee[] = [];
+
+    const insuranceMonthly = directSpecial.match(/保険：?保険要加入\s*(\d{1,3}(?:,\d{3})+|\d{3,8})円/);
+    const smartSupportMonthly = directSpecial.match(/スマサポコンシェル：?(\d{1,3}(?:,\d{3})+|\d{3,8})円（?月額/);
+    const cleaning = directSpecial.match(/(?:契約時)?ルームクリーニング代(?:（税込）)?：?(\d{1,3}(?:,\d{3})+|\d{4,8})円/);
+    const key = directSpecial.match(/カギ代：?(\d{1,3}(?:,\d{3})+|\d{4,8})円/);
+    const smartSupportJoin = directSpecial.match(/スマサポコンシェル入会金：?(\d{1,3}(?:,\d{3})+|\d{4,8})円/);
+    const renewalFee = directSpecial.match(/更新手数料：?(\d{1,3}(?:,\d{3})+|\d{4,8})円/);
+
+    if (insuranceMonthly?.[1]) {
+      customMonthlyFees.push({
+        id: `pdf-insurance-${Date.now()}`,
+        label: '保険料 / 보험료',
+        amount: Number(insuranceMonthly[1].replace(/,/g, '')),
+        memo: 'PDF 특記事項에서 월액 가능성 있음. 청구 방식 확인 필요',
+      });
+    }
+
+    if (smartSupportMonthly?.[1]) {
+      customMonthlyFees.push({
+        id: `pdf-smart-support-monthly-${Date.now()}`,
+        label: 'スマサポコンシェル（月額）',
+        amount: Number(smartSupportMonthly[1].replace(/,/g, '')),
+        memo: '월액 비용',
+      });
+    }
+
+    if (cleaning?.[1]) result.cleaningFee = Number(cleaning[1].replace(/,/g, ''));
+    if (key?.[1]) result.keyExchange = Number(key[1].replace(/,/g, ''));
+
+    if (smartSupportJoin?.[1]) {
+      customInitialFees.push({
+        id: `pdf-smart-support-join-${Date.now()}`,
+        label: 'スマサポコンシェル入会金',
+        amount: Number(smartSupportJoin[1].replace(/,/g, '')),
+        memo: '계약시 비용',
+      });
+    }
+
+    if (renewalFee?.[1]) {
+      memo.push(`更新手数料 ${renewalFee[1]}円 표기 있음. 갱신시 비용으로 초기비용에는 넣지 않았습니다.`);
+    }
+
+    if (/外国人契約可能/.test(directCondition + directSpecial + directEquipment)) {
+      memo.push('外国人契約可能 표기 있음');
+    }
+
+    if (/保証会社利用必須/.test(directCondition + directSpecial)) {
+      memo.push('保証会社利用必須 표기 있음. 초회 보증료는 별도 확인 필요');
+    }
+
+    if (/都市ガス/.test(directEquipment)) {
+      memo.push('都市ガス 표기 있음');
+    }
+
+    if (directStatus) {
+      memo.push(`現況/入居時期: ${directStatus}`);
+    }
+
+    result.customInitialFees = customInitialFees;
+    result.customMonthlyFees = customMonthlyFees;
+
+    result.estimateMemo = [
+      '본 견적은 PDF 자동 추출 결과를 바탕으로 한 개산 견적입니다.',
+      '자동 추출값은 관리회사 원본 PDF와 반드시 대조 확인해주세요.',
+      ...memo,
+    ].join('\n');
+
+    return result;
+  }
 
   const propertyNameByLabel = findFirstMatch(normalized, [
     /物件名\s*[:：]?\s*([^\n]+)/,
@@ -425,6 +600,46 @@ function parsePropertyPdfText(rawText: string): PdfExtractResult {
   return result;
 }
 
+function formatPdfTextItems(items: any[]) {
+  const textItems = items
+    .map((item: any) => ({
+      text: typeof item.str === 'string' ? item.str.trim() : '',
+      x: Array.isArray(item.transform) ? Number(item.transform[4]) || 0 : 0,
+      y: Array.isArray(item.transform) ? Number(item.transform[5]) || 0 : 0,
+    }))
+    .filter((item) => item.text);
+
+  textItems.sort((a, b) => {
+    if (Math.abs(b.y - a.y) > 3) return b.y - a.y;
+    return a.x - b.x;
+  });
+
+  const lines: Array<{ y: number; items: typeof textItems }> = [];
+
+  textItems.forEach((item) => {
+    const line = lines.find((candidate) => Math.abs(candidate.y - item.y) <= 3);
+
+    if (line) {
+      line.items.push(item);
+      line.y = (line.y + item.y) / 2;
+    } else {
+      lines.push({ y: item.y, items: [item] });
+    }
+  });
+
+  return lines
+    .map((line) =>
+      line.items
+        .sort((a, b) => a.x - b.x)
+        .map((item) => item.text)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
+    .filter(Boolean)
+    .join('\n');
+}
+
 async function extractTextFromPdf(file: File) {
   const pdfjsLib = await loadPdfJs();
   const arrayBuffer = await file.arrayBuffer();
@@ -434,7 +649,7 @@ async function extractTextFromPdf(file: File) {
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
     const content = await page.getTextContent();
-    const text = content.items.map((item: any) => ('str' in item ? item.str : '')).join(' ');
+    const text = formatPdfTextItems(content.items as any[]);
     pageTexts.push(`--- PAGE ${pageNumber} / ${pdf.numPages} ---\n${text}`);
   }
 
@@ -815,6 +1030,8 @@ export default function PropertyEstimateTool() {
       monthlyOtherFee: parsed.monthlyOtherFee ?? current.monthlyOtherFee,
       otherFeeName: parsed.otherFeeName || current.otherFeeName,
       otherFee: parsed.otherFee ?? current.otherFee,
+      customInitialFees: parsed.customInitialFees?.length ? parsed.customInitialFees : current.customInitialFees,
+      customMonthlyFees: parsed.customMonthlyFees?.length ? parsed.customMonthlyFees : current.customMonthlyFees,
       estimateMemo: parsed.estimateMemo || current.estimateMemo,
     }));
 
@@ -931,6 +1148,22 @@ export default function PropertyEstimateTool() {
               <CandidateItem
                 label="清掃費"
                 value={pdfExtractedData.cleaningFee !== undefined ? yen(pdfExtractedData.cleaningFee) : ''}
+              />
+              <CandidateItem
+                label="추가 초기비용"
+                value={
+                  pdfExtractedData.customInitialFees?.length
+                    ? pdfExtractedData.customInitialFees.map((fee) => `${fee.label} ${yen(fee.amount)}`).join(' / ')
+                    : ''
+                }
+              />
+              <CandidateItem
+                label="추가 월액비용"
+                value={
+                  pdfExtractedData.customMonthlyFees?.length
+                    ? pdfExtractedData.customMonthlyFees.map((fee) => `${fee.label} ${yen(fee.amount)}`).join(' / ')
+                    : ''
+                }
               />
             </div>
           </div>
