@@ -981,10 +981,13 @@ ${memo ? `- 관리자 메모: ${memo}` : ''}
 4. 更新料, 更新手数料처럼 갱신 시점 비용은 초기비용에 넣지 말고 estimateMemo에만 적으세요.
 5. 月額 비용은 customMonthlyFees에 넣으세요.
 6. 契約時 비용은 기본 항목에 해당하면 기본 항목에 넣고, 기본 항목이 없으면 customInitialFees에 넣으세요.
-7. 保証会社 初回保証料가 비율만 있고 금액이 없으면 0으로 두고 estimateMemo에 확인 필요라고 적으세요.
-8. 火災保険이 월액인지 2년 일시납인지 애매하면 estimateMemo에 확인 필요라고 적으세요.
-9. 출력은 설명 없이 JSON만 작성하세요.
-10. JSON 앞뒤에 코드블록 기호 \`\`\` 를 붙이지 마세요.
+7. 保証会社 初回保証料가 비율만 있고 금액 계산이 명확하면 월액 기준으로 계산해 guaranteeCompanyFee에 숫자로 넣으세요.
+8. 保証会社 初回保証料가 금액/비율 모두 불명확하면 guaranteeCompanyFee는 0으로 두고 estimateMemo에 확인 필요라고 적으세요.
+9. 火災保険이 월액인지 2년 일시납인지 애매하면 estimateMemo에 확인 필요라고 적으세요.
+10. 仲介手数料는 관리회사 PDF에 명시된 경우에만 agencyFee에 넣으세요. PDF에 없으면 0으로 두세요.
+11. 初期月額の計算方式은 PDF에 前家賃/日割/翌月分 표기가 있으면 initialRentMode에 반영하세요. 없으면 oneMonth로 두세요.
+12. 출력은 설명 없이 JSON만 작성하세요.
+13. JSON 앞뒤에 코드블록 기호 \`\`\` 를 붙이지 마세요.
 
 [항목 매핑 기준]
 - 物件名 → propertyName
@@ -1011,6 +1014,10 @@ ${memo ? `- 관리자 메모: ${memo}` : ''}
 - 契約事務手数料 → contractAdminFee
 - スマサポコンシェル入会金, 消毒代, 抗菌施工費 등 계약시 추가비용 → customInitialFees
 - スマサポコンシェル（月額）, 水道代, 町会費, 月額保証料 등 매월 비용 → customMonthlyFees
+- 仲介手数料 → agencyFee
+- 前家賃만 있으면 initialRentMode = "oneMonth"
+- 日割家賃만 있으면 initialRentMode = "prorated"
+- 日割家賃 + 翌月分이 있으면 initialRentMode = "proratedPlusNextMonth"
 
 [반드시 출력할 JSON 형식]
 {
@@ -1025,6 +1032,7 @@ ${memo ? `- 관리자 메모: ${memo}` : ''}
   "floor": "",
   "direction": "",
   "moveInDate": "",
+  "initialRentMode": "oneMonth",
   "rent": 0,
   "managementFee": 0,
   "deposit": 0,
@@ -1036,6 +1044,7 @@ ${memo ? `- 관리자 메모: ${memo}` : ''}
   "cleaningFee": 0,
   "supportFee": 0,
   "contractAdminFee": 0,
+  "agencyFee": 0,
   "otherFeeName": "",
   "otherFee": 0,
   "customInitialFees": [
@@ -1062,6 +1071,8 @@ ${memo ? `- 관리자 메모: ${memo}` : ''}
 - 短期解約違約金이 있으면 내용 요약
 - 更新料/更新手数料가 있으면 갱신시 비용으로 별도 기재
 - PDF상 현황과 입주가능일
+- 初期月額 계산 방식이 PDF상 명확한지 여부
+- 仲介手数料가 PDF상 기재되어 있는지 여부
 - 기타 계약 전 확인해야 할 내용
 
 첨부한 PDF를 읽고 위 형식의 JSON만 출력해주세요.`;
@@ -1089,6 +1100,32 @@ function normalizeCustomFees(fees: any[] | undefined, prefix: string): CustomFee
       memo: String(fee?.memo || ''),
     }))
     .filter((fee) => fee.label || fee.amount > 0 || fee.memo);
+}
+
+function normalizeInitialRentMode(value: unknown): InitialRentMode | null {
+  if (value === 'oneMonth' || value === 'prorated' || value === 'proratedPlusNextMonth') {
+    return value;
+  }
+
+  return null;
+}
+
+function normalizeDateInput(value: unknown) {
+  const raw = String(value || '').trim();
+
+  if (!raw) return '';
+
+  const isoMatch = raw.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2].padStart(2, '0')}-${isoMatch[3].padStart(2, '0')}`;
+  }
+
+  const japaneseMatch = raw.match(/(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日/);
+  if (japaneseMatch) {
+    return `${japaneseMatch[1]}-${japaneseMatch[2].padStart(2, '0')}-${japaneseMatch[3].padStart(2, '0')}`;
+  }
+
+  return raw;
 }
 
 export default function PropertyEstimateTool() {
@@ -1299,7 +1336,8 @@ export default function PropertyEstimateTool() {
         builtYear: parsed.builtYear || current.builtYear,
         floor: parsed.floor || current.floor,
         direction: parsed.direction || current.direction,
-        moveInDate: parsed.moveInDate || current.moveInDate,
+        moveInDate: parsed.moveInDate ? normalizeDateInput(parsed.moveInDate) : current.moveInDate,
+        initialRentMode: normalizeInitialRentMode(parsed.initialRentMode) || current.initialRentMode,
         rent: parsed.rent !== undefined ? numberValue(String(parsed.rent)) : current.rent,
         managementFee: parsed.managementFee !== undefined ? numberValue(String(parsed.managementFee)) : current.managementFee,
         deposit: parsed.deposit !== undefined ? numberValue(String(parsed.deposit)) : current.deposit,
@@ -1316,6 +1354,7 @@ export default function PropertyEstimateTool() {
         supportFee: parsed.supportFee !== undefined ? numberValue(String(parsed.supportFee)) : current.supportFee,
         contractAdminFee:
           parsed.contractAdminFee !== undefined ? numberValue(String(parsed.contractAdminFee)) : current.contractAdminFee,
+        agencyFee: parsed.agencyFee !== undefined ? numberValue(String(parsed.agencyFee)) : current.agencyFee,
         otherFeeName: parsed.otherFeeName || current.otherFeeName,
         otherFee: parsed.otherFee !== undefined ? numberValue(String(parsed.otherFee)) : current.otherFee,
         customInitialFees: normalizeCustomFees(parsed.customInitialFees, 'json-initial'),
@@ -1516,11 +1555,18 @@ export default function PropertyEstimateTool() {
       <section style={styles.panel}>
         <h2 style={styles.panelTitle}>6. 자동 계산 보조</h2>
 
+        <div style={styles.autoNoticeBox}>
+          <strong>PDF/JSON 기준 자동 반영</strong>
+          <p>
+            ChatGPT JSON에 보증회사 비용, 중개수수료, 초기 월세 계산 방식이 명확히 들어오면 입력폼에 자동 반영됩니다. PDF에 금액이 없는 항목은 여기 버튼으로 계산하거나 직접 입력하세요.
+          </p>
+        </div>
+
         <div style={styles.helperGrid}>
           <div style={styles.helperCard}>
             <h3 style={styles.helperTitle}>초기 월세 계산 방식</h3>
             <p style={styles.helperText}>
-              입주 예정일을 입력하면 일할 계산이 가능합니다. 관리회사 견적 기준과 다를 수 있으므로 최종 확인이 필요합니다.
+              JSON에 계산 방식이 있으면 자동 반영됩니다. 실제 계약 시작일이 다르면 입주 예정일을 직접 수정해 일할 계산을 다시 확인하세요.
             </p>
             <div style={styles.segmentRow}>
               <button
@@ -1554,7 +1600,7 @@ export default function PropertyEstimateTool() {
 
           <div style={styles.helperCard}>
             <h3 style={styles.helperTitle}>보증회사 비용 자동계산</h3>
-            <p style={styles.helperText}>월세+관리비+기타 월액을 기준으로 계산합니다.</p>
+            <p style={styles.helperText}>PDF에 금액이 없고 비율만 확인되는 경우, 월세+관리비+기타 월액을 기준으로 계산합니다.</p>
             <div style={styles.buttonWrap}>
               <button type="button" style={styles.secondaryButton} onClick={() => applyGuaranteeFee(0.3)}>
                 30%
@@ -1570,7 +1616,7 @@ export default function PropertyEstimateTool() {
 
           <div style={styles.helperCard}>
             <h3 style={styles.helperTitle}>중개수수료 자동계산</h3>
-            <p style={styles.helperText}>월세 기준으로 계산하며, 버튼은 소비세 10% 포함 금액으로 입력합니다.</p>
+            <p style={styles.helperText}>중개수수료는 보통 관리회사 PDF가 아니라 자사 기준입니다. 버튼은 월세 기준 소비세 10% 포함 금액으로 입력합니다.</p>
             <div style={styles.buttonWrap}>
               <button type="button" style={styles.secondaryButton} onClick={() => applyAgencyFee(0.5, true)}>
                 0.5개월+세금
@@ -2242,6 +2288,16 @@ const styles: Record<string, CSSProperties> = {
     border: '1px solid #eadfd4',
     background: '#fffaf5',
     padding: '18px',
+  },
+  autoNoticeBox: {
+    padding: '14px 16px',
+    borderRadius: '16px',
+    border: '1px solid #eadfd4',
+    background: '#fff8dc',
+    color: '#5b4432',
+    lineHeight: 1.65,
+    fontSize: '13px',
+    marginBottom: '14px',
   },
   helperGrid: {
     display: 'grid',
