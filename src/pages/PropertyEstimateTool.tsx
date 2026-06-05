@@ -1067,6 +1067,8 @@ export default function PropertyEstimateTool() {
   const [pdfExtractedText, setPdfExtractedText] = useState('');
   const [pdfPageCount, setPdfPageCount] = useState(0);
   const [pdfExtractedData, setPdfExtractedData] = useState<PdfExtractResult | null>(null);
+  const [ocrTextInput, setOcrTextInput] = useState('');
+  const [ocrTextStatus, setOcrTextStatus] = useState('');
   const [jsonInput, setJsonInput] = useState('');
   const [jsonStatus, setJsonStatus] = useState('');
 
@@ -1245,6 +1247,38 @@ export default function PropertyEstimateTool() {
     setPdfStatus('추출값을 입력폼에 반영했습니다. 금액은 반드시 원본 PDF와 대조 확인해주세요.');
   };
 
+  const analyzeOcrText = () => {
+    const sourceText = ocrTextInput.trim();
+
+    if (!sourceText) {
+      setOcrTextStatus('Google Docs에서 변환한 텍스트를 먼저 붙여넣어주세요.');
+      return;
+    }
+
+    try {
+      const parsed = parsePropertyPdfText(sourceText);
+      const hasAnyValue = Boolean(
+        parsed.propertyName ||
+          parsed.roomNo ||
+          parsed.address ||
+          parsed.rent !== undefined ||
+          parsed.managementFee !== undefined,
+      );
+
+      setPdfExtractedData(parsed);
+
+      if (hasAnyValue) {
+        setOcrTextStatus('텍스트 분석 후보를 만들었습니다. 아래 후보값을 원본 자료와 비교한 뒤 입력폼에 반영하세요.');
+      } else {
+        setOcrTextStatus(
+          '텍스트는 분석했지만 주요 항목을 찾지 못했습니다. Google Docs OCR 결과 전체를 복사했는지 확인해주세요.',
+        );
+      }
+    } catch (error: any) {
+      setOcrTextStatus(`텍스트 분석 중 오류가 발생했습니다. 상세: ${error?.message || '알 수 없는 오류'}`);
+    }
+  };
+
   const applyPastedJson = () => {
     try {
       const parsed = parsePastedJson(jsonInput);
@@ -1311,7 +1345,7 @@ export default function PropertyEstimateTool() {
         <p style={styles.eyebrow}>Osaka J Internal Tool</p>
         <h1 style={styles.title}>추천 매물 자료 생성</h1>
         <p style={styles.description}>
-          ChatGPT에서 추출한 JSON 또는 관리회사 PDF를 보며 입력한 금액을 기준으로 초기비용 개산 견적서와 고객용 매물 소개자료를 생성합니다.
+          Google Docs OCR 텍스트 또는 ChatGPT JSON을 붙여넣어 매물정보와 비용 항목을 자동 입력하고, 초기비용 개산 견적서와 고객용 매물 소개자료를 생성합니다.
         </p>
       </section>
 
@@ -1330,9 +1364,109 @@ export default function PropertyEstimateTool() {
       <section style={styles.panel}>
         <div style={styles.panelHeaderRow}>
           <div>
-            <h2 style={styles.panelTitle}>1. ChatGPT 추출 JSON 붙여넣기</h2>
+            <h2 style={styles.panelTitle}>1. Google Docs OCR 텍스트 붙여넣기</h2>
             <p style={styles.panelSubText}>
-              ChatGPT 대화창에서 PDF를 분석한 뒤, JSON 결과를 여기에 붙여넣어 입력폼에 반영합니다.
+              RealnetPro 매물 PDF를 Google Drive에 업로드한 뒤 Google 문서로 열고, 변환된 텍스트 전체를 여기에 붙여넣어 분석합니다.
+            </p>
+          </div>
+        </div>
+
+        <div style={styles.guideBox}>
+          <strong>무료 사용 순서</strong>
+          <p>
+            PDF를 Google Drive에 업로드 → 우클릭 → Google 문서로 열기 → 변환된 텍스트 전체 복사 → 아래 칸에 붙여넣기
+          </p>
+        </div>
+
+        <textarea
+          style={styles.ocrTextarea}
+          value={ocrTextInput}
+          onChange={(event) => setOcrTextInput(event.target.value)}
+          placeholder="Google Docs OCR로 변환된 매물 자료 텍스트를 여기에 붙여넣으세요."
+        />
+
+        <div style={styles.jsonActionRow}>
+          <button type="button" style={styles.primaryButton} onClick={analyzeOcrText}>
+            텍스트 분석 후보 만들기
+          </button>
+          <span>{ocrTextStatus || '텍스트를 붙여넣고 분석하면 추출 후보가 표시됩니다.'}</span>
+        </div>
+
+        {pdfExtractedData && (
+          <div style={styles.pdfCandidateBox}>
+            <div style={styles.panelHeaderRow}>
+              <div>
+                <h3 style={styles.helperTitle}>텍스트 자동 추출 후보</h3>
+                <p style={styles.panelSubText}>
+                  Google OCR 텍스트에서 찾은 후보값입니다. 원본 PDF와 비교 후 반영하세요.
+                </p>
+              </div>
+              <button type="button" style={styles.primaryButton} onClick={applyPdfExtractedData}>
+                추출값 입력폼에 반영
+              </button>
+            </div>
+
+            <div style={styles.candidateGrid}>
+              <CandidateItem label="매물명" value={pdfExtractedData.propertyName} />
+              <CandidateItem label="호실" value={pdfExtractedData.roomNo} />
+              <CandidateItem label="주소" value={pdfExtractedData.address} />
+              <CandidateItem label="교통" value={pdfExtractedData.nearestStation} />
+              <CandidateItem label="타입" value={pdfExtractedData.layout} />
+              <CandidateItem label="면적" value={pdfExtractedData.area} />
+              <CandidateItem label="구조" value={pdfExtractedData.structure} />
+              <CandidateItem label="축년" value={pdfExtractedData.builtYear} />
+              <CandidateItem label="층수" value={pdfExtractedData.floor} />
+              <CandidateItem label="향" value={pdfExtractedData.direction} />
+              <CandidateItem label="월세" value={pdfExtractedData.rent !== undefined ? yen(pdfExtractedData.rent) : ''} />
+              <CandidateItem
+                label="관리비"
+                value={pdfExtractedData.managementFee !== undefined ? yen(pdfExtractedData.managementFee) : ''}
+              />
+              <CandidateItem label="敷金" value={pdfExtractedData.deposit !== undefined ? yen(pdfExtractedData.deposit) : ''} />
+              <CandidateItem label="礼金" value={pdfExtractedData.keyMoney !== undefined ? yen(pdfExtractedData.keyMoney) : ''} />
+              <CandidateItem
+                label="保証会社"
+                value={pdfExtractedData.guaranteeCompanyFee !== undefined ? yen(pdfExtractedData.guaranteeCompanyFee) : ''}
+              />
+              <CandidateItem
+                label="火災保険"
+                value={pdfExtractedData.fireInsurance !== undefined ? yen(pdfExtractedData.fireInsurance) : ''}
+              />
+              <CandidateItem
+                label="鍵交換代"
+                value={pdfExtractedData.keyExchange !== undefined ? yen(pdfExtractedData.keyExchange) : ''}
+              />
+              <CandidateItem
+                label="清掃費"
+                value={pdfExtractedData.cleaningFee !== undefined ? yen(pdfExtractedData.cleaningFee) : ''}
+              />
+              <CandidateItem
+                label="추가 초기비용"
+                value={
+                  pdfExtractedData.customInitialFees?.length
+                    ? pdfExtractedData.customInitialFees.map((fee) => `${fee.label} ${yen(fee.amount)}`).join(' / ')
+                    : ''
+                }
+              />
+              <CandidateItem
+                label="추가 월액비용"
+                value={
+                  pdfExtractedData.customMonthlyFees?.length
+                    ? pdfExtractedData.customMonthlyFees.map((fee) => `${fee.label} ${yen(fee.amount)}`).join(' / ')
+                    : ''
+                }
+              />
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section style={styles.panel}>
+        <div style={styles.panelHeaderRow}>
+          <div>
+            <h2 style={styles.panelTitle}>2. ChatGPT JSON 붙여넣기</h2>
+            <p style={styles.panelSubText}>
+              Google OCR 텍스트 분석이 부족할 때만 사용합니다. ChatGPT에서 PDF를 분석해 JSON을 받은 뒤 이곳에 붙여넣습니다.
             </p>
           </div>
           <button type="button" style={styles.secondaryButton} onClick={() => copyText('jsonPrompt', buildChatGptJsonExtractionPrompt())}>
@@ -1357,7 +1491,7 @@ export default function PropertyEstimateTool() {
 
       <section style={styles.grid}>
         <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>2. 고객 / 매물 기본정보</h2>
+          <h2 style={styles.panelTitle}>3. 고객 / 매물 기본정보</h2>
 
           <div style={styles.formGrid}>
             <TextInput label="고객명" value={form.customerName} onChange={(value) => update('customerName', value)} />
@@ -1376,7 +1510,7 @@ export default function PropertyEstimateTool() {
         </div>
 
         <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>3. 비용 입력</h2>
+          <h2 style={styles.panelTitle}>4. 비용 입력</h2>
 
           <div style={styles.formGrid}>
             <MoneyInput label="월세 / 賃料" value={form.rent} onChange={(value) => update('rent', value)} />
@@ -1400,7 +1534,7 @@ export default function PropertyEstimateTool() {
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.panelTitle}>4. 추가 비용 항목</h2>
+        <h2 style={styles.panelTitle}>5. 추가 비용 항목</h2>
 
         <div style={styles.customFeeGrid}>
           <CustomFeeList
@@ -1426,7 +1560,7 @@ export default function PropertyEstimateTool() {
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.panelTitle}>5. 자동 계산 보조</h2>
+        <h2 style={styles.panelTitle}>6. 자동 계산 보조</h2>
 
         <div style={styles.helperGrid}>
           <div style={styles.helperCard}>
@@ -1652,13 +1786,13 @@ export default function PropertyEstimateTool() {
 
       <section style={styles.grid}>
         <OutputPanel
-          title="6. 고객 발송용 견적 안내문"
+          title="7. 고객 발송용 견적 안내문"
           value={customerMessage}
           copied={copied === 'customer'}
           onCopy={() => copyText('customer', customerMessage)}
         />
         <OutputPanel
-          title="7. 고객용 매물 소개자료 초안"
+          title="8. 고객용 매물 소개자료 초안"
           value={propertyIntro}
           copied={copied === 'intro'}
           onCopy={() => copyText('intro', propertyIntro)}
@@ -2388,6 +2522,29 @@ const styles: Record<string, CSSProperties> = {
     background: '#fffdfb',
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
     fontSize: '13px',
+  },
+  ocrTextarea: {
+    width: '100%',
+    minHeight: '260px',
+    boxSizing: 'border-box',
+    border: '1px solid #ded2c7',
+    borderRadius: '13px',
+    padding: '14px',
+    lineHeight: 1.65,
+    resize: 'vertical',
+    color: '#241d18',
+    background: '#fffdfb',
+    fontSize: '13px',
+  },
+  guideBox: {
+    padding: '14px 16px',
+    borderRadius: '16px',
+    border: '1px solid #eadfd4',
+    background: '#fff8dc',
+    color: '#5b4432',
+    lineHeight: 1.65,
+    fontSize: '13px',
+    marginBottom: '12px',
   },
   jsonActionRow: {
     display: 'flex',
