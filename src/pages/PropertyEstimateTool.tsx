@@ -1311,8 +1311,7 @@ export default function PropertyEstimateTool() {
         <p style={styles.eyebrow}>Osaka J Internal Tool</p>
         <h1 style={styles.title}>추천 매물 자료 생성</h1>
         <p style={styles.description}>
-          관리회사 공식 PDF를 보면서 주요 금액을 입력하면 초기비용 개산 견적서와 고객용 매물 소개자료를 생성합니다.
-          텍스트형 PDF는 직접 읽고, 이미지형 PDF는 OCR 보조로 읽어 자동 추출 후보를 만듭니다.
+          ChatGPT에서 추출한 JSON 또는 관리회사 PDF를 보며 입력한 금액을 기준으로 초기비용 개산 견적서와 고객용 매물 소개자료를 생성합니다.
         </p>
       </section>
 
@@ -1331,111 +1330,9 @@ export default function PropertyEstimateTool() {
       <section style={styles.panel}>
         <div style={styles.panelHeaderRow}>
           <div>
-            <h2 style={styles.panelTitle}>1. 관리회사 PDF 첨부 / 자동 입력</h2>
+            <h2 style={styles.panelTitle}>1. ChatGPT 추출 JSON 붙여넣기</h2>
             <p style={styles.panelSubText}>
-              RealnetPro에서 내려받은 매물 전용 PDF를 첨부하면, 읽을 수 있는 텍스트를 기준으로 매물정보와 비용 항목을 자동 입력합니다.
-            </p>
-          </div>
-
-          <label style={styles.uploadButton}>
-            PDF 첨부
-            <input
-              type="file"
-              accept="application/pdf,.pdf"
-              style={{ display: 'none' }}
-              onChange={(event) => handlePdfFile(event.target.files?.[0])}
-            />
-          </label>
-        </div>
-
-        <div style={styles.pdfStatusBox}>
-          <strong>{pdfFileName || '첨부된 PDF 없음'}</strong>
-          <p>{pdfStatus || 'PDF를 첨부하면 자동 추출 결과가 여기에 표시됩니다.'}</p>
-          {pdfPageCount > 0 && <span>{pdfPageCount}페이지 감지</span>}
-        </div>
-
-        {pdfExtractedData && (
-          <div style={styles.pdfCandidateBox}>
-            <div style={styles.panelHeaderRow}>
-              <div>
-                <h3 style={styles.helperTitle}>PDF 자동 추출 후보</h3>
-                <p style={styles.panelSubText}>
-                  바로 입력폼을 덮어쓰지 않고, 추출 후보를 먼저 보여줍니다. 원본 PDF와 비교 후 반영하세요.
-                </p>
-              </div>
-              <button type="button" style={styles.primaryButton} onClick={applyPdfExtractedData}>
-                추출값 입력폼에 반영
-              </button>
-            </div>
-
-            <div style={styles.candidateGrid}>
-              <CandidateItem label="매물명" value={pdfExtractedData.propertyName} />
-              <CandidateItem label="호실" value={pdfExtractedData.roomNo} />
-              <CandidateItem label="주소" value={pdfExtractedData.address} />
-              <CandidateItem label="교통" value={pdfExtractedData.nearestStation} />
-              <CandidateItem label="타입" value={pdfExtractedData.layout} />
-              <CandidateItem label="면적" value={pdfExtractedData.area} />
-              <CandidateItem label="구조" value={pdfExtractedData.structure} />
-              <CandidateItem label="축년" value={pdfExtractedData.builtYear} />
-              <CandidateItem label="층수" value={pdfExtractedData.floor} />
-              <CandidateItem label="향" value={pdfExtractedData.direction} />
-              <CandidateItem label="월세" value={pdfExtractedData.rent !== undefined ? yen(pdfExtractedData.rent) : ''} />
-              <CandidateItem
-                label="관리비"
-                value={pdfExtractedData.managementFee !== undefined ? yen(pdfExtractedData.managementFee) : ''}
-              />
-              <CandidateItem label="敷金" value={pdfExtractedData.deposit !== undefined ? yen(pdfExtractedData.deposit) : ''} />
-              <CandidateItem label="礼金" value={pdfExtractedData.keyMoney !== undefined ? yen(pdfExtractedData.keyMoney) : ''} />
-              <CandidateItem
-                label="保証会社"
-                value={pdfExtractedData.guaranteeCompanyFee !== undefined ? yen(pdfExtractedData.guaranteeCompanyFee) : ''}
-              />
-              <CandidateItem
-                label="火災保険"
-                value={pdfExtractedData.fireInsurance !== undefined ? yen(pdfExtractedData.fireInsurance) : ''}
-              />
-              <CandidateItem
-                label="鍵交換代"
-                value={pdfExtractedData.keyExchange !== undefined ? yen(pdfExtractedData.keyExchange) : ''}
-              />
-              <CandidateItem
-                label="清掃費"
-                value={pdfExtractedData.cleaningFee !== undefined ? yen(pdfExtractedData.cleaningFee) : ''}
-              />
-              <CandidateItem
-                label="추가 초기비용"
-                value={
-                  pdfExtractedData.customInitialFees?.length
-                    ? pdfExtractedData.customInitialFees.map((fee) => `${fee.label} ${yen(fee.amount)}`).join(' / ')
-                    : ''
-                }
-              />
-              <CandidateItem
-                label="추가 월액비용"
-                value={
-                  pdfExtractedData.customMonthlyFees?.length
-                    ? pdfExtractedData.customMonthlyFees.map((fee) => `${fee.label} ${yen(fee.amount)}`).join(' / ')
-                    : ''
-                }
-              />
-            </div>
-          </div>
-        )}
-
-        {pdfExtractedText && (
-          <details style={styles.pdfPreviewBox}>
-            <summary>추출된 PDF 텍스트 일부 보기</summary>
-            <pre>{pdfExtractedText}</pre>
-          </details>
-        )}
-      </section>
-
-      <section style={styles.panel}>
-        <div style={styles.panelHeaderRow}>
-          <div>
-            <h2 style={styles.panelTitle}>2. ChatGPT 추출 JSON 붙여넣기</h2>
-            <p style={styles.panelSubText}>
-              관리자 페이지 OCR이 깨지는 PDF는 이 ChatGPT 대화창에서 PDF를 분석한 뒤, JSON 결과를 여기에 붙여넣어 입력폼에 반영합니다.
+              ChatGPT 대화창에서 PDF를 분석한 뒤, JSON 결과를 여기에 붙여넣어 입력폼에 반영합니다.
             </p>
           </div>
           <button type="button" style={styles.secondaryButton} onClick={() => copyText('jsonPrompt', buildChatGptJsonExtractionPrompt())}>
@@ -1460,7 +1357,7 @@ export default function PropertyEstimateTool() {
 
       <section style={styles.grid}>
         <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>3. 고객 / 매물 기본정보</h2>
+          <h2 style={styles.panelTitle}>2. 고객 / 매물 기본정보</h2>
 
           <div style={styles.formGrid}>
             <TextInput label="고객명" value={form.customerName} onChange={(value) => update('customerName', value)} />
@@ -1479,7 +1376,7 @@ export default function PropertyEstimateTool() {
         </div>
 
         <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>4. 비용 입력</h2>
+          <h2 style={styles.panelTitle}>3. 비용 입력</h2>
 
           <div style={styles.formGrid}>
             <MoneyInput label="월세 / 賃料" value={form.rent} onChange={(value) => update('rent', value)} />
@@ -1503,7 +1400,7 @@ export default function PropertyEstimateTool() {
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.panelTitle}>5. 추가 비용 항목</h2>
+        <h2 style={styles.panelTitle}>4. 추가 비용 항목</h2>
 
         <div style={styles.customFeeGrid}>
           <CustomFeeList
@@ -1529,7 +1426,7 @@ export default function PropertyEstimateTool() {
       </section>
 
       <section style={styles.panel}>
-        <h2 style={styles.panelTitle}>6. 자동 계산 보조</h2>
+        <h2 style={styles.panelTitle}>5. 자동 계산 보조</h2>
 
         <div style={styles.helperGrid}>
           <div style={styles.helperCard}>
@@ -1755,13 +1652,13 @@ export default function PropertyEstimateTool() {
 
       <section style={styles.grid}>
         <OutputPanel
-          title="7. 고객 발송용 견적 안내문"
+          title="6. 고객 발송용 견적 안내문"
           value={customerMessage}
           copied={copied === 'customer'}
           onCopy={() => copyText('customer', customerMessage)}
         />
         <OutputPanel
-          title="8. 고객용 매물 소개자료 초안"
+          title="7. 고객용 매물 소개자료 초안"
           value={propertyIntro}
           copied={copied === 'intro'}
           onCopy={() => copyText('intro', propertyIntro)}
