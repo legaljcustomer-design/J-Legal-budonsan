@@ -1,5 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 
+type InitialRentMode = 'oneMonth' | 'prorated' | 'proratedPlusNextMonth';
+
 type EstimateItem = {
   id: string;
   label: string;
@@ -21,6 +23,7 @@ type PropertyForm = {
   floor: string;
   direction: string;
   moveInDate: string;
+  initialRentMode: InitialRentMode;
   rent: number;
   managementFee: number;
   deposit: number;
@@ -53,6 +56,7 @@ const defaultForm: PropertyForm = {
   floor: '',
   direction: '',
   moveInDate: '',
+  initialRentMode: 'oneMonth',
   rent: 0,
   managementFee: 0,
   deposit: 0,
@@ -85,7 +89,8 @@ const sampleForm: PropertyForm = {
   builtYear: '2009年03月築',
   floor: '3階',
   direction: '東向',
-  moveInDate: '상담',
+  moveInDate: '',
+  initialRentMode: 'oneMonth',
   rent: 82000,
   managementFee: 10000,
   deposit: 0,
@@ -116,7 +121,91 @@ function numberValue(value: string) {
   return Number.isFinite(numeric) ? numeric : 0;
 }
 
-function buildItems(form: PropertyForm): EstimateItem[] {
+function getMoveInProration(moveInDate: string, monthlyAmount: number) {
+  if (!moveInDate || monthlyAmount <= 0) {
+    return {
+      daysInMonth: 0,
+      chargeDays: 0,
+      amount: 0,
+      isValid: false,
+    };
+  }
+
+  const date = new Date(`${moveInDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return {
+      daysInMonth: 0,
+      chargeDays: 0,
+      amount: 0,
+      isValid: false,
+    };
+  }
+
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const chargeDays = Math.max(0, daysInMonth - day + 1);
+  const amount = Math.round((monthlyAmount / daysInMonth) * chargeDays);
+
+  return {
+    daysInMonth,
+    chargeDays,
+    amount,
+    isValid: true,
+  };
+}
+
+function getInitialRentItems(form: PropertyForm): EstimateItem[] {
+  const rentProration = getMoveInProration(form.moveInDate, form.rent);
+  const managementProration = getMoveInProration(form.moveInDate, form.managementFee);
+
+  if (form.initialRentMode === 'prorated' && rentProration.isValid) {
+    return [
+      {
+        id: 'proratedRent',
+        label: '日割家賃 / 일할 월세',
+        amount: rentProration.amount,
+        memo: `${rentProration.daysInMonth}일 중 ${rentProration.chargeDays}일분`,
+        taxable: false,
+      },
+      {
+        id: 'proratedManagementFee',
+        label: '日割共益費 / 일할 관리비',
+        amount: managementProration.amount,
+        memo: `${managementProration.daysInMonth}일 중 ${managementProration.chargeDays}일분`,
+        taxable: false,
+      },
+    ].filter((item) => item.amount > 0);
+  }
+
+  if (form.initialRentMode === 'proratedPlusNextMonth' && rentProration.isValid) {
+    return [
+      {
+        id: 'proratedRent',
+        label: '日割家賃 / 일할 월세',
+        amount: rentProration.amount,
+        memo: `${rentProration.daysInMonth}일 중 ${rentProration.chargeDays}일분`,
+        taxable: false,
+      },
+      {
+        id: 'proratedManagementFee',
+        label: '日割共益費 / 일할 관리비',
+        amount: managementProration.amount,
+        memo: `${managementProration.daysInMonth}일 중 ${managementProration.chargeDays}일분`,
+        taxable: false,
+      },
+      { id: 'nextMonthRent', label: '翌月家賃 / 익월 월세', amount: form.rent, memo: '다음달 1개월분', taxable: false },
+      {
+        id: 'nextMonthManagementFee',
+        label: '翌月共益費 / 익월 관리비',
+        amount: form.managementFee,
+        memo: '다음달 1개월분',
+        taxable: false,
+      },
+    ].filter((item) => item.amount > 0);
+  }
+
   return [
     { id: 'rent', label: '前家賃 / 월세', amount: form.rent, memo: '1개월분 기준', taxable: false },
     {
@@ -126,6 +215,12 @@ function buildItems(form: PropertyForm): EstimateItem[] {
       memo: '1개월분 기준',
       taxable: false,
     },
+  ].filter((item) => item.amount > 0);
+}
+
+function buildItems(form: PropertyForm): EstimateItem[] {
+  return [
+    ...getInitialRentItems(form),
     { id: 'monthlyOtherFee', label: form.monthlyOtherName || '기타 월액', amount: form.monthlyOtherFee, memo: '월액 비용', taxable: false },
     { id: 'deposit', label: '敷金 / 보증금', amount: form.deposit, memo: '계약 종료 시 정산 대상', taxable: false },
     { id: 'keyMoney', label: '礼金 / 사례금', amount: form.keyMoney, memo: '반환 없음', taxable: false },
@@ -159,6 +254,7 @@ function buildCustomerMessage(form: PropertyForm, total: number, monthlyTotal: n
 - 타입/면적: ${[form.layout, form.area].filter(Boolean).join(' / ') || '확인 필요'}
 - 구조/축년: ${[form.structure, form.builtYear].filter(Boolean).join(' / ') || '확인 필요'}
 - 층수/향: ${[form.floor, form.direction].filter(Boolean).join(' / ') || '확인 필요'}
+- 입주 예정일: ${form.moveInDate || '확인 필요'}
 
 [월액 비용]
 - 월세: ${yen(form.rent)}
@@ -187,6 +283,7 @@ function buildPropertyIntro(form: PropertyForm) {
 - 축년: ${form.builtYear || '확인 필요'}
 - 층수: ${form.floor || '확인 필요'}
 - 향: ${form.direction || '확인 필요'}
+- 입주 가능일: ${form.moveInDate || '확인 필요'}
 
 [비용]
 - 월세: ${yen(form.rent)}
@@ -214,6 +311,7 @@ export default function PropertyEstimateTool() {
   const items = useMemo(() => buildItems(form), [form]);
   const initialTotal = useMemo(() => items.reduce((sum, item) => sum + item.amount, 0), [items]);
   const monthlyTotal = form.rent + form.managementFee + form.monthlyOtherFee;
+  const proration = useMemo(() => getMoveInProration(form.moveInDate, form.rent + form.managementFee), [form.moveInDate, form.rent, form.managementFee]);
   const customerMessage = useMemo(() => buildCustomerMessage(form, initialTotal, monthlyTotal), [form, initialTotal, monthlyTotal]);
   const propertyIntro = useMemo(() => buildPropertyIntro(form), [form]);
 
@@ -241,6 +339,26 @@ export default function PropertyEstimateTool() {
     }));
   };
 
+  const setInitialRentMode = (mode: InitialRentMode) => {
+    setForm((current) => ({ ...current, initialRentMode: mode }));
+  };
+
+  const applyGuaranteeFee = (rate: number) => {
+    const base = form.rent + form.managementFee + form.monthlyOtherFee;
+    setForm((current) => ({
+      ...current,
+      guaranteeCompanyFee: Math.round(base * rate),
+    }));
+  };
+
+  const applyAgencyFee = (rate: number, includeTax = true) => {
+    const taxRate = includeTax ? 1.1 : 1;
+    setForm((current) => ({
+      ...current,
+      agencyFee: Math.round(form.rent * rate * taxRate),
+    }));
+  };
+
   const copyText = async (label: string, text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -262,7 +380,7 @@ export default function PropertyEstimateTool() {
         <h1 style={styles.title}>추천 매물 자료 생성</h1>
         <p style={styles.description}>
           관리회사 공식 PDF를 보면서 주요 금액을 입력하면 초기비용 개산 견적서와 고객용 매물 소개자료를 생성합니다.
-          1단계에서는 금액 오류 방지를 위해 자동 판독보다 수동 확인 입력을 우선합니다.
+          이번 단계에서는 일할계산, 보증회사 비용 자동계산, 중개수수료 자동계산을 추가했습니다.
         </p>
       </section>
 
@@ -288,7 +406,7 @@ export default function PropertyEstimateTool() {
             <TextInput label="호실" value={form.roomNo} onChange={(value) => update('roomNo', value)} />
             <TextInput label="주소" value={form.address} onChange={(value) => update('address', value)} />
             <TextInput label="가까운 역 / 도보" value={form.nearestStation} onChange={(value) => update('nearestStation', value)} />
-            <TextInput label="입주 가능일" value={form.moveInDate} onChange={(value) => update('moveInDate', value)} />
+            <DateInput label="입주 예정일" value={form.moveInDate} onChange={(value) => update('moveInDate', value)} />
             <TextInput label="타입" value={form.layout} onChange={(value) => update('layout', value)} />
             <TextInput label="면적" value={form.area} onChange={(value) => update('area', value)} />
             <TextInput label="구조" value={form.structure} onChange={(value) => update('structure', value)} />
@@ -318,6 +436,79 @@ export default function PropertyEstimateTool() {
             <MoneyInput label="기타 비용" value={form.otherFee} onChange={(value) => update('otherFee', value)} />
             <TextInput label="기타 월액명" value={form.monthlyOtherName} onChange={(value) => update('monthlyOtherName', value)} />
             <MoneyInput label="기타 월액" value={form.monthlyOtherFee} onChange={(value) => update('monthlyOtherFee', value)} />
+          </div>
+        </div>
+      </section>
+
+      <section style={styles.panel}>
+        <h2 style={styles.panelTitle}>3. 자동 계산 보조</h2>
+
+        <div style={styles.helperGrid}>
+          <div style={styles.helperCard}>
+            <h3 style={styles.helperTitle}>초기 월세 계산 방식</h3>
+            <p style={styles.helperText}>
+              입주 예정일을 입력하면 일할 계산이 가능합니다. 관리회사 견적 기준과 다를 수 있으므로 최종 확인이 필요합니다.
+            </p>
+            <div style={styles.segmentRow}>
+              <button
+                type="button"
+                style={form.initialRentMode === 'oneMonth' ? styles.segmentActive : styles.segmentButton}
+                onClick={() => setInitialRentMode('oneMonth')}
+              >
+                1개월분
+              </button>
+              <button
+                type="button"
+                style={form.initialRentMode === 'prorated' ? styles.segmentActive : styles.segmentButton}
+                onClick={() => setInitialRentMode('prorated')}
+              >
+                일할만
+              </button>
+              <button
+                type="button"
+                style={form.initialRentMode === 'proratedPlusNextMonth' ? styles.segmentActive : styles.segmentButton}
+                onClick={() => setInitialRentMode('proratedPlusNextMonth')}
+              >
+                일할+익월
+              </button>
+            </div>
+            <p style={styles.helperResult}>
+              {proration.isValid
+                ? `입주월 기준: ${proration.daysInMonth}일 중 ${proration.chargeDays}일분 / 월세+관리비 일할 ${yen(proration.amount)}`
+                : '입주 예정일을 입력하면 일할 금액이 표시됩니다.'}
+            </p>
+          </div>
+
+          <div style={styles.helperCard}>
+            <h3 style={styles.helperTitle}>보증회사 비용 자동계산</h3>
+            <p style={styles.helperText}>월세+관리비+기타 월액을 기준으로 계산합니다.</p>
+            <div style={styles.buttonWrap}>
+              <button type="button" style={styles.secondaryButton} onClick={() => applyGuaranteeFee(0.3)}>
+                30%
+              </button>
+              <button type="button" style={styles.secondaryButton} onClick={() => applyGuaranteeFee(0.5)}>
+                50%
+              </button>
+              <button type="button" style={styles.secondaryButton} onClick={() => applyGuaranteeFee(1)}>
+                100%
+              </button>
+            </div>
+          </div>
+
+          <div style={styles.helperCard}>
+            <h3 style={styles.helperTitle}>중개수수료 자동계산</h3>
+            <p style={styles.helperText}>월세 기준으로 계산하며, 버튼은 소비세 10% 포함 금액으로 입력합니다.</p>
+            <div style={styles.buttonWrap}>
+              <button type="button" style={styles.secondaryButton} onClick={() => applyAgencyFee(0.5, true)}>
+                0.5개월+세금
+              </button>
+              <button type="button" style={styles.secondaryButton} onClick={() => applyAgencyFee(1, true)}>
+                1개월+세금
+              </button>
+              <button type="button" style={styles.secondaryButton} onClick={() => applyAgencyFee(0, true)}>
+                0円
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -357,7 +548,7 @@ export default function PropertyEstimateTool() {
           <InfoLine label="타입/면적" value={[form.layout, form.area].filter(Boolean).join(' / ') || '-'} />
           <InfoLine label="구조/축년" value={[form.structure, form.builtYear].filter(Boolean).join(' / ') || '-'} />
           <InfoLine label="층수/향" value={[form.floor, form.direction].filter(Boolean).join(' / ') || '-'} />
-          <InfoLine label="입주 가능일" value={form.moveInDate || '-'} />
+          <InfoLine label="입주 예정일" value={form.moveInDate || '-'} />
         </div>
 
         <div style={styles.tableWrap}>
@@ -403,13 +594,13 @@ export default function PropertyEstimateTool() {
 
       <section style={styles.grid}>
         <OutputPanel
-          title="3. 고객 발송용 견적 안내문"
+          title="4. 고객 발송용 견적 안내문"
           value={customerMessage}
           copied={copied === 'customer'}
           onCopy={() => copyText('customer', customerMessage)}
         />
         <OutputPanel
-          title="4. 고객용 매물 소개자료 초안"
+          title="5. 고객용 매물 소개자료 초안"
           value={propertyIntro}
           copied={copied === 'intro'}
           onCopy={() => copyText('intro', propertyIntro)}
@@ -445,6 +636,15 @@ function TextInput({ label, value, onChange }: { label: string; value: string; o
     <label style={styles.label}>
       <span>{label}</span>
       <input style={styles.input} value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+function DateInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label style={styles.label}>
+      <span>{label}</span>
+      <input style={styles.input} type="date" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }
@@ -627,6 +827,65 @@ const styles: Record<string, CSSProperties> = {
     border: '1px solid #eadfd4',
     background: '#fffaf5',
     padding: '18px',
+  },
+  helperGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    gap: '14px',
+  },
+  helperCard: {
+    padding: '16px',
+    border: '1px solid #eadfd4',
+    borderRadius: '18px',
+    background: '#fffaf5',
+  },
+  helperTitle: {
+    margin: '0 0 8px',
+    fontSize: '15px',
+    color: '#241d18',
+  },
+  helperText: {
+    margin: '0 0 12px',
+    color: '#7b716a',
+    fontSize: '13px',
+    lineHeight: 1.55,
+  },
+  helperResult: {
+    margin: '12px 0 0',
+    color: '#5b4432',
+    fontSize: '12px',
+    lineHeight: 1.55,
+    fontWeight: 800,
+  },
+  segmentRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+  },
+  segmentButton: {
+    border: '1px solid #d8c7b5',
+    borderRadius: '999px',
+    padding: '8px 12px',
+    background: '#fff',
+    color: '#5b4432',
+    fontWeight: 900,
+    cursor: 'pointer',
+    fontSize: '12px',
+  },
+  segmentActive: {
+    border: '1px solid #8b5a2b',
+    borderRadius: '999px',
+    padding: '8px 12px',
+    background: '#8b5a2b',
+    color: '#fff',
+    fontWeight: 900,
+    cursor: 'pointer',
+    fontSize: '12px',
+  },
+  buttonWrap: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
   },
   printHeader: {
     display: 'flex',
