@@ -1,5 +1,37 @@
 [
   {
+    "id": "prop-1783494861354",
+    "title": "1LDK 52.7㎡ 에사카역 복층매",
+    "price": "93,500",
+    "location": "吹田市垂水町",
+    "prefecture": "osaka",
+    "type": "OneRoom",
+    "description": "에사카 생활권, 이 집은 들어가자마자 느낌이 다릅니다\n\n북큐선 에사카역 도보 13분.\n한큐 센리선 토요츠역 도보 8분.\n\n오사카부 스이타시 타루미마치에 나온\n52.7㎡ 1LDK 복층 아파트입니다.\n\n이 집의 장점은 딱 하나로 정리됩니다.\n\n밝고, 넓고, 답답하지 않습니다.\n\n1층인데도 남향이라 햇빛이 잘 들어오고,\n창밖도 막힌 느낌이 적어서\n불을 켜지 않아도 실내가 환하게 느껴집니다.\n\n무엇보다 복층 구조라\n천장이 시원하게 열려 있고\n일반 1LDK보다 공간이 훨씬 넓게 느껴집니다.\n\n혼자 살면 정말 여유롭고,\n두 분이 살아도 답답하지 않은 크기입니다.\n\n월세 93,500엔, 관리비 6,000엔.\n합계 99,500엔으로 월 10만엔 안쪽입니다.\n\n에사카 생활권에서\n52.7㎡, 복층, 남향, 월 10만엔 안쪽이면\n꽤 매력 있는 조건입니다.\n\n조용하게 살면서도\n에사카 생활권은 놓치고 싶지 않은 분,\n좁은 원룸이 답답했던 분,\n햇빛 잘 드는 넓은 집을 찾는 분께 추천드립니다.\n\n사진보다 직접 봤을 때 더 좋은 집.\n이 말이 잘 어울리는 매물입니다.\n\n소재지: 오사카부 스이타시 타루미마치 2초메 20-8\n교통: 에사카역 도보 13분 / 토요츠역 도보 8분\n타입: 1LDK 복층\n전용면적: 52.7㎡\n방향: 남향\n월세: 93,500엔\n관리비: 6,000엔\n레이킹: 50,000엔\n입주 가능일: 2026년 7월 27일 이후\n\n",
+    "images": [
+      "/assets/uploads/properties/prop-1783494861354/1783494922460_00.webp",
+      "/assets/uploads/properties/prop-1783494861354/1783494928665_01.webp",
+      "/assets/uploads/properties/prop-1783494861354/1783494939388_02.webp",
+      "/assets/uploads/properties/prop-1783494861354/1783494944874_03.webp",
+      "/assets/uploads/properties/prop-1783494861354/1783494949757_04.webp",
+      "/assets/uploads/properties/prop-1783494861354/1783494954910_05.webp",
+      "/assets/uploads/properties/prop-1783494861354/1783494959699_06.webp"
+    ],
+    "features": [],
+    "construction": "",
+    "completionYear": "2002年03月",
+    "nearestStation": "에사카역,토요츠역",
+    "nearestLine": "북큐선 ,한큐 센리선",
+    "youtubeUrl": "https://www.youtube.com/shorts/MAnUDva50yY",
+    "mapAddress": "大阪府吹田市垂水町２丁目20-8",
+    "floorPlan": "1LDK",
+    "floorPlanImage": "/assets/uploads/properties/prop-1783494861354/floorplan/1783494972002_00.webp",
+    "area": "52.7㎡ ",
+    "isFeatured": true,
+    "badgeLabel": "복층1LDK/ 외국인계약가능/시키킹0/52.7㎡ ",
+    "createdAt": 1783494861354,
+    "ownerId": "system"
+  },
+  {
     "id": "prop-1779853289764",
     "title": "1DK / 오사카시 / 혼마치역 / 32.97㎡",
     "price": "월117,000円 / 12,000円",
